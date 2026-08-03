@@ -29,4 +29,4 @@ Project Status
 🚧 The project is currently in its initial planning and repository setup phase.
 
 
-** Development Team: NextSpace **
+**Development Team: NextSpace**
