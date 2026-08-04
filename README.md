@@ -8,14 +8,14 @@ Repository Purpose
 
 Maintain an organized workspace for team collaboration, making it easier to manage version control and track changes during the project's development.
 
-Repository Guidelines
+### Repository Guidelines
 
 - Keep the project structure organized.
 - Write clear and descriptive commit messages.
 - Avoid deleting files without consulting the team.
 - Keep the documentation up to date whenever necessary.
 
-Repository Structure
+### Repository Structure
 
 As the project evolves, this repository will include:
 
@@ -24,7 +24,7 @@ As the project evolves, this repository will include:
 - Project resources
 - Configuration files
 
-## Team Roles
+### Team Roles
 
 The project team is organized into the following roles to ensure efficient collaboration and clear responsibilities.
 
@@ -39,7 +39,7 @@ The project team is organized into the following roles to ensure efficient colla
 | Jaqueline | Frontend Developer |
 | Gabriela | Frontend Developer |
 
-Project Status
+### Project Status
 
 🚧 The project is currently in its initial planning and repository setup phase.
 
