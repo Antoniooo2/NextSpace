@@ -24,6 +24,21 @@ As the project evolves, this repository will include:
 - Project resources
 - Configuration files
 
+## Team Roles
+
+The project team is organized into the following roles to ensure efficient collaboration and clear responsibilities.
+
+| Member | Role |
+|--------|------|
+| Antonio | Full Stack Developer |
+| Rubén | Full Stack Developer |
+| Francisco | Backend Developer |
+| Julia | Backend Developer |
+| Christopher | Backend Developer |
+| Sofía | Backend Developer |
+| Jaqueline | Frontend Developer |
+| Gabriela | Frontend Developer |
+
 Project Status
 
 🚧 The project is currently in its initial planning and repository setup phase.
