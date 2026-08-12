@@ -39,6 +39,26 @@ The project team is organized into the following roles to ensure efficient colla
 | Jaqueline | Frontend Developer |
 | Gabriela | Frontend Developer |
 
+### Branch Guidelines
+
+Before making any changes, make sure you are working on the appropriate branch. Do not make changes directly on the `main` branch.
+
+Switch to your branch before starting your work with this command: git switch -c branchname
+Example: git switch -c Antonio
+
+### Branch Names
+
+| Member | Branch Name |
+|--------|------|
+| Antonio | Antonio |
+| Rubén | Ruben |
+| Francisco | Francisco |
+| Julia | Julia |
+| Christopher | Christopher |
+| Sofía | Sofia |
+| Jaqueline | Jaqueline |
+| Gabriela | Gabriela |
+
 ### Project Status
 
 🚧 The project is currently in its initial planning and repository setup phase.
