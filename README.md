@@ -1,16 +1,46 @@
-# React + Vite
+# NextSpace
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Welcome to the official NextSpace repository.
 
-Currently, two official plugins are available:
+This repository is used to store and manage the project's source code, documentation, and resources throughout its development.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Repository Purpose
 
-## React Compiler
+Maintain an organized workspace for team collaboration, making it easier to manage version control and track changes during the project's development.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Repository Guidelines
 
-## Expanding the ESLint configuration
+- Keep the project structure organized.
+- Write clear and descriptive commit messages.
+- Avoid deleting files without consulting the team.
+- Keep the documentation up to date whenever necessary.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Repository Structure
+
+As the project evolves, this repository will include:
+
+- Source code
+- Documentation
+- Project resources
+- Configuration files
+
+### Team Roles
+
+The project team is organized into the following roles to ensure efficient collaboration and clear responsibilities.
+
+| Member | Role |
+|--------|------|
+| Antonio | Full Stack Developer |
+| Rubén | Full Stack Developer |
+| Francisco | Backend Developer |
+| Julia | Backend Developer |
+| Christopher | Backend Developer |
+| Sofía | Backend Developer |
+| Jaqueline | Frontend Developer |
+| Gabriela | Frontend Developer |
+
+### Project Status
+
+🚧 The project is currently in its initial planning and repository setup phase.
+
+**Development Team: NextSpace**
