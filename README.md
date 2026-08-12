@@ -43,7 +43,7 @@ The project team is organized into the following roles to ensure efficient colla
 
 Before making any changes, make sure you are working on the appropriate branch. Do not make changes directly on the `main` branch.
 
-Switch to your branch before starting your work with this command: ** git switch -c branchname **
+Switch to your branch before starting your work with this command: git switch -c branchname
 Example: git switch -c Antonio
 
 ### Branch Names
