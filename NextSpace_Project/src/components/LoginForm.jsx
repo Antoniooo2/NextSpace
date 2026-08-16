@@ -121,7 +121,7 @@ export default function LoginForm({ onSwitchToSignup, onLogoClick }) {
                     className="ns-link-btn"
                     onClick={onSwitchToSignup}
                 >
-                    Create my landlord account
+                    Create my account
                 </button>
             </p>
         </div>
