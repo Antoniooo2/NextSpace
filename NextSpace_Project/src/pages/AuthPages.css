@@ -1,0 +1,163 @@
+.ns-auth-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.ns-auth-wrapper::before,
+.ns-auth-wrapper::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: #eaf1f8;
+  z-index: 0;
+}
+
+.ns-auth-wrapper::before {
+  width: 500px;
+  height: 500px;
+  top: -180px;
+  left: -180px;
+}
+
+.ns-auth-wrapper::after {
+  width: 400px;
+  height: 400px;
+  bottom: -150px;
+  right: -150px;
+}
+
+.ns-card {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  border: 1px solid #eef0f2;
+  border-radius: 16px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 30px rgba(20, 33, 61, 0.08);
+  text-align: center;
+}
+
+.ns-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.ns-logo-img {
+  height: 22px;
+}
+
+.ns-logo-text {
+  font-weight: 700;
+  font-size: 17px;
+  color: #14213d;
+}
+
+.ns-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #14213d;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.ns-subtitle {
+  font-size: 13px;
+  color: #8a8f98;
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.ns-field {
+  text-align: left;
+  margin-bottom: 18px;
+}
+
+.ns-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #14213d;
+  margin-bottom: 6px;
+}
+
+.ns-input {
+  width: 100%;
+  padding: 10px 14px;
+  background-color: #f5f6f7;
+  border: 1px solid #e4e6e9;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+  color: #14213d;
+}
+
+.ns-input::placeholder {
+  color: #a0a5ab;
+}
+
+.ns-input:focus {
+  outline: none;
+  border-color: #5b8dbe;
+  background-color: #ffffff;
+}
+
+.ns-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #14213d;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.ns-button:hover:not(:disabled) {
+  background-color: #1c2d52;
+}
+
+.ns-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ns-message {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #14213d;
+  background-color: #f5f6f7;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.ns-link-row {
+  margin-top: 22px;
+  font-size: 13px;
+  color: #8a8f98;
+}
+
+.ns-link {
+  color: #5b8dbe;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ns-link:hover {
+  text-decoration: underline;
+}
