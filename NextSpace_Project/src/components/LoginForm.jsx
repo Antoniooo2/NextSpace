@@ -47,7 +47,7 @@ export default function LoginForm({ onSwitchToSignup, onLogoClick }) {
                             id="loginEmail"
                             type="email"
                             className="form-control"
-                            placeholder="example@yourproperty.com"
+                            placeholder="example@nextspace.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocusedField('email')}

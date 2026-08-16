@@ -17,7 +17,10 @@ const ACCOUNT_TYPES = [
 ]
 
 export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
-    const [fullName, setFullName] = useState('')
+    const [firstName, setFirstName] = useState('')
+    const [lastName, setLastName] = useState('')
+    const [dui, setDui] = useState('')
+    const [phone, setPhone] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -26,7 +29,7 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
 
     const handleSubmit = (e) => {
         e.preventDefault()
-        console.log({ fullName, email, password, accountType })
+        console.log({ firstName, lastName, dui, phone, email, password, accountType })
     }
 
     return (
@@ -47,24 +50,48 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
 
             <form onSubmit={handleSubmit} noValidate>
                 <div className="ns-mb-field">
-                    <label htmlFor="fullName" className="ns-label">
-                        Full name
+                    <label htmlFor="firstName" className="ns-label">
+                        First name
                     </label>
                     <div
-                        className={`ns-input-group input-group ${focusedField === 'fullName' ? 'focused' : ''
+                        className={`ns-input-group input-group ${focusedField === 'firstName' ? 'focused' : ''
                             }`}
                     >
                         <span className="input-group-text">
                             <i className="bi bi-person"></i>
                         </span>
                         <input
-                            id="fullName"
+                            id="firstName"
                             type="text"
                             className="form-control"
-                            placeholder="Ronaldo Mendoza"
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            onFocus={() => setFocusedField('fullName')}
+                            placeholder="Ronaldo"
+                            value={firstName}
+                            onChange={(e) => setFirstName(e.target.value)}
+                            onFocus={() => setFocusedField('firstName')}
+                            onBlur={() => setFocusedField(null)}
+                        />
+                    </div>
+                </div>
+
+                <div className="ns-mb-field">
+                    <label htmlFor="lastName" className="ns-label">
+                        Last name
+                    </label>
+                    <div
+                        className={`ns-input-group input-group ${focusedField === 'lastName' ? 'focused' : ''
+                            }`}
+                    >
+                        <span className="input-group-text">
+                            <i className="bi bi-person"></i>
+                        </span>
+                        <input
+                            id="lastName"
+                            type="text"
+                            className="form-control"
+                            placeholder="Mendoza"
+                            value={lastName}
+                            onChange={(e) => setLastName(e.target.value)}
+                            onFocus={() => setFocusedField('lastName')}
                             onBlur={() => setFocusedField(null)}
                         />
                     </div>
@@ -89,6 +116,54 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocusedField('email')}
+                            onBlur={() => setFocusedField(null)}
+                        />
+                    </div>
+                </div>
+
+                <div className="ns-mb-field">
+                    <label htmlFor="dui" className="ns-label">
+                        DUI
+                    </label>
+                    <div
+                        className={`ns-input-group input-group ${focusedField === 'dui' ? 'focused' : ''
+                            }`}
+                    >
+                        <span className="input-group-text">
+                            <i class="bi bi-person-badge"></i>
+                        </span>
+                        <input
+                            id="dui"
+                            type="text"
+                            className="form-control"
+                            placeholder="00000000-0"
+                            value={dui}
+                            onChange={(e) => setDui(e.target.value)}
+                            onFocus={() => setFocusedField('dui')}
+                            onBlur={() => setFocusedField(null)}
+                        />
+                    </div>
+                </div>
+
+                <div className="ns-mb-field">
+                    <label htmlFor="phone" className="ns-label">
+                        Phone Number
+                    </label>
+                    <div
+                        className={`ns-input-group input-group ${focusedField === 'phone' ? 'focused' : ''
+                            }`}
+                    >
+                        <span className="input-group-text">
+                            <i class="bi bi-phone"></i>
+                        </span>
+                        <input
+                            id="phone"
+                            type="text"
+                            className="form-control"
+                            placeholder="7517-1234"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            onFocus={() => setFocusedField('phone')}
                             onBlur={() => setFocusedField(null)}
                         />
                     </div>
