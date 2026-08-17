@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import logo from '../assets/logo_ns.png'
+import logo from '../assets/NextSpace_logo.png'
 import { supabase } from '../lib/supabaseClient'
 
 const ACCOUNT_TYPES = [

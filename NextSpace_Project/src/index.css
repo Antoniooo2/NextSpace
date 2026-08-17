@@ -119,9 +119,11 @@ body {
 }
 
 .ns-label-row {
-  display: flex;
+  
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 6px;
+  position: relative;
   margin-bottom: 6px;
 }
 
@@ -134,6 +136,10 @@ body {
   font-weight: 600;
   color: var(--ns-blue-accent);
   text-decoration: none;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .ns-forgot-link:hover {
@@ -195,6 +201,7 @@ body {
   color: #2a3142;
   margin-bottom: 6px;
   display: block;
+  text-align: center;
 }
 
 .ns-input-group {

@@ -34,6 +34,21 @@ function ForgotPassword() {
     setFieldError('')
     setLoading(true)
 
+    setFieldError('')
+    setLoading(true)
+
+    console.log('origin:', window.location.origin)
+    console.log('key existe:', !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
+    console.log('key primeros/últimos chars:',
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.slice(0, 5),
+      '...',
+      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.slice(-5)
+    )
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/new-password`,
+    })
+
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/new-password`,
     })
