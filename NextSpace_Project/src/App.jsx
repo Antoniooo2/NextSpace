@@ -5,7 +5,7 @@ import LoginForm from './components/LoginForm.jsx'
 import SignupForm from './components/SignUpForm.jsx'
 import ForgotPassword from './pages/ForgotPassword'
 import NewPassword from './pages/NewPassword'
-import Welcome from './pages/Welcome'
+import Welcome from './pages/Welcome.jsx'
 
 function MainFlow() {
   const [view, setView] = useState('landing')
