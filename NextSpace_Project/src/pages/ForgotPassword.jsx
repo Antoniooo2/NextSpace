@@ -34,9 +34,6 @@ function ForgotPassword() {
     setFieldError('')
     setLoading(true)
 
-    setFieldError('')
-    setLoading(true)
-
     console.log('origin:', window.location.origin)
     console.log('key existe:', !!import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY)
     console.log('key primeros/últimos chars:',
@@ -44,10 +41,6 @@ function ForgotPassword() {
       '...',
       import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.slice(-5)
     )
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/new-password`,
-    })
 
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/new-password`,
@@ -67,8 +60,6 @@ function ForgotPassword() {
       })
     }
   }
-
-  console.log('debug supabase url', import.meta.env.VITE_SUPABASE_URL)
 
   return (
     <div className="ns-auth-wrapper">
