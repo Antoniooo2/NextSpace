@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import logo from '../assets/NextSpace_logo.png'
+import { Link, useNavigate } from 'react-router-dom'
+import logo from '../assets/logo_ns.png'
 import { supabase } from '../lib/supabaseClient'
 
-export default function LoginForm({ onSwitchToSignup, onLogoClick, onLoginSuccess }) {
+export default function LoginForm({ onSwitchToSignup, onLogoClick }) {
+    const navigate = useNavigate()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -30,7 +31,7 @@ export default function LoginForm({ onSwitchToSignup, onLogoClick, onLoginSucces
         }
 
         console.log('Sesión iniciada:', data.session)
-        if (onLoginSuccess) onLoginSuccess()
+        navigate('/welcome')
     }
 
     return (

@@ -5,6 +5,7 @@ import LoginForm from './components/LoginForm.jsx'
 import SignupForm from './components/SignUpForm.jsx'
 import ForgotPassword from './pages/ForgotPassword'
 import NewPassword from './pages/NewPassword'
+import Welcome from './pages/Welcome'
 
 function MainFlow() {
   const [view, setView] = useState('landing')
@@ -41,6 +42,7 @@ function App() {
     <Routes>
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/new-password" element={<NewPassword />} />
+      <Route path="/welcome" element={<Welcome />} />
       <Route path="/*" element={<MainFlow />} />
     </Routes>
   )
