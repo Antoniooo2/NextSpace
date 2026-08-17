@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import logo from '../assets/logo_ns.png'
 import { supabase } from '../lib/supabaseClient'
 
@@ -86,9 +87,9 @@ export default function LoginForm({ onSwitchToSignup, onLogoClick, onLoginSucces
                         <label htmlFor="loginPassword" className="ns-label">
                             Your password
                         </label>
-                        <a href="#" className="ns-forgot-link">
+                        <Link to="/forgot-password" className="ns-forgot-link">
                             Forgot it?
-                        </a>
+                        </Link>
                     </div>
                     <div
                         className={`ns-input-group input-group ${focusedField === 'password' ? 'focused' : ''
