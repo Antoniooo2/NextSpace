@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&display=swap');
+
+.ns-card {
+  font-family: 'Poppins', system-ui, sans-serif;
+}
+
 .ns-auth-wrapper {
   position: relative;
   display: flex;
@@ -6,29 +12,8 @@
   min-height: 100vh;
   background-color: #ffffff;
   overflow: hidden;
-}
-
-.ns-auth-wrapper::before,
-.ns-auth-wrapper::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  background: #eaf1f8;
-  z-index: 0;
-}
-
-.ns-auth-wrapper::before {
-  width: 500px;
-  height: 500px;
-  top: -180px;
-  left: -180px;
-}
-
-.ns-auth-wrapper::after {
-  width: 400px;
-  height: 400px;
-  bottom: -150px;
-  right: -150px;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
 .ns-card {
@@ -36,45 +21,60 @@
   z-index: 1;
   background: #ffffff;
   border: 1px solid #eef0f2;
-  border-radius: 16px;
-  padding: 36px 32px;
+  border-radius: 24px;
+  padding: 44px 40px 40px;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 8px 30px rgba(20, 33, 61, 0.08);
+  max-width: 440px;
+  box-shadow: 0 24px 60px rgba(20, 33, 61, 0.12);
   text-align: center;
+  animation: ns-rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.ns-logo-row {
+@keyframes ns-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ns-icon-badge {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: linear-gradient(155deg, #1c2d52, #4c7ba8);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
+  box-shadow: 0 10px 24px rgba(28, 45, 82, 0.28);
+}
+
+.ns-icon-badge svg {
+  width: 26px;
+  height: 26px;
+  stroke: #ffffff;
 }
 
 .ns-logo-img {
-  height: 22px;
-}
-
-.ns-logo-text {
-  font-weight: 700;
-  font-size: 17px;
-  color: #14213d;
+  height: 80px;
+  width: auto;
+  margin: 10px;
+  opacity: 1;
 }
 
 .ns-title {
-  font-size: 19px;
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 22px;
   font-weight: 700;
   color: #14213d;
-  margin-bottom: 6px;
-  text-align: center;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
 }
 
 .ns-subtitle {
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.5;
   color: #8a8f98;
-  margin-bottom: 28px;
-  text-align: center;
+  margin-bottom: 30px;
+  padding: 0 6px;
 }
 
 .ns-field {
@@ -87,18 +87,35 @@
   font-size: 12.5px;
   font-weight: 600;
   color: #14213d;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
+}
+
+.ns-input-wrap {
+  position: relative;
+}
+
+.ns-input-wrap svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  stroke: #a0a5ab;
+  pointer-events: none;
+  transition: stroke 0.15s ease;
 }
 
 .ns-input {
   width: 100%;
-  padding: 10px 14px;
+  padding: 12px 14px 12px 40px;
   background-color: #f5f6f7;
-  border: 1px solid #e4e6e9;
-  border-radius: 8px;
+  border: 1.5px solid #e4e6e9;
+  border-radius: 11px;
   font-size: 14px;
   box-sizing: border-box;
   color: #14213d;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .ns-input::placeholder {
@@ -107,29 +124,55 @@
 
 .ns-input:focus {
   outline: none;
-  border-color: #5b8dbe;
+  border-color: #4c7ba8;
   background-color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(76, 123, 168, 0.12);
+}
+
+.ns-input:focus + svg,
+.ns-input-wrap:focus-within svg {
+  stroke: #4c7ba8;
+}
+
+.ns-input.ns-input-error {
+  border-color: #dc2626;
+  background-color: #fef4f3;
+}
+
+.ns-error-text {
+  display: block;
+  font-size: 12px;
+  color: #dc2626;
+  margin-top: 6px;
+  text-align: left;
 }
 
 .ns-button {
   width: 100%;
-  padding: 12px;
-  background-color: #14213d;
+  padding: 13px;
+  background: linear-gradient(155deg, #182b52, #274a7c);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: 11px;
+  font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
-  margin-top: 6px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 
 .ns-button:hover:not(:disabled) {
-  background-color: #1c2d52;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(20, 33, 61, 0.28);
+  filter: brightness(1.06);
+}
+
+.ns-button:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .ns-button:disabled {
@@ -138,26 +181,41 @@
 }
 
 .ns-message {
-  margin-top: 16px;
+  margin-top: 18px;
   font-size: 13px;
-  color: #14213d;
-  background-color: #f5f6f7;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 12px 14px;
+  border-radius: 11px;
+  line-height: 1.5;
+  animation: ns-rise 0.3s ease both;
+}
+
+.ns-message-success {
+  color: #15803d;
+  background-color: #ecfdf3;
+}
+
+.ns-message-error {
+  color: #dc2626;
+  background-color: #fef4f3;
 }
 
 .ns-link-row {
-  margin-top: 22px;
+  margin-top: 26px;
   font-size: 13px;
   color: #8a8f98;
 }
 
 .ns-link {
-  color: #5b8dbe;
+  color: #4c7ba8;
   font-weight: 600;
   text-decoration: none;
 }
 
 .ns-link:hover {
   text-decoration: underline;
+}
+
+.ns-auth-wrapper {
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
 }
