@@ -53,6 +53,8 @@ function ForgotPassword() {
     }
   }
 
+  console.log('debug supabase url', import.meta.env.VITE_SUPABASE_URL)
+
   return (
     <div className="ns-auth-wrapper">
       <div className="ns-card">
