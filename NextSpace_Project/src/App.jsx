@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import LandingPage from './components/LandingPage.jsx'
 import LoginForm from './components/LoginForm.jsx'
 import SignupForm from './components/SignUpForm.jsx'
+import ForgotPassword from './pages/ForgotPassword'
+import NewPassword from './pages/NewPassword'
 
-function App() {
+function MainFlow() {
   const [view, setView] = useState('landing')
 
   if (view === 'landing') {
@@ -30,6 +33,16 @@ function App() {
         />
       )}
     </div>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/new-password" element={<NewPassword />} />
+      <Route path="/*" element={<MainFlow />} />
+    </Routes>
   )
 }
 
