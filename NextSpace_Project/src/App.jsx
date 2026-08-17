@@ -21,6 +21,7 @@ function App() {
         <LoginForm
           onSwitchToSignup={() => setView('signup')}
           onLogoClick={() => setView('landing')}
+          onLoginSuccess={() => setView('landing')}
         />
       ) : (
         <SignupForm

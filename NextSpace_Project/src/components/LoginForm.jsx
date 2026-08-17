@@ -1,16 +1,35 @@
 import { useState } from 'react'
 import logo from '../assets/logo_ns.png'
+import { supabase } from '../lib/supabaseClient'
 
-export default function LoginForm({ onSwitchToSignup, onLogoClick }) {
+export default function LoginForm({ onSwitchToSignup, onLogoClick, onLoginSuccess }) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const [rememberMe, setRememberMe] = useState(false)
     const [focusedField, setFocusedField] = useState(null)
+    const [loading, setLoading] = useState(false)
+    const [errorMsg, setErrorMsg] = useState('')
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        console.log({ email, password, rememberMe })
+        setErrorMsg('')
+        setLoading(true)
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
+
+        setLoading(false)
+
+        if (error) {
+            setErrorMsg(error.message)
+            return
+        }
+
+        console.log('Sesión iniciada:', data.session)
+        if (onLoginSuccess) onLoginSuccess()
     }
 
     return (
@@ -30,6 +49,12 @@ export default function LoginForm({ onSwitchToSignup, onLogoClick }) {
                 Simple rental management for entrepreneurs
             </p>
             <h1 className="ns-welcome-title">Welcome to NextSpace</h1>
+
+            {errorMsg && (
+                <div className="alert alert-danger py-2" role="alert">
+                    {errorMsg}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} noValidate>
                 <div className="ns-mb-field">
@@ -108,8 +133,8 @@ export default function LoginForm({ onSwitchToSignup, onLogoClick }) {
                     </label>
                 </div>
 
-                <button type="submit" className="ns-submit-btn ns-submit-btn-icon">
-                    Enter my space
+                <button type="submit" className="ns-submit-btn ns-submit-btn-icon" disabled={loading}>
+                    {loading ? 'Signing in...' : 'Enter my space'}
                     <i className="bi bi-arrow-right"></i>
                 </button>
             </form>

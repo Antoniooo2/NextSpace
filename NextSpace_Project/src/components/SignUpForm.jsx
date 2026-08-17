@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import logo from '../assets/logo_ns.png'
+import { supabase } from '../lib/supabaseClient'
 
 const ACCOUNT_TYPES = [
     {
@@ -26,10 +27,39 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
     const [showPassword, setShowPassword] = useState(false)
     const [accountType, setAccountType] = useState('business')
     const [focusedField, setFocusedField] = useState(null)
+    const [loading, setLoading] = useState(false)
+    const [errorMsg, setErrorMsg] = useState('')
+    const [successMsg, setSuccessMsg] = useState('')
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        console.log({ firstName, lastName, dui, phone, email, password, accountType })
+        setErrorMsg('')
+        setSuccessMsg('')
+        setLoading(true)
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    first_name: firstName,
+                    last_name: lastName,
+                    dui,
+                    phone,
+                    account_type: accountType,
+                },
+            },
+        })
+
+        setLoading(false)
+
+        if (error) {
+            setErrorMsg(error.message)
+            return
+        }
+
+        setSuccessMsg('¡Cuenta creada! Revisa tu correo para confirmar.')
+        console.log('Usuario creado:', data.user)
     }
 
     return (
@@ -48,155 +78,90 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
             <h1 className="ns-title">Create your account</h1>
             <p className="ns-subtitle">It's free and takes less than 2 minutes.</p>
 
+            {errorMsg && (
+                <div className="alert alert-danger py-2" role="alert">
+                    {errorMsg}
+                </div>
+            )}
+            {successMsg && (
+                <div className="alert alert-success py-2" role="alert">
+                    {successMsg}
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} noValidate>
                 <div className="ns-mb-field">
-                    <label htmlFor="firstName" className="ns-label">
-                        First name
-                    </label>
-                    <div
-                        className={`ns-input-group input-group ${focusedField === 'firstName' ? 'focused' : ''
-                            }`}
-                    >
-                        <span className="input-group-text">
-                            <i className="bi bi-person"></i>
-                        </span>
+                    <label htmlFor="firstName" className="ns-label">First name</label>
+                    <div className={`ns-input-group input-group ${focusedField === 'firstName' ? 'focused' : ''}`}>
+                        <span className="input-group-text"><i className="bi bi-person"></i></span>
                         <input
-                            id="firstName"
-                            type="text"
-                            className="form-control"
-                            placeholder="Ronaldo"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            onFocus={() => setFocusedField('firstName')}
-                            onBlur={() => setFocusedField(null)}
+                            id="firstName" type="text" className="form-control" placeholder="Ronaldo"
+                            value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                            onFocus={() => setFocusedField('firstName')} onBlur={() => setFocusedField(null)}
                         />
                     </div>
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="lastName" className="ns-label">
-                        Last name
-                    </label>
-                    <div
-                        className={`ns-input-group input-group ${focusedField === 'lastName' ? 'focused' : ''
-                            }`}
-                    >
-                        <span className="input-group-text">
-                            <i className="bi bi-person"></i>
-                        </span>
+                    <label htmlFor="lastName" className="ns-label">Last name</label>
+                    <div className={`ns-input-group input-group ${focusedField === 'lastName' ? 'focused' : ''}`}>
+                        <span className="input-group-text"><i className="bi bi-person"></i></span>
                         <input
-                            id="lastName"
-                            type="text"
-                            className="form-control"
-                            placeholder="Mendoza"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            onFocus={() => setFocusedField('lastName')}
-                            onBlur={() => setFocusedField(null)}
+                            id="lastName" type="text" className="form-control" placeholder="Mendoza"
+                            value={lastName} onChange={(e) => setLastName(e.target.value)}
+                            onFocus={() => setFocusedField('lastName')} onBlur={() => setFocusedField(null)}
                         />
                     </div>
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="email" className="ns-label">
-                        Email address
-                    </label>
-                    <div
-                        className={`ns-input-group input-group ${focusedField === 'email' ? 'focused' : ''
-                            }`}
-                    >
-                        <span className="input-group-text">
-                            <i className="bi bi-envelope"></i>
-                        </span>
+                    <label htmlFor="email" className="ns-label">Email address</label>
+                    <div className={`ns-input-group input-group ${focusedField === 'email' ? 'focused' : ''}`}>
+                        <span className="input-group-text"><i className="bi bi-envelope"></i></span>
                         <input
-                            id="email"
-                            type="email"
-                            className="form-control"
-                            placeholder="example@nextspace.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            onFocus={() => setFocusedField('email')}
-                            onBlur={() => setFocusedField(null)}
+                            id="email" type="email" className="form-control" placeholder="example@nextspace.com"
+                            value={email} onChange={(e) => setEmail(e.target.value)}
+                            onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
                         />
                     </div>
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="dui" className="ns-label">
-                        DUI
-                    </label>
-                    <div
-                        className={`ns-input-group input-group ${focusedField === 'dui' ? 'focused' : ''
-                            }`}
-                    >
-                        <span className="input-group-text">
-                            <i class="bi bi-person-badge"></i>
-                        </span>
+                    <label htmlFor="dui" className="ns-label">DUI</label>
+                    <div className={`ns-input-group input-group ${focusedField === 'dui' ? 'focused' : ''}`}>
+                        <span className="input-group-text"><i className="bi bi-person-badge"></i></span>
                         <input
-                            id="dui"
-                            type="text"
-                            className="form-control"
-                            placeholder="00000000-0"
-                            value={dui}
-                            onChange={(e) => setDui(e.target.value)}
-                            onFocus={() => setFocusedField('dui')}
-                            onBlur={() => setFocusedField(null)}
+                            id="dui" type="text" className="form-control" placeholder="00000000-0"
+                            value={dui} onChange={(e) => setDui(e.target.value)}
+                            onFocus={() => setFocusedField('dui')} onBlur={() => setFocusedField(null)}
                         />
                     </div>
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="phone" className="ns-label">
-                        Phone Number
-                    </label>
-                    <div
-                        className={`ns-input-group input-group ${focusedField === 'phone' ? 'focused' : ''
-                            }`}
-                    >
-                        <span className="input-group-text">
-                            <i class="bi bi-phone"></i>
-                        </span>
+                    <label htmlFor="phone" className="ns-label">Phone Number</label>
+                    <div className={`ns-input-group input-group ${focusedField === 'phone' ? 'focused' : ''}`}>
+                        <span className="input-group-text"><i className="bi bi-phone"></i></span>
                         <input
-                            id="phone"
-                            type="text"
-                            className="form-control"
-                            placeholder="7517-1234"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            onFocus={() => setFocusedField('phone')}
-                            onBlur={() => setFocusedField(null)}
+                            id="phone" type="text" className="form-control" placeholder="7517-1234"
+                            value={phone} onChange={(e) => setPhone(e.target.value)}
+                            onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
                         />
                     </div>
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="password" className="ns-label">
-                        Password
-                    </label>
-                    <div
-                        className={`ns-input-group input-group ${focusedField === 'password' ? 'focused' : ''
-                            }`}
-                    >
-                        <span className="input-group-text">
-                            <i className="bi bi-lock"></i>
-                        </span>
+                    <label htmlFor="password" className="ns-label">Password</label>
+                    <div className={`ns-input-group input-group ${focusedField === 'password' ? 'focused' : ''}`}>
+                        <span className="input-group-text"><i className="bi bi-lock"></i></span>
                         <input
-                            id="password"
-                            type={showPassword ? 'text' : 'password'}
-                            className="form-control"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            onFocus={() => setFocusedField('password')}
-                            onBlur={() => setFocusedField(null)}
+                            id="password" type={showPassword ? 'text' : 'password'} className="form-control" placeholder="••••••••"
+                            value={password} onChange={(e) => setPassword(e.target.value)}
+                            onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)}
                         />
                         <button
-                            type="button"
-                            className="ns-eye-btn"
-                            onClick={() => setShowPassword((v) => !v)}
-                            aria-label={
-                                showPassword ? 'Hide password' : 'Show password'
-                            }
+                            type="button" className="ns-eye-btn" onClick={() => setShowPassword((v) => !v)}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
                         >
                             <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                         </button>
@@ -209,10 +174,8 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                         {ACCOUNT_TYPES.map((type) => (
                             <div className="col-6" key={type.id}>
                                 <div
-                                    className={`ns-type-card ${accountType === type.id ? 'selected' : ''
-                                        }`}
-                                    role="button"
-                                    tabIndex={0}
+                                    className={`ns-type-card ${accountType === type.id ? 'selected' : ''}`}
+                                    role="button" tabIndex={0}
                                     onClick={() => setAccountType(type.id)}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' || e.key === ' ') {
@@ -230,18 +193,14 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                     </div>
                 </div>
 
-                <button type="submit" className="ns-submit-btn">
-                    Create my account
+                <button type="submit" className="ns-submit-btn" disabled={loading}>
+                    {loading ? 'Creating account...' : 'Create my account'}
                 </button>
             </form>
 
             <p className="ns-footer-text">
                 Already have an account?{' '}
-                <button
-                    type="button"
-                    className="ns-link-btn"
-                    onClick={onSwitchToLogin}
-                >
+                <button type="button" className="ns-link-btn" onClick={onSwitchToLogin}>
                     Sign in
                 </button>
             </p>
