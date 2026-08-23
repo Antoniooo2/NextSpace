@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { DEMO_OWNER_ID, PROPERTIES } from '../../data/properties'
 import PropertyCard from './PropertyCard'
-
+import NewPropertyModal from './NewPropertyModal'
 
 export default function OwnerHome({ firstName, search, onViewProperty }) {
     const [ownProperties, setOwnProperties] = useState(() =>
