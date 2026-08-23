@@ -1,3 +1,5 @@
+/* ===== Dashboard shell ===== */
+
 .ns-dash {
   display: flex;
   min-height: 100vh;
@@ -30,7 +32,7 @@
   }
 }
 
-
+/* ---- Sidebar ---- */
 
 .ns-dash-sidebar {
   width: 240px;
@@ -174,8 +176,7 @@
   display: none;
 }
 
-
-
+/* ---- Main / topbar ---- */
 
 .ns-dash-main {
   flex: 1;
@@ -252,26 +253,6 @@
 
 .ns-dash-workspace-pill {
   display: none;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid var(--ns-border);
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #2a3142;
-  white-space: nowrap;
-}
-
-@media (min-width: 720px) {
-  .ns-dash-workspace-pill {
-    display: flex;
-  }
-}
-
-.ns-dash-workspace-pill i {
-  font-size: 11px;
-  color: var(--ns-text-muted);
 }
 
 .ns-dash-content {
@@ -282,8 +263,7 @@
   margin: 0 auto;
 }
 
-
-
+/* ---- Content header ---- */
 
 .ns-dash-header {
   display: flex;
@@ -339,6 +319,26 @@
   background: var(--ns-blue-bg);
 }
 
+.ns-outline-btn.active {
+  border-color: var(--ns-navy);
+  background: var(--ns-blue-bg);
+  color: var(--ns-navy);
+}
+
+.ns-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--ns-navy);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
 .ns-filled-btn {
   background: var(--ns-navy);
   border: 1.5px solid var(--ns-navy);
@@ -349,8 +349,61 @@
   background: var(--ns-navy-light);
 }
 
+/* ---- Filter panel ---- */
 
+.ns-filter-panel {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 24px;
+}
 
+.ns-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ns-filter-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2a3142;
+}
+
+.ns-filter-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ns-filter-range span {
+  color: var(--ns-text-muted);
+  font-size: 13px;
+}
+
+.ns-filter-range input {
+  width: 90px;
+  border: 1px solid var(--ns-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+}
+
+.ns-filter-range input:focus {
+  border-color: var(--ns-blue-accent);
+}
+
+.ns-filter-actions {
+  margin-left: auto;
+}
+
+/* ---- Category pills ---- */
 
 .ns-pill-row {
   display: flex;
@@ -381,19 +434,18 @@
   color: #fff;
 }
 
-
-
+/* ---- Property grid & cards ---- */
 
 .ns-prop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 280px));
+  gap: 20px;
 }
 
 .ns-prop-card {
   background: #fff;
   border: 1px solid var(--ns-border);
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -401,13 +453,13 @@
 }
 
 .ns-prop-card:hover {
-  box-shadow: 0 16px 32px rgba(15, 28, 63, 0.1);
+  box-shadow: 0 12px 26px rgba(15, 28, 63, 0.1);
   transform: translateY(-2px);
 }
 
 .ns-prop-media {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 3;
   background: var(--ns-blue-bg);
 }
 
@@ -425,45 +477,45 @@
   align-items: center;
   justify-content: center;
   color: var(--ns-blue-accent);
-  font-size: 32px;
+  font-size: 28px;
   background: linear-gradient(135deg, #edf4ff 0%, #dfeafe 100%);
 }
 
 .ns-prop-price {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   background: var(--ns-navy);
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  padding: 6px 12px;
-  border-radius: 8px;
+  padding: 5px 10px;
+  border-radius: 7px;
 }
 
 .ns-prop-price small {
   font-weight: 500;
   opacity: 0.75;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .ns-prop-body {
-  padding: 16px 18px 18px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   flex: 1;
 }
 
 .ns-prop-title {
-  font-size: 15.5px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #1a1f2b;
   margin: 0;
 }
 
 .ns-prop-location {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ns-text-muted);
   margin: 0;
   display: flex;
@@ -474,17 +526,17 @@
 .ns-prop-meta {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 12px;
+  gap: 12px;
+  font-size: 11.5px;
   color: #4a5265;
-  margin: 2px 0 10px;
+  margin: 2px 0 8px;
   flex-wrap: wrap;
 }
 
 .ns-prop-meta span {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .ns-prop-actions {
@@ -498,10 +550,10 @@
   background: transparent;
   border: 1.5px solid var(--ns-navy);
   color: var(--ns-navy);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
-  padding: 9px;
-  border-radius: 9px;
+  padding: 8px;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease;
 }
@@ -513,12 +565,11 @@
 
 .ns-prop-btn-icon {
   flex: 0 0 auto;
-  width: 38px;
-  padding: 9px 0;
+  width: 36px;
+  padding: 8px 0;
 }
 
-
-
+/* ---- Load more ---- */
 
 .ns-load-more {
   display: flex;
@@ -533,8 +584,7 @@
   color: var(--ns-text-muted);
 }
 
-
-
+/* ---- Empty state ---- */
 
 .ns-empty-state {
   display: flex;
@@ -572,8 +622,7 @@
   padding: 90px 24px;
 }
 
-
-
+/* ---- Owner stats ---- */
 
 .ns-stats-row {
   display: grid;
@@ -603,42 +652,41 @@
   color: var(--ns-text-muted);
 }
 
-
-
+/* ---- Profile ---- */
 
 .ns-profile-card {
   background: #fff;
   border: 1px solid var(--ns-border);
-  border-radius: 16px;
-  padding: 26px;
-  max-width: 560px;
+  border-radius: 14px;
+  padding: 22px 24px;
+  max-width: 460px;
 }
 
 .ns-profile-top {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-bottom: 20px;
+  gap: 14px;
+  padding-bottom: 16px;
   border-bottom: 1px solid var(--ns-border);
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .ns-profile-avatar {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--ns-navy);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .ns-profile-top h2 {
-  font-size: 17px;
+  font-size: 15.5px;
   font-weight: 700;
   color: #1a1f2b;
   margin: 0 0 4px;
@@ -648,7 +696,7 @@
   display: inline-block;
   background: var(--ns-blue-bg);
   color: var(--ns-blue-accent);
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 999px;
@@ -657,43 +705,42 @@
 .ns-profile-fields {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
 .ns-profile-field {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .ns-profile-field i {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
   background: var(--ns-blue-bg);
   color: var(--ns-blue-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 13px;
   flex-shrink: 0;
 }
 
 .ns-profile-field-label {
   display: block;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--ns-text-muted);
 }
 
 .ns-profile-field-value {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #1a1f2b;
 }
 
-
-
+/* ---- Modals ---- */
 
 .ns-modal-backdrop {
   position: fixed;
@@ -841,8 +888,234 @@
   line-height: 1.5;
 }
 
+/* ---- Confirm dialog ---- */
 
+.ns-confirm-modal {
+  max-width: 360px;
+  text-align: center;
+  padding: 30px 26px 26px;
+}
 
+.ns-confirm-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fdecec;
+  color: #e5484d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 16px;
+}
+
+.ns-confirm-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1f2b;
+  margin: 0 0 6px;
+}
+
+.ns-confirm-desc {
+  font-size: 13px;
+  color: var(--ns-text-muted);
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+
+.ns-confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ns-confirm-btn-cancel {
+  flex: 1;
+  background: #fff;
+  border: 1.5px solid var(--ns-border);
+  color: #1a1f2b;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ns-confirm-btn-cancel:hover {
+  background: var(--ns-page-bg);
+}
+
+.ns-confirm-btn-danger {
+  flex: 1;
+  background: #e5484d;
+  border: 1.5px solid #e5484d;
+  color: #fff;
+  font-weight: 600;
+  font-size: 13.5px;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ns-confirm-btn-danger:hover {
+  background: #c93b40;
+  border-color: #c93b40;
+}
+
+/* ---- Property detail page (full screen) ---- */
+
+.ns-detail-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: #4a5265;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 16px;
+}
+
+.ns-detail-back:hover {
+  color: var(--ns-navy);
+}
+
+.ns-detail-hero {
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  aspect-ratio: 16 / 7;
+  background: var(--ns-blue-bg);
+}
+
+.ns-detail-hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ns-detail-hero-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  color: var(--ns-blue-accent);
+  background: linear-gradient(135deg, #edf4ff 0%, #dfeafe 100%);
+}
+
+.ns-detail-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.ns-detail-main h1 {
+  font-size: 23px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  margin: 0 0 8px;
+}
+
+.ns-detail-location {
+  font-size: 13.5px;
+  color: var(--ns-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 18px;
+}
+
+.ns-detail-tags {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.ns-detail-tags span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ns-blue-bg);
+  color: var(--ns-navy);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: 999px;
+}
+
+.ns-detail-desc {
+  font-size: 13.5px;
+  color: #4a5265;
+  line-height: 1.7;
+  margin: 0;
+}
+
+.ns-detail-side {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.ns-detail-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ns-navy);
+}
+
+.ns-detail-price small {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ns-text-muted);
+}
+
+.ns-detail-owner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0;
+  padding-top: 18px;
+  border-top: 1px solid var(--ns-border);
+}
+
+.ns-detail-owner-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ns-navy);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12.5px;
+  flex-shrink: 0;
+}
+
+.ns-detail-owner-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1f2b;
+}
+
+.ns-detail-owner-label {
+  font-size: 11px;
+  color: var(--ns-text-muted);
+}
+
+@media (max-width: 800px) {
+  .ns-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Responsive ---- */
 
 @media (max-width: 900px) {
   .ns-dash-mobile-toggle {
