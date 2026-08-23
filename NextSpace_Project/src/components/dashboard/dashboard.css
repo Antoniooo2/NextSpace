@@ -1,4 +1,4 @@
-/* ===== Dashboard shell ===== */
+/* Dashboard */
 
 .ns-dash {
   display: flex;
@@ -32,7 +32,7 @@
   }
 }
 
-/* ---- Sidebar ---- */
+/* Sidebar */
 
 .ns-dash-sidebar {
   width: 240px;
@@ -176,7 +176,7 @@
   display: none;
 }
 
-/* ---- Main / topbar ---- */
+/* Main and topbar */
 
 .ns-dash-main {
   flex: 1;
@@ -263,7 +263,7 @@
   margin: 0 auto;
 }
 
-/* ---- Content header ---- */
+/* Content header */
 
 .ns-dash-header {
   display: flex;
@@ -349,7 +349,7 @@
   background: var(--ns-navy-light);
 }
 
-/* ---- Filter panel ---- */
+/* Filter panel */
 
 .ns-filter-panel {
   background: #fff;
@@ -403,7 +403,7 @@
   margin-left: auto;
 }
 
-/* ---- Category pills ---- */
+/* Category pills */
 
 .ns-pill-row {
   display: flex;
@@ -434,7 +434,7 @@
   color: #fff;
 }
 
-/* ---- Property grid & cards ---- */
+/* Property grid and cards */
 
 .ns-prop-grid {
   display: grid;
@@ -497,6 +497,31 @@
   font-weight: 500;
   opacity: 0.75;
   font-size: 10px;
+}
+
+.ns-prop-favorite {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #4a5265;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.ns-prop-favorite:hover {
+  background: #fff;
+}
+
+.ns-prop-favorite.active {
+  color: #e5484d;
 }
 
 .ns-prop-body {
@@ -569,7 +594,7 @@
   padding: 8px 0;
 }
 
-/* ---- Load more ---- */
+/* Load more */
 
 .ns-load-more {
   display: flex;
@@ -584,7 +609,7 @@
   color: var(--ns-text-muted);
 }
 
-/* ---- Empty state ---- */
+/* Empty state */
 
 .ns-empty-state {
   display: flex;
@@ -622,7 +647,7 @@
   padding: 90px 24px;
 }
 
-/* ---- Owner stats ---- */
+/* Owner stats */
 
 .ns-stats-row {
   display: grid;
@@ -652,95 +677,373 @@
   color: var(--ns-text-muted);
 }
 
-/* ---- Profile ---- */
+/* Profile */
 
-.ns-profile-card {
+.ns-profile-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.ns-profile-side {
   background: #fff;
   border: 1px solid var(--ns-border);
   border-radius: 14px;
-  padding: 22px 24px;
-  max-width: 460px;
+  overflow: hidden;
 }
 
-.ns-profile-top {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--ns-border);
-  margin-bottom: 18px;
-}
-
-.ns-profile-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+.ns-profile-banner {
+  height: 64px;
   background: var(--ns-navy);
+}
+
+.ns-profile-side-body {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ns-profile-avatar-lg {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--ns-blue-accent);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
+  border: 4px solid #fff;
+  margin-top: -32px;
   flex-shrink: 0;
 }
 
-.ns-profile-top h2 {
-  font-size: 15.5px;
+.ns-profile-side-body h2 {
+  font-size: 15px;
   font-weight: 700;
   color: #1a1f2b;
-  margin: 0 0 4px;
+  margin: 10px 0 6px;
+  text-align: center;
 }
 
 .ns-profile-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   background: var(--ns-blue-bg);
   color: var(--ns-blue-accent);
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
+  margin-bottom: 20px;
 }
 
 .ns-profile-fields {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  margin-bottom: 20px;
 }
 
-.ns-profile-field {
+.ns-profile-field-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.ns-profile-field-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ns-text-muted);
+}
+
+.ns-profile-field-value {
+  background: var(--ns-page-bg);
+  border: 1px solid var(--ns-border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1a1f2b;
+  word-break: break-word;
+}
+
+.ns-profile-edit-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.ns-profile-main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.ns-profile-stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 14px;
+}
+
+.ns-profile-stat-card {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ns-profile-stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--ns-border);
+  color: #4a5265;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ns-profile-stat-label {
+  font-size: 11px;
+  color: var(--ns-text-muted);
+}
+
+.ns-profile-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1f2b;
+  line-height: 1;
+}
+
+.ns-profile-section {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.ns-profile-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.ns-profile-section-head h3 {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #1a1f2b;
+  margin: 0;
+}
+
+.ns-link-btn {
+  background: transparent;
+  border: none;
+  color: var(--ns-blue-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ns-link-btn:hover {
+  text-decoration: underline;
+}
+
+.ns-profile-empty-hint {
+  font-size: 13px;
+  color: var(--ns-text-muted);
+  margin: 0;
+}
+
+.ns-profile-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ns-profile-mini-card {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 8px;
+  border: 1px solid var(--ns-border);
+  border-radius: 10px;
 }
 
-.ns-profile-field i {
-  width: 30px;
-  height: 30px;
+.ns-profile-mini-img {
+  width: 52px;
+  height: 52px;
   border-radius: 8px;
+  overflow: hidden;
   background: var(--ns-blue-bg);
   color: var(--ns-blue-accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 18px;
   flex-shrink: 0;
 }
 
-.ns-profile-field-label {
+.ns-profile-mini-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   display: block;
-  font-size: 11px;
+}
+
+.ns-profile-mini-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ns-profile-mini-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1f2b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns-profile-mini-location {
+  font-size: 11.5px;
   color: var(--ns-text-muted);
 }
 
-.ns-profile-field-value {
-  display: block;
-  font-size: 13px;
+.ns-profile-mini-price {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ns-navy);
+}
+
+.ns-profile-mini-price small {
+  font-weight: 500;
+  color: var(--ns-text-muted);
+  font-size: 10.5px;
+}
+
+.ns-profile-mini-remove {
+  color: var(--ns-text-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+  padding: 6px;
+}
+
+.ns-profile-mini-remove.clickable {
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.ns-profile-mini-remove.clickable:hover {
+  background: #fdecec;
+  color: #e5484d;
+}
+
+.ns-settings-card {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ns-settings-header {
+  background: var(--ns-page-bg);
+  border-bottom: 1px solid var(--ns-border);
+  padding: 14px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1a1f2b;
+}
+
+.ns-settings-body {
+  padding: 0 20px;
+}
+
+.ns-profile-setting-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--ns-border);
+  padding: 14px 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-profile-setting-row:first-of-type {
+  border-top: none;
+}
+
+.ns-profile-setting-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--ns-border);
+  color: #4a5265;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ns-profile-setting-row > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-profile-setting-title {
+  font-size: 13.5px;
   font-weight: 600;
   color: #1a1f2b;
 }
 
-/* ---- Modals ---- */
+.ns-profile-setting-desc {
+  font-size: 11.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-profile-setting-chevron {
+  color: var(--ns-text-muted);
+  font-size: 13px;
+}
+
+.ns-profile-setting-danger .ns-profile-setting-icon {
+  border-color: #f3c6c6;
+  color: #e5484d;
+}
+
+.ns-profile-setting-danger .ns-profile-setting-title {
+  color: #e5484d;
+}
+
+@media (max-width: 760px) {
+  .ns-profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modals */
 
 .ns-modal-backdrop {
   position: fixed;
@@ -888,7 +1191,7 @@
   line-height: 1.5;
 }
 
-/* ---- Confirm dialog ---- */
+/* Confirm dialog */
 
 .ns-confirm-modal {
   max-width: 360px;
@@ -907,6 +1210,11 @@
   justify-content: center;
   font-size: 22px;
   margin: 0 auto 16px;
+}
+
+.ns-confirm-icon-neutral {
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
 }
 
 .ns-confirm-title {
@@ -961,7 +1269,7 @@
   border-color: #c93b40;
 }
 
-/* ---- Property detail page (full screen) ---- */
+/* Property detail page, full screen */
 
 .ns-detail-back {
   display: inline-flex;
@@ -1063,6 +1371,13 @@
   padding: 20px;
 }
 
+.ns-detail-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .ns-detail-price {
   font-size: 24px;
   font-weight: 700;
@@ -1073,6 +1388,31 @@
   font-size: 12.5px;
   font-weight: 500;
   color: var(--ns-text-muted);
+}
+
+.ns-detail-favorite {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--ns-border);
+  background: #fff;
+  color: #4a5265;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ns-detail-favorite:hover {
+  border-color: #e5484d;
+  color: #e5484d;
+}
+
+.ns-detail-favorite.active {
+  color: #e5484d;
+  border-color: #e5484d;
 }
 
 .ns-detail-owner {
@@ -1115,7 +1455,7 @@
   }
 }
 
-/* ---- Responsive ---- */
+/* Responsive */
 
 @media (max-width: 900px) {
   .ns-dash-mobile-toggle {
@@ -1163,5 +1503,385 @@
 
   .ns-dash-content {
     padding: 20px 16px;
+  }
+}
+
+/* Payments */
+
+.ns-pay-top-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.ns-pay-lease-card {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-pay-lease-media {
+  position: relative;
+  aspect-ratio: 16 / 8;
+  background: var(--ns-blue-bg);
+}
+
+.ns-pay-lease-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ns-pay-status-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: var(--ns-navy);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 7px;
+}
+
+.ns-pay-lease-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.ns-pay-lease-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ns-pay-lease-top h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  margin: 0 0 4px;
+}
+
+.ns-pay-lease-address {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+  margin: 0 0 8px;
+}
+
+.ns-pay-lease-meta {
+  font-size: 12px;
+  color: #4a5265;
+  margin: 0;
+}
+
+.ns-pay-lease-meta strong {
+  color: #1a1f2b;
+}
+
+.ns-pay-dot {
+  margin: 0 8px;
+  color: var(--ns-border);
+}
+
+.ns-pay-rent {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  white-space: nowrap;
+}
+
+.ns-pay-rent small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-lease-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--ns-border);
+}
+
+.ns-pay-contract-id {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-due-card {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ns-pay-due-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b8860b;
+  margin: 0;
+}
+
+.ns-pay-due-desc {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+  margin: 0 0 8px;
+}
+
+.ns-pay-due-amount {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  margin: 0 0 14px;
+}
+
+.ns-pay-full-btn {
+  width: 100%;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.ns-pay-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  margin: 0 0 14px;
+}
+
+.ns-pay-schedule-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.ns-pay-schedule-chip {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ns-pay-schedule-chip.status-pending {
+  border-color: var(--ns-navy);
+  border-width: 1.5px;
+}
+
+.ns-pay-schedule-chip.status-upcoming {
+  opacity: 0.6;
+}
+
+.ns-pay-schedule-date {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ns-pay-schedule-date span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ns-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.ns-pay-schedule-date strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1f2b;
+}
+
+.ns-pay-schedule-ref {
+  font-size: 11px;
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-tag {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.ns-pay-tag.tag-paid {
+  background: #e3f6ea;
+  color: #1a8a4a;
+}
+
+.ns-pay-tag.tag-pending {
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+}
+
+.ns-pay-tag.tag-overdue {
+  background: #fdecec;
+  color: #e5484d;
+}
+
+.ns-pay-table-wrap {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.ns-pay-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ns-pay-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ns-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 12px 16px;
+  background: var(--ns-page-bg);
+  border-bottom: 1px solid var(--ns-border);
+}
+
+.ns-pay-table td {
+  font-size: 13px;
+  color: #1a1f2b;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ns-border);
+}
+
+.ns-pay-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ns-pay-muted {
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-icon-btn {
+  background: transparent;
+  border: 1px solid var(--ns-border);
+  color: #4a5265;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.ns-pay-icon-btn:hover {
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  border-color: var(--ns-blue-accent);
+}
+
+.ns-pay-lease-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.ns-pay-lease-row {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ns-pay-lease-row-img {
+  width: 46px;
+  height: 46px;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.ns-pay-lease-row-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ns-pay-lease-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.ns-pay-lease-row-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1f2b;
+}
+
+.ns-pay-lease-row-tenant {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-lease-row-rent {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  white-space: nowrap;
+}
+
+.ns-pay-lease-row-rent small {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-lease-row-due {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+  white-space: nowrap;
+}
+
+.ns-pay-reminder-btn {
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .ns-pay-top-grid {
+    grid-template-columns: 1fr;
   }
 }

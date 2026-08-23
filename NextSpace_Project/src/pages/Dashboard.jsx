@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
@@ -7,7 +7,10 @@ import OwnerHome from '../components/dashboard/OwnerHome'
 import ProfileView from '../components/dashboard/ProfileView'
 import ComingSoon from '../components/dashboard/ComingSoon'
 import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
+import ConfirmDialog from '../components/dashboard/ConfirmDialog'
 import '../components/dashboard/dashboard.css'
+import BusinessPayments from '../components/dashboard/BusinessPayments'
+import OwnerPayments from '../components/dashboard/OwnerPayments'
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -16,28 +19,21 @@ export default function Dashboard() {
     const [section, setSection] = useState('home')
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+
+    const loadUser = useCallback(async () => {
+        const { data, error } = await supabase.auth.getUser()
+        if (error || !data?.user) {
+            navigate('/')
+            return
+        }
+        setUser(data.user)
+        setLoading(false)
+    }, [navigate])
 
     useEffect(() => {
-        let active = true
-
-        const loadUser = async () => {
-            const { data, error } = await supabase.auth.getUser()
-            if (!active) return
-
-            if (error || !data?.user) {
-                navigate('/')
-                return
-            }
-
-            setUser(data.user)
-            setLoading(false)
-        }
-
         loadUser()
-        return () => {
-            active = false
-        }
-    }, [navigate])
+    }, [loadUser])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -70,7 +66,14 @@ export default function Dashboard() {
 
         switch (section) {
             case 'profile':
-                return <ProfileView user={user} accountType={accountType} />
+                return (
+                    <ProfileView
+                        user={user}
+                        accountType={accountType}
+                        onNavigate={handleSectionChange}
+                        onUserUpdated={loadUser}
+                    />
+                )
             case 'contracts':
                 return (
                     <ComingSoon
@@ -80,12 +83,10 @@ export default function Dashboard() {
                     />
                 )
             case 'payments':
-                return (
-                    <ComingSoon
-                        icon="bi-credit-card"
-                        title="Payments"
-                        description="Secure escrow payments and deposit tracking are on the way."
-                    />
+                return accountType === 'property-owner' ? (
+                    <OwnerPayments />
+                ) : (
+                    <BusinessPayments onNavigate={handleSectionChange} />
                 )
             case 'notifications':
                 return (
@@ -113,17 +114,31 @@ export default function Dashboard() {
     }
 
     return (
-        <DashboardLayout
-            firstName={firstName}
-            lastName={lastName}
-            accountType={accountType}
-            section={section}
-            onSectionChange={handleSectionChange}
-            onLogout={handleLogout}
-            search={search}
-            onSearchChange={setSearch}
-        >
-            {renderContent()}
-        </DashboardLayout>
+        <>
+            <DashboardLayout
+                firstName={firstName}
+                lastName={lastName}
+                accountType={accountType}
+                section={section}
+                onSectionChange={handleSectionChange}
+                onLogoutClick={() => setShowLogoutConfirm(true)}
+                search={search}
+                onSearchChange={setSearch}
+            >
+                {renderContent()}
+            </DashboardLayout>
+
+            {showLogoutConfirm && (
+                <ConfirmDialog
+                    icon="bi-box-arrow-right"
+                    title="Log out of NextSpace?"
+                    description="You'll need to sign in again to access your dashboard."
+                    confirmLabel="Log out"
+                    cancelLabel="Cancel"
+                    onConfirm={handleLogout}
+                    onCancel={() => setShowLogoutConfirm(false)}
+                />
+            )}
+        </>
     )
 }
