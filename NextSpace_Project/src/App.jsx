@@ -6,7 +6,10 @@ import SignupForm from './components/SignUpForm.jsx'
 import ForgotPassword from './pages/ForgotPassword'
 import NewPassword from './pages/NewPassword'
 import Welcome from './pages/Welcome.jsx'
+<<<<<<< HEAD
 import Dashboard from './pages/Dashboard.jsx'
+=======
+>>>>>>> 1cd65e055b767ce02be776f51f0670fb868aed67
 
 function MainFlow() {
   const [view, setView] = useState('landing')
@@ -44,7 +47,10 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/new-password" element={<NewPassword />} />
       <Route path="/welcome" element={<Welcome />} />
+<<<<<<< HEAD
       <Route path="/dashboard" element={<Dashboard />} />
+=======
+>>>>>>> 1cd65e055b767ce02be776f51f0670fb868aed67
       <Route path="/*" element={<MainFlow />} />
     </Routes>
   )

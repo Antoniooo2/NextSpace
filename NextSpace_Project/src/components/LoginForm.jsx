@@ -31,7 +31,11 @@ export default function LoginForm({ onSwitchToSignup, onLogoClick }) {
         }
 
         console.log('Sesión iniciada:', data.session)
+<<<<<<< HEAD
         navigate('/dashboard')
+=======
+        navigate('/welcome')
+>>>>>>> 1cd65e055b767ce02be776f51f0670fb868aed67
     }
 
     return (
