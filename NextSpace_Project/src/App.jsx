@@ -5,7 +5,6 @@ import LoginForm from './components/LoginForm.jsx'
 import SignupForm from './components/SignUpForm.jsx'
 import ForgotPassword from './pages/ForgotPassword'
 import NewPassword from './pages/NewPassword'
-import Welcome from './pages/Welcome.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 
 function MainFlow() {
