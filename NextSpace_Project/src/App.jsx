@@ -42,7 +42,6 @@ function App() {
     <Routes>
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/new-password" element={<NewPassword />} />
-      <Route path="/welcome" element={<Welcome />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/*" element={<MainFlow />} />
     </Routes>
