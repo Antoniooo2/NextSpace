@@ -524,6 +524,32 @@
   color: #e5484d;
 }
 
+.ns-prop-availability {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--ns-navy);
+}
+
+.ns-prop-availability.available {
+  background: #1d9a6c;
+}
+
+.ns-prop-availability.occupied {
+  background: #d64545;
+}
+
+.ns-prop-availability.reserved {
+  background: #c98a1f;
+}
+
 .ns-prop-body {
   padding: 14px 16px 16px;
   display: flex;

@@ -1,36 +1,140 @@
-import { useMemo, useState } from 'react'
-import { DEMO_OWNER_ID, PROPERTIES } from '../../data/properties'
+import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
 import PropertyCard from './PropertyCard'
-import NewPropertyModal from './NewPropertyModal'
+import NewPropertyModal, { describeSupabaseError } from './NewPropertyModal'
+import ConfirmDialog from './ConfirmDialog'
 
-export default function OwnerHome({ firstName, search, onViewProperty }) {
-    const [ownProperties, setOwnProperties] = useState(() =>
-        PROPERTIES.filter((p) => p.ownerId === DEMO_OWNER_ID)
-    )
-    const [showNewModal, setShowNewModal] = useState(false)
+export default function OwnerHome({ user, firstName, search, onViewProperty }) {
+    const [ownerDui, setOwnerDui] = useState(null)
+    const [ownProperties, setOwnProperties] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState('')
+    const [showFormModal, setShowFormModal] = useState(false)
+    const [editingProperty, setEditingProperty] = useState(null)
+    const [deleteTarget, setDeleteTarget] = useState(null)
+    const [deleting, setDeleting] = useState(false)
+    const [deleteError, setDeleteError] = useState('')
+
+    useEffect(() => {
+        let cancelled = false
+
+        const load = async () => {
+            setLoading(true)
+            setLoadError('')
+
+            const { data: userRow, error: userError } = await supabase
+                .from('users')
+                .select('dui')
+                .eq('id_supabase_auth', user.id)
+                .single()
+
+            if (cancelled) return
+
+            if (userError || !userRow) {
+                setLoadError("We couldn't find your account record. Please contact support.")
+                setLoading(false)
+                return
+            }
+
+            setOwnerDui(userRow.dui)
+
+            const { data: properties, error: propertiesError } = await supabase
+                .from('add_business')
+                .select('*')
+                .eq('owner_id', userRow.dui)
+                .order('registration_date', { ascending: false })
+
+            if (cancelled) return
+
+            if (propertiesError) {
+                setLoadError(describeSupabaseError(propertiesError))
+                setLoading(false)
+                return
+            }
+
+            setOwnProperties(properties || [])
+            setLoading(false)
+        }
+
+        load()
+
+        return () => {
+            cancelled = true
+        }
+    }, [user.id])
 
     const filtered = useMemo(() => {
         const query = search.trim().toLowerCase()
         if (!query) return ownProperties
         return ownProperties.filter(
-            (p) => p.title.toLowerCase().includes(query) || p.city.toLowerCase().includes(query)
+            (p) =>
+                p.property_name.toLowerCase().includes(query) ||
+                p.property_type.toLowerCase().includes(query)
         )
     }, [ownProperties, search])
 
-    const totalMonthly = ownProperties.reduce((sum, p) => sum + p.price, 0)
+    const totalMonthly = ownProperties.reduce((sum, p) => sum + (p.monthly_rent || 0), 0)
+    const activeCount = ownProperties.filter((p) => p.availability === 'Available').length
 
-    const handleCreate = (newProperty) => {
-        setOwnProperties((prev) => [
-            {
-                id: `local-${Date.now()}`,
-                image: null,
-                ownerId: DEMO_OWNER_ID,
-                ownerName: firstName,
-                ...newProperty,
-            },
-            ...prev,
-        ])
-        setShowNewModal(false)
+    const openCreateModal = () => {
+        setEditingProperty(null)
+        setShowFormModal(true)
+    }
+
+    const openEditModal = (property) => {
+        setEditingProperty(property)
+        setShowFormModal(true)
+    }
+
+    const handleSaved = (savedProperty) => {
+        setOwnProperties((prev) => {
+            const exists = prev.some((p) => p.property_id === savedProperty.property_id)
+            if (exists) {
+                return prev.map((p) => (p.property_id === savedProperty.property_id ? savedProperty : p))
+            }
+            return [savedProperty, ...prev]
+        })
+        setShowFormModal(false)
+        setEditingProperty(null)
+    }
+
+    const handleDelete = async () => {
+        setDeleting(true)
+        setDeleteError('')
+
+        const { data, error } = await supabase
+            .from('add_business')
+            .delete()
+            .eq('property_id', deleteTarget.property_id)
+            .select()
+
+        setDeleting(false)
+
+        if (error) {
+            setDeleteError(describeSupabaseError(error))
+            setDeleteTarget(null)
+            return
+        }
+
+        if (!data || data.length === 0) {
+            setDeleteError(
+                "The property could not be deleted. This is usually caused by a permissions (row-level security) rule blocking it."
+            )
+            setDeleteTarget(null)
+            return
+        }
+
+        setOwnProperties((prev) => prev.filter((p) => p.property_id !== deleteTarget.property_id))
+        setDeleteTarget(null)
+    }
+
+    if (loading) {
+        return (
+            <div className="ns-dash-loading">
+                <div className="ns-dash-spinner" />
+                <p>Loading your properties...</p>
+            </div>
+        )
     }
 
     return (
@@ -41,11 +145,23 @@ export default function OwnerHome({ firstName, search, onViewProperty }) {
                     <p>Manage the commercial spaces you've published on NextSpace, {firstName}.</p>
                 </div>
                 <div className="ns-dash-header-actions">
-                    <button type="button" className="ns-filled-btn" onClick={() => setShowNewModal(true)}>
+                    <button type="button" className="ns-filled-btn" onClick={openCreateModal}>
                         <i className="bi bi-plus-lg"></i> Publish new space
                     </button>
                 </div>
             </div>
+
+            {loadError && (
+                <div className="alert alert-danger py-2" role="alert">
+                    {loadError}
+                </div>
+            )}
+
+            {deleteError && (
+                <div className="alert alert-danger py-2" role="alert">
+                    {deleteError}
+                </div>
+            )}
 
             <div className="ns-stats-row">
                 <div className="ns-stat-card">
@@ -57,7 +173,7 @@ export default function OwnerHome({ firstName, search, onViewProperty }) {
                     <span className="ns-stat-card-label">Potential monthly income</span>
                 </div>
                 <div className="ns-stat-card">
-                    <span className="ns-stat-card-value">{ownProperties.length}</span>
+                    <span className="ns-stat-card-value">{activeCount}</span>
                     <span className="ns-stat-card-label">Active on marketplace</span>
                 </div>
             </div>
@@ -72,7 +188,7 @@ export default function OwnerHome({ firstName, search, onViewProperty }) {
                             : 'Try a different keyword.'}
                     </p>
                     {ownProperties.length === 0 && (
-                        <button type="button" className="ns-filled-btn" onClick={() => setShowNewModal(true)}>
+                        <button type="button" className="ns-filled-btn" onClick={openCreateModal}>
                             <i className="bi bi-plus-lg"></i> Publish new space
                         </button>
                     )}
@@ -81,21 +197,51 @@ export default function OwnerHome({ firstName, search, onViewProperty }) {
                 <div className="ns-prop-grid">
                     {filtered.map((property) => (
                         <PropertyCard
-                            key={property.id}
+                            key={property.property_id}
                             property={property}
                             onAction={onViewProperty}
-                            secondaryAction={{
-                                icon: 'bi-pencil',
-                                label: 'Edit listing',
-                                onClick: onViewProperty,
-                            }}
+                            secondaryActions={[
+                                {
+                                    icon: 'bi-pencil',
+                                    label: 'Edit listing',
+                                    onClick: openEditModal,
+                                },
+                                {
+                                    icon: 'bi-trash',
+                                    label: 'Delete listing',
+                                    onClick: (p) => {
+                                        setDeleteError('')
+                                        setDeleteTarget(p)
+                                    },
+                                },
+                            ]}
                         />
                     ))}
                 </div>
             )}
 
-            {showNewModal && (
-                <NewPropertyModal onClose={() => setShowNewModal(false)} onCreate={handleCreate} />
+            {showFormModal && (
+                <NewPropertyModal
+                    property={editingProperty}
+                    ownerDui={ownerDui}
+                    onClose={() => {
+                        setShowFormModal(false)
+                        setEditingProperty(null)
+                    }}
+                    onSaved={handleSaved}
+                />
+            )}
+
+            {deleteTarget && (
+                <ConfirmDialog
+                    icon="bi-trash"
+                    title="Delete this property?"
+                    description={`"${deleteTarget.property_name}" will be permanently removed from your listings. This can't be undone.`}
+                    confirmLabel={deleting ? 'Deleting...' : 'Delete'}
+                    cancelLabel="Cancel"
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteTarget(null)}
+                />
             )}
         </>
     )
