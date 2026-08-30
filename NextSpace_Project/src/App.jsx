@@ -6,6 +6,7 @@ import SignupForm from './components/SignUpForm.jsx'
 import ForgotPassword from './pages/ForgotPassword'
 import NewPassword from './pages/NewPassword'
 import Dashboard from './pages/Dashboard.jsx'
+import PropertyDetail from './pages/PropertyDetail.jsx'
 
 function MainFlow() {
   const [view, setView] = useState('landing')
@@ -44,6 +45,7 @@ function App() {
       <Route path="/new-password" element={<NewPassword />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/*" element={<MainFlow />} />
+      <Route path="/property-detail/:id" element={<PropertyDetail />} />
     </Routes>
   )
 }
