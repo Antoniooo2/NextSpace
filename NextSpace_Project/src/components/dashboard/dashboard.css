@@ -1718,6 +1718,15 @@
   opacity: 0.6;
 }
 
+.ns-pay-schedule-chip.status-late {
+  border-color: #e5484d;
+  border-width: 1.5px;
+}
+
+.ns-pay-schedule-chip.status-cancelled {
+  opacity: 0.6;
+}
+
 .ns-pay-schedule-date {
   display: flex;
   align-items: baseline;
@@ -1762,9 +1771,21 @@
   color: var(--ns-blue-accent);
 }
 
-.ns-pay-tag.tag-overdue {
+.ns-pay-tag.tag-overdue,
+.ns-pay-tag.tag-late {
   background: #fdecec;
   color: #e5484d;
+}
+
+.ns-pay-tag.tag-active {
+  background: #e3f6ea;
+  color: #1a8a4a;
+}
+
+.ns-pay-tag.tag-cancelled,
+.ns-pay-tag.tag-expired {
+  background: #eef0f3;
+  color: #5b6474;
 }
 
 .ns-pay-table-wrap {
@@ -1904,6 +1925,11 @@
 .ns-pay-reminder-btn {
   padding: 7px 14px;
   font-size: 12px;
+}
+
+.ns-pay-lease-row select.ns-contract-status-select {
+  width: auto;
+  flex: 0 0 auto;
 }
 
 @media (max-width: 900px) {
