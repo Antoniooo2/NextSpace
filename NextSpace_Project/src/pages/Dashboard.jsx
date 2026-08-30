@@ -7,7 +7,6 @@ import OwnerHome from '../components/dashboard/OwnerHome'
 import ProfileView from '../components/dashboard/ProfileView'
 import ComingSoon from '../components/dashboard/ComingSoon'
 import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
-import ConfirmDialog from '../components/dashboard/ConfirmDialog'
 import '../components/dashboard/dashboard.css'
 import BusinessPayments from '../components/dashboard/BusinessPayments'
 import OwnerPayments from '../components/dashboard/OwnerPayments'
@@ -19,7 +18,6 @@ export default function Dashboard() {
     const [section, setSection] = useState('home')
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
     const loadUser = useCallback(async () => {
         const { data, error } = await supabase.auth.getUser()
@@ -114,31 +112,17 @@ export default function Dashboard() {
     }
 
     return (
-        <>
-            <DashboardLayout
-                firstName={firstName}
-                lastName={lastName}
-                accountType={accountType}
-                section={section}
-                onSectionChange={handleSectionChange}
-                onLogoutClick={() => setShowLogoutConfirm(true)}
-                search={search}
-                onSearchChange={setSearch}
-            >
-                {renderContent()}
-            </DashboardLayout>
-
-            {showLogoutConfirm && (
-                <ConfirmDialog
-                    icon="bi-box-arrow-right"
-                    title="Log out of NextSpace?"
-                    description="You'll need to sign in again to access your dashboard."
-                    confirmLabel="Log out"
-                    cancelLabel="Cancel"
-                    onConfirm={handleLogout}
-                    onCancel={() => setShowLogoutConfirm(false)}
-                />
-            )}
-        </>
+        <DashboardLayout
+            firstName={firstName}
+            lastName={lastName}
+            accountType={accountType}
+            section={section}
+            onSectionChange={handleSectionChange}
+            onLogout={handleLogout}
+            search={search}
+            onSearchChange={setSearch}
+        >
+            {renderContent()}
+        </DashboardLayout>
     )
 }
