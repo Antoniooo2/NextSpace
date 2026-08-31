@@ -104,6 +104,12 @@ export default function OwnerPayments() {
                     {loadError}
                 </div>
             )}
+            {activeLeases.length === 0 && (
+                <p className="ns-pay-muted mb-3">
+                    You don't have any active leases yet, so there's nothing to record a payment against. Activate a
+                    contract first from the Contracts section.
+                </p>
+            )}
             {actionError && (
                 <div className="alert alert-danger py-2" role="alert">
                     {actionError}

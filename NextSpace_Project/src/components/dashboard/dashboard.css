@@ -349,6 +349,13 @@
   background: var(--ns-navy-light);
 }
 
+.ns-outline-btn:disabled,
+.ns-filled-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Filter panel */
 
 .ns-filter-panel {
