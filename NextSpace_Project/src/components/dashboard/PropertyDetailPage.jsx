@@ -213,18 +213,6 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                         )}
                     </div>
 
-                    {detail.phone_number && (
-                        <div className="ns-detail-owner">
-                            <span className="ns-detail-owner-avatar">
-                                <i className="bi bi-telephone"></i>
-                            </span>
-                            <div>
-                                <div className="ns-detail-owner-name">{detail.phone_number}</div>
-                                <div className="ns-detail-owner-label">Contact phone</div>
-                            </div>
-                        </div>
-                    )}
-
                     {accountType === 'business' && (
                         <>
                             {requestError && (

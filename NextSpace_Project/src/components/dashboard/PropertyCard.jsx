@@ -46,11 +46,6 @@ export default function PropertyCard({ property, actionLabel = 'View details', o
                     <span>
                         <i className="bi bi-arrows-angle-expand"></i> {property.business_size_width} × {property.business_size_length} m
                     </span>
-                    {property.phone_number && (
-                        <span>
-                            <i className="bi bi-telephone"></i> {property.phone_number}
-                        </span>
-                    )}
                 </div>
 
                 <div className="ns-prop-actions">
