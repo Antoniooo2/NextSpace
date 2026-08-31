@@ -61,7 +61,14 @@ export default function Dashboard() {
 
     const renderContent = () => {
         if (viewingProperty) {
-            return <PropertyDetailPage property={viewingProperty} onBack={() => setViewingProperty(null)} />
+            return (
+                <PropertyDetailPage
+                    property={viewingProperty}
+                    user={user}
+                    accountType={accountType}
+                    onBack={() => setViewingProperty(null)}
+                />
+            )
         }
 
         switch (section) {

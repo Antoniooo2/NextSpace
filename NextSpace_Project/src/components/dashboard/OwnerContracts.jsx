@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from './NewPropertyModal'
 import NewContractModal, { CONTRACT_STATUSES } from './NewContractModal'
+import AcceptContractModal from './AcceptContractModal'
 
 const CONTRACT_EMBED =
     '*, add_business!contract_property_id_fkey(property_name), users!contract_tenant_dui_fkey(first_name,last_name)'
@@ -16,6 +17,7 @@ export default function OwnerContracts({ user }) {
     const [actionError, setActionError] = useState('')
     const [showNewModal, setShowNewModal] = useState(false)
     const [updatingId, setUpdatingId] = useState(null)
+    const [acceptTarget, setAcceptTarget] = useState(null)
 
     const loadData = async (dui) => {
         const [
@@ -107,6 +109,24 @@ export default function OwnerContracts({ user }) {
         )
     }
 
+    const handleReject = (contractId) => handleStatusChange(contractId, 'Cancelled')
+
+    const handleAccepted = (updatedContract) => {
+        setContracts((prev) =>
+            prev.map((c) =>
+                c.contract_id === updatedContract.contract_id
+                    ? {
+                          ...c,
+                          status: updatedContract.status,
+                          start_date: updatedContract.start_date,
+                          end_date: updatedContract.end_date,
+                      }
+                    : c
+            )
+        )
+        setAcceptTarget(null)
+    }
+
     if (loading) {
         return (
             <div className="ns-dash-loading">
@@ -175,18 +195,39 @@ export default function OwnerContracts({ user }) {
                                     ${Number(contract.monthly_rent).toLocaleString()}<small>/mo</small>
                                 </span>
                                 <span className="ns-pay-lease-row-due">
-                                    {contract.start_date} – {contract.end_date}
+                                    {contract.start_date && contract.end_date
+                                        ? `${contract.start_date} – ${contract.end_date}`
+                                        : 'Dates pending'}
                                 </span>
-                                <select
-                                    className="form-select form-select-sm ns-contract-status-select"
-                                    value={contract.status}
-                                    disabled={updatingId === contract.contract_id}
-                                    onChange={(e) => handleStatusChange(contract.contract_id, e.target.value)}
-                                >
-                                    {CONTRACT_STATUSES.map((s) => (
-                                        <option key={s} value={s}>{s}</option>
-                                    ))}
-                                </select>
+                                {contract.status === 'Pending' ? (
+                                    <>
+                                        <button
+                                            type="button" className="ns-outline-btn ns-pay-reminder-btn"
+                                            onClick={() => handleReject(contract.contract_id)}
+                                            disabled={updatingId === contract.contract_id}
+                                        >
+                                            Reject
+                                        </button>
+                                        <button
+                                            type="button" className="ns-filled-btn ns-pay-reminder-btn"
+                                            onClick={() => setAcceptTarget(contract)}
+                                            disabled={updatingId === contract.contract_id}
+                                        >
+                                            Accept
+                                        </button>
+                                    </>
+                                ) : (
+                                    <select
+                                        className="form-select form-select-sm ns-contract-status-select"
+                                        value={contract.status}
+                                        disabled={updatingId === contract.contract_id}
+                                        onChange={(e) => handleStatusChange(contract.contract_id, e.target.value)}
+                                    >
+                                        {CONTRACT_STATUSES.map((s) => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
                         )
                     })}
@@ -199,6 +240,14 @@ export default function OwnerContracts({ user }) {
                     tenants={tenants}
                     onClose={() => setShowNewModal(false)}
                     onSaved={handleCreated}
+                />
+            )}
+
+            {acceptTarget && (
+                <AcceptContractModal
+                    contract={acceptTarget}
+                    onClose={() => setAcceptTarget(null)}
+                    onAccepted={handleAccepted}
                 />
             )}
         </>

@@ -92,7 +92,9 @@ export default function BusinessContracts({ user }) {
                                     ${Number(contract.monthly_rent).toLocaleString()}<small>/mo</small>
                                 </span>
                                 <span className="ns-pay-lease-row-due">
-                                    {contract.start_date} – {contract.end_date}
+                                    {contract.start_date && contract.end_date
+                                        ? `${contract.start_date} – ${contract.end_date}`
+                                        : 'Dates pending'}
                                 </span>
                                 <span className={`ns-pay-tag ${CONTRACT_STATUS_TAG[contract.status] || 'tag-pending'}`}>
                                     {contract.status}

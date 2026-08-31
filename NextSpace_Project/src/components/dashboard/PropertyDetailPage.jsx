@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { TYPE_ICON } from './PropertyCard'
+import { describeSupabaseError } from './NewPropertyModal'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import { PROPERTY_SERVICE_NAMES_EMBED, withServiceNames } from '../../lib/propertyServices'
 
-export default function PropertyDetailPage({ property, onBack }) {
+export default function PropertyDetailPage({ property, user, accountType, onBack }) {
     const [detail, setDetail] = useState(property || null)
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
+    const [tenantDui, setTenantDui] = useState(null)
+    const [hasPendingRequest, setHasPendingRequest] = useState(false)
+    const [requesting, setRequesting] = useState(false)
+    const [requestError, setRequestError] = useState('')
+    const [requestSuccess, setRequestSuccess] = useState(false)
 
     useEffect(() => {
         let cancelled = false
@@ -45,6 +51,78 @@ export default function PropertyDetailPage({ property, onBack }) {
             cancelled = true
         }
     }, [property?.property_id])
+
+    useEffect(() => {
+        let cancelled = false
+
+        const checkExistingRequest = async () => {
+            if (accountType !== 'business' || !user?.id || !detail?.property_id) return
+
+            const { data: userRow, error: userError } = await supabase
+                .from('users')
+                .select('dui')
+                .eq('id_supabase_auth', user.id)
+                .single()
+
+            if (cancelled || userError || !userRow) return
+
+            setTenantDui(userRow.dui)
+
+            const { data: existing, error: existingError } = await supabase
+                .from('contract')
+                .select('contract_id')
+                .eq('property_id', detail.property_id)
+                .eq('tenant_dui', userRow.dui)
+                .eq('status', 'Pending')
+
+            if (cancelled || existingError) return
+
+            setHasPendingRequest((existing || []).length > 0)
+        }
+
+        checkExistingRequest()
+
+        return () => {
+            cancelled = true
+        }
+    }, [accountType, user?.id, detail?.property_id])
+
+    const handleRequestContract = async () => {
+        if (!tenantDui || !detail) return
+
+        setRequesting(true)
+        setRequestError('')
+        setRequestSuccess(false)
+
+        const { data, error } = await supabase
+            .from('contract')
+            .insert({
+                property_id: detail.property_id,
+                business_id: detail.business_id,
+                tenant_dui: tenantDui,
+                monthly_rent: detail.monthly_rent,
+                status: 'Pending',
+                start_date: null,
+                end_date: null,
+            })
+            .select()
+
+        setRequesting(false)
+
+        if (error) {
+            setRequestError(describeSupabaseError(error))
+            return
+        }
+        if (!data || data.length === 0) {
+            setRequestError(
+                "The request could not be sent. This is usually caused by a permissions (row-level security) rule blocking it."
+            )
+            return
+        }
+
+        setRequestSuccess(true)
+        setHasPendingRequest(true)
+    }
 
     if (!property) return null
 
@@ -145,6 +223,37 @@ export default function PropertyDetailPage({ property, onBack }) {
                                 <div className="ns-detail-owner-label">Contact phone</div>
                             </div>
                         </div>
+                    )}
+
+                    {accountType === 'business' && (
+                        <>
+                            {requestError && (
+                                <div className="alert alert-danger py-2" role="alert">
+                                    {requestError}
+                                </div>
+                            )}
+                            {requestSuccess && (
+                                <div className="alert alert-success py-2" role="alert">
+                                    Your contract request was sent to the owner.
+                                </div>
+                            )}
+                            {detail.monthly_rent == null ? (
+                                <p className="ns-pay-muted mb-0">
+                                    This property doesn't have a rent price set yet — contact the owner directly.
+                                </p>
+                            ) : hasPendingRequest ? (
+                                <button type="button" className="ns-submit-btn" disabled>
+                                    Request pending
+                                </button>
+                            ) : (
+                                <button
+                                    type="button" className="ns-submit-btn"
+                                    onClick={handleRequestContract} disabled={requesting}
+                                >
+                                    {requesting ? 'Sending...' : 'Request contract'}
+                                </button>
+                            )}
+                        </>
                     )}
                 </aside>
             </div>
