@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { TYPE_ICON } from './PropertyCard'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
+import { PROPERTY_SERVICE_NAMES_EMBED, withServiceNames } from '../../lib/propertyServices'
 
 export default function PropertyDetailPage({ property, onBack }) {
     const [detail, setDetail] = useState(property || null)
@@ -22,7 +23,7 @@ export default function PropertyDetailPage({ property, onBack }) {
 
             const { data, error } = await supabase
                 .from('add_business')
-                .select(`*, ${PROPERTY_PHOTO_EMBED}`)
+                .select(`*, ${PROPERTY_PHOTO_EMBED}, ${PROPERTY_SERVICE_NAMES_EMBED}`)
                 .eq('property_id', property.property_id)
                 .single()
 
@@ -34,7 +35,7 @@ export default function PropertyDetailPage({ property, onBack }) {
                 return
             }
 
-            setDetail(withCoverPhoto(data))
+            setDetail(withServiceNames(withCoverPhoto(data)))
             setLoading(false)
         }
 
@@ -70,6 +71,7 @@ export default function PropertyDetailPage({ property, onBack }) {
     }
 
     const typeIcon = TYPE_ICON[detail.property_type] || 'bi-building'
+    const locationText = [detail.address, detail.municipality, detail.department].filter(Boolean).join(', ')
 
     return (
         <div className="ns-detail-page">
@@ -93,6 +95,11 @@ export default function PropertyDetailPage({ property, onBack }) {
                     <p className="ns-detail-location">
                         <i className={`bi ${typeIcon}`}></i> {detail.property_type}
                     </p>
+                    {locationText && (
+                        <p className="ns-detail-location">
+                            <i className="bi bi-geo-alt"></i> {locationText}
+                        </p>
+                    )}
 
                     <div className="ns-detail-tags">
                         <span>
@@ -103,9 +110,19 @@ export default function PropertyDetailPage({ property, onBack }) {
                         </span>
                     </div>
 
+                    {detail.service_names?.length > 0 && (
+                        <div className="ns-detail-tags">
+                            {detail.service_names.map((name) => (
+                                <span key={name}>
+                                    <i className="bi bi-check2"></i> {name}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+
                     <p className="ns-detail-desc">
-                        A commercial space ready for your business. Reach out through NextSpace to schedule a
-                        visit, request the digital contract, or ask the owner any questions before booking.
+                        {detail.description ||
+                            'A commercial space ready for your business. Reach out through NextSpace to schedule a visit, request the digital contract, or ask the owner any questions before booking.'}
                     </p>
                 </div>
 

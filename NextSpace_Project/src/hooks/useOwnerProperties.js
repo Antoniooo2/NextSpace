@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { describeSupabaseError } from '../components/dashboard/NewPropertyModal'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../lib/propertyPhotos'
+import { PROPERTY_SERVICE_IDS_EMBED, withServiceIds } from '../lib/propertyServices'
 
 // Shared between OwnerHome.jsx (full manage view) and ProfileView.jsx (preview section)
 // so both read the owner's own add_business rows the same way.
@@ -18,7 +19,7 @@ export function useOwnerProperties(user) {
 
             const { data, error: fetchError } = await supabase
                 .from('add_business')
-                .select(`*, ${PROPERTY_PHOTO_EMBED}`)
+                .select(`*, ${PROPERTY_PHOTO_EMBED}, ${PROPERTY_SERVICE_IDS_EMBED}`)
                 .eq('owner_id', targetDui)
                 .order('registration_date', { ascending: false })
 
@@ -27,7 +28,7 @@ export function useOwnerProperties(user) {
                 return
             }
 
-            setProperties((data || []).map(withCoverPhoto))
+            setProperties((data || []).map((row) => withServiceIds(withCoverPhoto(row))))
         },
         [ownerDui]
     )

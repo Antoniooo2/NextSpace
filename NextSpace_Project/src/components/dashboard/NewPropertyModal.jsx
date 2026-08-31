@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { EL_SALVADOR_DEPARTMENTS, EL_SALVADOR_DEPARTMENT_NAMES } from '../../lib/elSalvadorLocations'
 
 export const PROPERTY_TYPES = [
     'Café/Restaurant',
@@ -54,12 +55,46 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
     )
     const [availability, setAvailability] = useState(property?.availability || AVAILABILITY_OPTIONS[0])
     const [phoneNumber, setPhoneNumber] = useState(property?.phone_number || '')
+    const [description, setDescription] = useState(property?.description || '')
+    const [department, setDepartment] = useState(property?.department || '')
+    const [municipality, setMunicipality] = useState(property?.municipality || '')
+    const [address, setAddress] = useState(property?.address || '')
     const [photoFile, setPhotoFile] = useState(null)
     const [photoPreview, setPhotoPreview] = useState(property?.photo_url || null)
     const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false)
     const [photoError, setPhotoError] = useState('')
+    const [servicesList, setServicesList] = useState([])
+    const [selectedServiceIds, setSelectedServiceIds] = useState(property?.service_ids || [])
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
+
+    useEffect(() => {
+        let cancelled = false
+
+        supabase
+            .from('services')
+            .select('service_id, service_name')
+            .order('service_id')
+            .then(({ data, error }) => {
+                if (cancelled || error) return
+                setServicesList(data || [])
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    const handleDepartmentChange = (value) => {
+        setDepartment(value)
+        setMunicipality(EL_SALVADOR_DEPARTMENTS[value]?.[0] || '')
+    }
+
+    const toggleService = (serviceId) => {
+        setSelectedServiceIds((prev) =>
+            prev.includes(serviceId) ? prev.filter((id) => id !== serviceId) : [...prev, serviceId]
+        )
+    }
 
     const handlePhotoChange = (e) => {
         const file = e.target.files?.[0]
@@ -124,6 +159,22 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
         return null
     }
 
+    const syncServices = async (businessId) => {
+        const { error: deleteError } = await supabase
+            .from('business_services')
+            .delete()
+            .eq('business_id', businessId)
+        if (deleteError) return describeSupabaseError(deleteError)
+
+        if (selectedServiceIds.length === 0) return null
+
+        const rows = selectedServiceIds.map((serviceId) => ({ business_id: businessId, service_id: serviceId }))
+        const { error: insertError } = await supabase.from('business_services').insert(rows)
+        if (insertError) return describeSupabaseError(insertError)
+
+        return null
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setErrorMsg('')
@@ -164,6 +215,10 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             business_size_length: lengthNum,
             availability,
             phone_number: phoneNumber.trim(),
+            description: description.trim() || null,
+            department: department || null,
+            municipality: municipality || null,
+            address: address.trim() || null,
         }
 
         const query = isEditMode
@@ -188,17 +243,22 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
         }
 
         const savedProperty = data[0]
+        const issues = []
 
         if (photoFile || removeExistingPhoto) {
             const photoIssue = await replacePhoto(savedProperty.property_id)
-            setSaving(false)
-            if (photoIssue) {
-                setErrorMsg(`The property was saved, but the photo could not be updated: ${photoIssue}`)
-                onSaved(savedProperty)
-                return
-            }
-        } else {
-            setSaving(false)
+            if (photoIssue) issues.push(`photo (${photoIssue})`)
+        }
+
+        const servicesIssue = await syncServices(savedProperty.business_id)
+        if (servicesIssue) issues.push(`amenities (${servicesIssue})`)
+
+        setSaving(false)
+
+        if (issues.length > 0) {
+            setErrorMsg(`The property was saved, but some details couldn't be updated: ${issues.join('; ')}.`)
+            onSaved(savedProperty)
+            return
         }
 
         onSaved(savedProperty)
@@ -338,6 +398,86 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="ns-mb-field mb-0">
+                                <label className="ns-label" htmlFor="propDescription">Detailed description (optional)</label>
+                                <textarea
+                                    id="propDescription" className="form-control" rows={3}
+                                    placeholder="Describe the advantages of your property, such as finishes, accessibility, parking, and nearby amenities..."
+                                    value={description} onChange={(e) => setDescription(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="ns-form-section">
+                            <span className="ns-account-type-label"><i className="bi bi-geo-alt"></i> Location</span>
+
+                            <div className="row g-2">
+                                <div className="col-6">
+                                    <div className="ns-mb-field">
+                                        <label className="ns-label" htmlFor="propDepartment">Department (optional)</label>
+                                        <select
+                                            id="propDepartment" className="form-select"
+                                            value={department} onChange={(e) => handleDepartmentChange(e.target.value)}
+                                        >
+                                            <option value="">Select a department</option>
+                                            {EL_SALVADOR_DEPARTMENT_NAMES.map((name) => (
+                                                <option key={name} value={name}>{name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="col-6">
+                                    <div className="ns-mb-field">
+                                        <label className="ns-label" htmlFor="propMunicipality">Municipality (optional)</label>
+                                        <select
+                                            id="propMunicipality" className="form-select"
+                                            value={municipality} onChange={(e) => setMunicipality(e.target.value)}
+                                            disabled={!department}
+                                        >
+                                            <option value="">Select a municipality</option>
+                                            {(EL_SALVADOR_DEPARTMENTS[department] || []).map((name) => (
+                                                <option key={name} value={name}>{name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="ns-mb-field mb-0">
+                                <label className="ns-label" htmlFor="propAddress">Detailed address (optional)</label>
+                                <input
+                                    id="propAddress" type="text" className="form-control"
+                                    placeholder="e.g., 125 El Mirador Street, Escalón"
+                                    value={address} onChange={(e) => setAddress(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="ns-form-section">
+                            <span className="ns-account-type-label"><i className="bi bi-check2-square"></i> Services and Amenities</span>
+                            {servicesList.length === 0 ? (
+                                <p className="ns-pay-muted mb-0">Loading amenities...</p>
+                            ) : (
+                                <div className="row g-2">
+                                    {servicesList.map((service) => (
+                                        <div className="col-6" key={service.service_id}>
+                                            <div className="form-check">
+                                                <input
+                                                    id={`service-${service.service_id}`}
+                                                    type="checkbox"
+                                                    className="form-check-input"
+                                                    checked={selectedServiceIds.includes(service.service_id)}
+                                                    onChange={() => toggleService(service.service_id)}
+                                                />
+                                                <label className="form-check-label" htmlFor={`service-${service.service_id}`}>
+                                                    {service.service_name}
+                                                </label>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         <div className="ns-form-section">
