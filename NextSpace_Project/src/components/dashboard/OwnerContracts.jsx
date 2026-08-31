@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from './NewPropertyModal'
 import NewContractModal, { CONTRACT_STATUSES } from './NewContractModal'
@@ -6,6 +6,8 @@ import AcceptContractModal from './AcceptContractModal'
 
 const CONTRACT_EMBED =
     '*, add_business!contract_property_id_fkey(property_name), users!contract_tenant_dui_fkey(first_name,last_name)'
+
+const STATUS_FILTERS = [{ id: 'all', label: 'All' }, ...CONTRACT_STATUSES.map((s) => ({ id: s, label: s }))]
 
 export default function OwnerContracts({ user }) {
     const [ownerDui, setOwnerDui] = useState(null)
@@ -18,6 +20,7 @@ export default function OwnerContracts({ user }) {
     const [showNewModal, setShowNewModal] = useState(false)
     const [updatingId, setUpdatingId] = useState(null)
     const [acceptTarget, setAcceptTarget] = useState(null)
+    const [statusFilter, setStatusFilter] = useState('all')
 
     const loadData = async (dui) => {
         const [
@@ -127,6 +130,11 @@ export default function OwnerContracts({ user }) {
         setAcceptTarget(null)
     }
 
+    const filteredContracts = useMemo(
+        () => (statusFilter === 'all' ? contracts : contracts.filter((c) => c.status === statusFilter)),
+        [contracts, statusFilter]
+    )
+
     if (loading) {
         return (
             <div className="ns-dash-loading">
@@ -169,15 +177,32 @@ export default function OwnerContracts({ user }) {
                 <p className="ns-pay-muted mb-4">Publish a property first to be able to create a contract.</p>
             )}
 
+            {contracts.length > 0 && (
+                <div className="ns-pill-row">
+                    {STATUS_FILTERS.map((filter) => (
+                        <button
+                            type="button"
+                            key={filter.id}
+                            className={`ns-pill ${statusFilter === filter.id ? 'active' : ''}`}
+                            onClick={() => setStatusFilter(filter.id)}
+                        >
+                            {filter.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
             {contracts.length === 0 ? (
                 <div className="ns-empty-state">
                     <i className="bi bi-file-earmark-text"></i>
                     <h3>No contracts yet</h3>
                     <p>Create your first lease agreement for one of your properties.</p>
                 </div>
+            ) : filteredContracts.length === 0 ? (
+                <p className="ns-pay-muted mb-4">No contracts match this filter.</p>
             ) : (
                 <div className="ns-pay-lease-list">
-                    {contracts.map((contract) => {
+                    {filteredContracts.map((contract) => {
                         const property = contract.add_business
                         const tenant = contract.users
                         return (
