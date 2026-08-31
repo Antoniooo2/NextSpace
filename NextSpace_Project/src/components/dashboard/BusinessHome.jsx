@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import PropertyCard from './PropertyCard'
 import { PROPERTY_TYPES } from './NewPropertyModal'
+import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 
 const PAGE_SIZE = 6
 const CATEGORY_PILLS = [{ id: 'all', label: 'All' }, ...PROPERTY_TYPES.map((type) => ({ id: type, label: type }))]
@@ -27,7 +28,7 @@ export default function BusinessHome({ search, onViewProperty }) {
 
             const { data, error } = await supabase
                 .from('add_business')
-                .select('*')
+                .select(`*, ${PROPERTY_PHOTO_EMBED}`)
                 .eq('availability', 'Available')
                 .order('registration_date', { ascending: false })
 
@@ -44,7 +45,7 @@ export default function BusinessHome({ search, onViewProperty }) {
                 return
             }
 
-            setProperties(data || [])
+            setProperties((data || []).map(withCoverPhoto))
             setLoading(false)
         }
 

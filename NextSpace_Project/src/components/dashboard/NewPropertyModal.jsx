@@ -19,6 +19,10 @@ const TYPE_ICON = {
     Other: 'bi-building',
 }
 
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024
+const PHOTO_URL_MARKER = '/property-photos/'
+
 export function describeSupabaseError(error) {
     if (!error) return 'Something went wrong. Please try again.'
     if (error.code === '23514') {
@@ -50,8 +54,75 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
     )
     const [availability, setAvailability] = useState(property?.availability || AVAILABILITY_OPTIONS[0])
     const [phoneNumber, setPhoneNumber] = useState(property?.phone_number || '')
+    const [photoFile, setPhotoFile] = useState(null)
+    const [photoPreview, setPhotoPreview] = useState(property?.photo_url || null)
+    const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false)
+    const [photoError, setPhotoError] = useState('')
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setPhotoError('')
+
+        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+            setPhotoError('Please choose a JPG, PNG, WEBP, or GIF image.')
+            e.target.value = ''
+            return
+        }
+        if (file.size > MAX_PHOTO_BYTES) {
+            setPhotoError('Image must be 5MB or smaller.')
+            e.target.value = ''
+            return
+        }
+
+        setPhotoFile(file)
+        setRemoveExistingPhoto(false)
+        setPhotoPreview(URL.createObjectURL(file))
+    }
+
+    const handleRemovePhoto = () => {
+        setPhotoFile(null)
+        setPhotoPreview(null)
+        setPhotoError('')
+        setRemoveExistingPhoto(true)
+    }
+
+    const replacePhoto = async (propertyId) => {
+        const oldPhotos = property?.business_photos || []
+
+        for (const old of oldPhotos) {
+            const idx = old.photo_url?.indexOf(PHOTO_URL_MARKER)
+            if (idx != null && idx !== -1) {
+                const oldPath = old.photo_url.slice(idx + PHOTO_URL_MARKER.length)
+                await supabase.storage.from('property-photos').remove([oldPath])
+            }
+        }
+        if (oldPhotos.length > 0) {
+            await supabase.from('business_photos').delete().eq('property_id', propertyId)
+        }
+
+        if (!photoFile) return null
+
+        const ext = photoFile.name.split('.').pop()
+        const path = `${propertyId}/${Date.now()}.${ext}`
+
+        const { error: uploadError } = await supabase.storage.from('property-photos').upload(path, photoFile)
+        if (uploadError) return describeSupabaseError(uploadError)
+
+        const {
+            data: { publicUrl },
+        } = supabase.storage.from('property-photos').getPublicUrl(path)
+
+        const { error: photoRowError } = await supabase
+            .from('business_photos')
+            .insert({ property_id: propertyId, photo_url: publicUrl })
+        if (photoRowError) return describeSupabaseError(photoRowError)
+
+        return null
+    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -100,13 +171,14 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             : supabase.from('add_business').insert({ ...payload, owner_id: ownerDui }).select()
 
         const { data, error } = await query
-        setSaving(false)
 
         if (error) {
+            setSaving(false)
             setErrorMsg(describeSupabaseError(error))
             return
         }
         if (!data || data.length === 0) {
+            setSaving(false)
             setErrorMsg(
                 isEditMode
                     ? "The update did not apply. This is usually caused by a permissions (row-level security) rule blocking the change."
@@ -115,7 +187,21 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             return
         }
 
-        onSaved(data[0])
+        const savedProperty = data[0]
+
+        if (photoFile || removeExistingPhoto) {
+            const photoIssue = await replacePhoto(savedProperty.property_id)
+            setSaving(false)
+            if (photoIssue) {
+                setErrorMsg(`The property was saved, but the photo could not be updated: ${photoIssue}`)
+                onSaved(savedProperty)
+                return
+            }
+        } else {
+            setSaving(false)
+        }
+
+        onSaved(savedProperty)
     }
 
     return (
@@ -140,98 +226,131 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
                     )}
 
                     <form onSubmit={handleSubmit}>
-                        <div className="ns-mb-field">
-                            <label className="ns-label" htmlFor="propName">Property name</label>
-                            <div className="ns-input-group input-group">
-                                <span className="input-group-text"><i className="bi bi-shop"></i></span>
-                                <input
-                                    id="propName" type="text" className="form-control" placeholder="Local Las Flores"
-                                    value={propertyName} onChange={(e) => setPropertyName(e.target.value)} required
-                                />
-                            </div>
+                        <div className="ns-form-section">
+                            <span className="ns-account-type-label"><i className="bi bi-camera"></i> Property Photo</span>
+                            <label htmlFor="propPhoto" className="ns-photo-dropzone">
+                                {photoPreview ? (
+                                    <img src={photoPreview} alt="Property preview" />
+                                ) : (
+                                    <span className="ns-photo-dropzone-empty">
+                                        <i className="bi bi-cloud-arrow-up"></i>
+                                        <span>Upload photo</span>
+                                    </span>
+                                )}
+                            </label>
+                            <input
+                                id="propPhoto" type="file" accept="image/*" className="d-none"
+                                onChange={handlePhotoChange}
+                            />
+                            {photoPreview && (
+                                <div>
+                                    <button type="button" className="ns-link-btn" onClick={handleRemovePhoto}>
+                                        Remove photo
+                                    </button>
+                                </div>
+                            )}
+                            {photoError && <p className="ns-photo-error">{photoError}</p>}
                         </div>
 
-                        <div className="ns-mb-field">
-                            <span className="ns-account-type-label">Property type</span>
+                        <div className="ns-form-section">
+                            <span className="ns-account-type-label"><i className="bi bi-info-circle"></i> Basic Information</span>
+
+                            <div className="ns-mb-field">
+                                <label className="ns-label" htmlFor="propName">Property name</label>
+                                <div className="ns-input-group input-group">
+                                    <span className="input-group-text"><i className="bi bi-shop"></i></span>
+                                    <input
+                                        id="propName" type="text" className="form-control" placeholder="Local Las Flores"
+                                        value={propertyName} onChange={(e) => setPropertyName(e.target.value)} required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="ns-mb-field">
+                                <span className="ns-account-type-label">Property type</span>
+                                <div className="row g-2">
+                                    {PROPERTY_TYPES.map((type) => (
+                                        <div className="col-6" key={type}>
+                                            <div
+                                                className={`ns-type-card ${propertyType === type ? 'selected' : ''}`}
+                                                role="button" tabIndex={0}
+                                                onClick={() => setPropertyType(type)}
+                                            >
+                                                <i className={`bi ${TYPE_ICON[type]} ns-type-icon`}></i>
+                                                <div className="ns-type-title">{type}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             <div className="row g-2">
-                                {PROPERTY_TYPES.map((type) => (
-                                    <div className="col-6" key={type}>
-                                        <div
-                                            className={`ns-type-card ${propertyType === type ? 'selected' : ''}`}
-                                            role="button" tabIndex={0}
-                                            onClick={() => setPropertyType(type)}
-                                        >
-                                            <i className={`bi ${TYPE_ICON[type]} ns-type-icon`}></i>
-                                            <div className="ns-type-title">{type}</div>
+                                <div className="col-6">
+                                    <div className="ns-mb-field">
+                                        <label className="ns-label" htmlFor="propRent">Monthly rent (USD, optional)</label>
+                                        <div className="ns-input-group input-group">
+                                            <span className="input-group-text"><i className="bi bi-currency-dollar"></i></span>
+                                            <input
+                                                id="propRent" type="number" min="0" step="0.01" className="form-control" placeholder="850"
+                                                value={monthlyRent} onChange={(e) => setMonthlyRent(e.target.value)}
+                                            />
                                         </div>
                                     </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="row g-2">
-                            <div className="col-6">
-                                <div className="ns-mb-field">
-                                    <label className="ns-label" htmlFor="propRent">Monthly rent (USD, optional)</label>
-                                    <div className="ns-input-group input-group">
-                                        <span className="input-group-text"><i className="bi bi-currency-dollar"></i></span>
-                                        <input
-                                            id="propRent" type="number" min="0" step="0.01" className="form-control" placeholder="850"
-                                            value={monthlyRent} onChange={(e) => setMonthlyRent(e.target.value)}
-                                        />
+                                </div>
+                                <div className="col-6">
+                                    <div className="ns-mb-field mb-0">
+                                        <label className="ns-label" htmlFor="propAvailability">Availability</label>
+                                        <select
+                                            id="propAvailability" className="form-select"
+                                            value={availability} onChange={(e) => setAvailability(e.target.value)}
+                                        >
+                                            {AVAILABILITY_OPTIONS.map((opt) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>
-                            <div className="col-6">
-                                <div className="ns-mb-field">
-                                    <label className="ns-label" htmlFor="propAvailability">Availability</label>
-                                    <select
-                                        id="propAvailability" className="form-select"
-                                        value={availability} onChange={(e) => setAvailability(e.target.value)}
-                                    >
-                                        {AVAILABILITY_OPTIONS.map((opt) => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div className="row g-2">
-                            <div className="col-6">
-                                <div className="ns-mb-field">
-                                    <label className="ns-label" htmlFor="propWidth">Width (m)</label>
-                                    <div className="ns-input-group input-group">
-                                        <span className="input-group-text"><i className="bi bi-arrows-angle-expand"></i></span>
-                                        <input
-                                            id="propWidth" type="number" min="0" step="0.01" className="form-control" placeholder="6"
-                                            value={width} onChange={(e) => setWidth(e.target.value)} required
-                                        />
+                            <div className="row g-2">
+                                <div className="col-6">
+                                    <div className="ns-mb-field mb-0">
+                                        <label className="ns-label" htmlFor="propWidth">Width (m)</label>
+                                        <div className="ns-input-group input-group">
+                                            <span className="input-group-text"><i className="bi bi-arrows-angle-expand"></i></span>
+                                            <input
+                                                id="propWidth" type="number" min="0" step="0.01" className="form-control" placeholder="6"
+                                                value={width} onChange={(e) => setWidth(e.target.value)} required
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="col-6">
-                                <div className="ns-mb-field">
-                                    <label className="ns-label" htmlFor="propLength">Length (m)</label>
-                                    <div className="ns-input-group input-group">
-                                        <span className="input-group-text"><i className="bi bi-arrows-angle-expand"></i></span>
-                                        <input
-                                            id="propLength" type="number" min="0" step="0.01" className="form-control" placeholder="10"
-                                            value={length} onChange={(e) => setLength(e.target.value)} required
-                                        />
+                                <div className="col-6">
+                                    <div className="ns-mb-field mb-0">
+                                        <label className="ns-label" htmlFor="propLength">Length (m)</label>
+                                        <div className="ns-input-group input-group">
+                                            <span className="input-group-text"><i className="bi bi-arrows-angle-expand"></i></span>
+                                            <input
+                                                id="propLength" type="number" min="0" step="0.01" className="form-control" placeholder="10"
+                                                value={length} onChange={(e) => setLength(e.target.value)} required
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="ns-mb-field">
-                            <label className="ns-label" htmlFor="propPhone">Phone number</label>
-                            <div className="ns-input-group input-group">
-                                <span className="input-group-text"><i className="bi bi-telephone"></i></span>
-                                <input
-                                    id="propPhone" type="text" className="form-control" placeholder="7000-0000"
-                                    value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required
-                                />
+                        <div className="ns-form-section">
+                            <span className="ns-account-type-label"><i className="bi bi-telephone"></i> Contact</span>
+                            <div className="ns-mb-field mb-0">
+                                <label className="ns-label" htmlFor="propPhone">Phone number</label>
+                                <div className="ns-input-group input-group">
+                                    <span className="input-group-text"><i className="bi bi-telephone"></i></span>
+                                    <input
+                                        id="propPhone" type="text" className="form-control" placeholder="7000-0000"
+                                        value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required
+                                    />
+                                </div>
                             </div>
                         </div>
 

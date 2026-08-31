@@ -13,7 +13,24 @@ export default function BusinessPayments({ user, onNavigate }) {
     const [payments, setPayments] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
+    const [payError, setPayError] = useState('')
+    const [paying, setPaying] = useState(false)
     const [notice, setNotice] = useState(false)
+
+    const loadPayments = async (contractId) => {
+        const { data: paymentRows, error: paymentError } = await supabase
+            .from('payment')
+            .select('*')
+            .eq('contract_id', contractId)
+            .order('payment_date', { ascending: false })
+
+        if (paymentError) {
+            setLoadError(describeSupabaseError(paymentError))
+            return
+        }
+
+        setPayments(paymentRows || [])
+    }
 
     useEffect(() => {
         let cancelled = false
@@ -45,22 +62,8 @@ export default function BusinessPayments({ user, onNavigate }) {
                 return
             }
 
-            const { data: paymentRows, error: paymentError } = await supabase
-                .from('payment')
-                .select('*')
-                .eq('contract_id', activeContract.contract_id)
-                .order('payment_date', { ascending: false })
-
-            if (cancelled) return
-
-            if (paymentError) {
-                setLoadError(describeSupabaseError(paymentError))
-                setLoading(false)
-                return
-            }
-
-            setPayments(paymentRows || [])
-            setLoading(false)
+            await loadPayments(activeContract.contract_id)
+            if (!cancelled) setLoading(false)
         }
 
         load()
@@ -69,6 +72,39 @@ export default function BusinessPayments({ user, onNavigate }) {
             cancelled = true
         }
     }, [user.id])
+
+    const handlePayNow = async () => {
+        if (!contract) return
+
+        setPaying(true)
+        setPayError('')
+
+        const { data, error } = await supabase
+            .from('payment')
+            .insert({
+                contract_id: contract.contract_id,
+                payment_date: new Date().toISOString().slice(0, 10),
+                amount: contract.monthly_rent,
+                payment_method: 'Credit Card',
+                status: 'Paid',
+            })
+            .select()
+
+        setPaying(false)
+
+        if (error) {
+            setPayError(describeSupabaseError(error))
+            return
+        }
+        if (!data || data.length === 0) {
+            setPayError(
+                "The payment could not be recorded. This is usually caused by a permissions (row-level security) rule blocking it."
+            )
+            return
+        }
+
+        await loadPayments(contract.contract_id)
+    }
 
     if (loading) {
         return (
@@ -167,14 +203,26 @@ export default function BusinessPayments({ user, onNavigate }) {
                             <p className="ns-pay-due-desc">You have no pending or late payments.</p>
                         </>
                     )}
-                    <button type="button" className="ns-filled-btn ns-pay-full-btn" onClick={() => setNotice(true)}>
-                        Pay now
+                    <button
+                        type="button" className="ns-filled-btn ns-pay-full-btn"
+                        onClick={handlePayNow} disabled={paying}
+                    >
+                        {paying ? 'Processing...' : 'Pay now'}
                     </button>
                     <button type="button" className="ns-outline-btn ns-pay-full-btn" onClick={() => setNotice(true)}>
                         <i className="bi bi-download"></i> Download receipt
                     </button>
+                    <p className="ns-pay-simulation-note">
+                        <i className="bi bi-info-circle"></i> Simulated in-platform payment — no real bank charge occurs yet.
+                    </p>
                 </div>
             </div>
+
+            {payError && (
+                <div className="alert alert-danger py-2" role="alert">
+                    {payError}
+                </div>
+            )}
 
             <h3 className="ns-pay-section-title">Payment schedule</h3>
             {payments.length === 0 ? (

@@ -1,80 +1,30 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import PropertyCard from './PropertyCard'
 import NewPropertyModal, { describeSupabaseError } from './NewPropertyModal'
 import ConfirmDialog from './ConfirmDialog'
 
 export default function OwnerHome({ user, firstName, search, onViewProperty }) {
-    const [ownerDui, setOwnerDui] = useState(null)
-    const [ownProperties, setOwnProperties] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [loadError, setLoadError] = useState('')
+    const { ownerDui, properties, setProperties, loading, error: loadError, reload } = useOwnerProperties(user)
     const [showFormModal, setShowFormModal] = useState(false)
     const [editingProperty, setEditingProperty] = useState(null)
     const [deleteTarget, setDeleteTarget] = useState(null)
     const [deleting, setDeleting] = useState(false)
     const [deleteError, setDeleteError] = useState('')
 
-    useEffect(() => {
-        let cancelled = false
-
-        const load = async () => {
-            setLoading(true)
-            setLoadError('')
-
-            const { data: userRow, error: userError } = await supabase
-                .from('users')
-                .select('dui')
-                .eq('id_supabase_auth', user.id)
-                .single()
-
-            if (cancelled) return
-
-            if (userError || !userRow) {
-                setLoadError("We couldn't find your account record. Please contact support.")
-                setLoading(false)
-                return
-            }
-
-            setOwnerDui(userRow.dui)
-
-            const { data: properties, error: propertiesError } = await supabase
-                .from('add_business')
-                .select('*')
-                .eq('owner_id', userRow.dui)
-                .order('registration_date', { ascending: false })
-
-            if (cancelled) return
-
-            if (propertiesError) {
-                setLoadError(describeSupabaseError(propertiesError))
-                setLoading(false)
-                return
-            }
-
-            setOwnProperties(properties || [])
-            setLoading(false)
-        }
-
-        load()
-
-        return () => {
-            cancelled = true
-        }
-    }, [user.id])
-
     const filtered = useMemo(() => {
         const query = search.trim().toLowerCase()
-        if (!query) return ownProperties
-        return ownProperties.filter(
+        if (!query) return properties
+        return properties.filter(
             (p) =>
                 p.property_name.toLowerCase().includes(query) ||
                 p.property_type.toLowerCase().includes(query)
         )
-    }, [ownProperties, search])
+    }, [properties, search])
 
-    const totalMonthly = ownProperties.reduce((sum, p) => sum + (p.monthly_rent || 0), 0)
-    const activeCount = ownProperties.filter((p) => p.availability === 'Available').length
+    const totalMonthly = properties.reduce((sum, p) => sum + (p.monthly_rent || 0), 0)
+    const activeCount = properties.filter((p) => p.availability === 'Available').length
 
     const openCreateModal = () => {
         setEditingProperty(null)
@@ -86,16 +36,10 @@ export default function OwnerHome({ user, firstName, search, onViewProperty }) {
         setShowFormModal(true)
     }
 
-    const handleSaved = (savedProperty) => {
-        setOwnProperties((prev) => {
-            const exists = prev.some((p) => p.property_id === savedProperty.property_id)
-            if (exists) {
-                return prev.map((p) => (p.property_id === savedProperty.property_id ? savedProperty : p))
-            }
-            return [savedProperty, ...prev]
-        })
+    const handleSaved = async () => {
         setShowFormModal(false)
         setEditingProperty(null)
+        await reload()
     }
 
     const handleDelete = async () => {
@@ -124,7 +68,7 @@ export default function OwnerHome({ user, firstName, search, onViewProperty }) {
             return
         }
 
-        setOwnProperties((prev) => prev.filter((p) => p.property_id !== deleteTarget.property_id))
+        setProperties((prev) => prev.filter((p) => p.property_id !== deleteTarget.property_id))
         setDeleteTarget(null)
     }
 
@@ -165,7 +109,7 @@ export default function OwnerHome({ user, firstName, search, onViewProperty }) {
 
             <div className="ns-stats-row">
                 <div className="ns-stat-card">
-                    <span className="ns-stat-card-value">{ownProperties.length}</span>
+                    <span className="ns-stat-card-value">{properties.length}</span>
                     <span className="ns-stat-card-label">Published listings</span>
                 </div>
                 <div className="ns-stat-card">
@@ -181,13 +125,13 @@ export default function OwnerHome({ user, firstName, search, onViewProperty }) {
             {filtered.length === 0 ? (
                 <div className="ns-empty-state">
                     <i className="bi bi-buildings"></i>
-                    <h3>{ownProperties.length === 0 ? "You haven't published any spaces yet" : 'No properties match your search'}</h3>
+                    <h3>{properties.length === 0 ? "You haven't published any spaces yet" : 'No properties match your search'}</h3>
                     <p>
-                        {ownProperties.length === 0
+                        {properties.length === 0
                             ? 'List your first commercial space and start reaching entrepreneurs across El Salvador.'
                             : 'Try a different keyword.'}
                     </p>
-                    {ownProperties.length === 0 && (
+                    {properties.length === 0 && (
                         <button type="button" className="ns-filled-btn" onClick={openCreateModal}>
                             <i className="bi bi-plus-lg"></i> Publish new space
                         </button>

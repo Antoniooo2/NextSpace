@@ -20,9 +20,13 @@ export default function PropertyCard({ property, actionLabel = 'View details', o
     return (
         <div className="ns-prop-card">
             <div className="ns-prop-media">
-                <div className="ns-prop-media-placeholder">
-                    <i className={`bi ${typeIcon}`}></i>
-                </div>
+                {property.photo_url ? (
+                    <img src={property.photo_url} alt={property.property_name} />
+                ) : (
+                    <div className="ns-prop-media-placeholder">
+                        <i className={`bi ${typeIcon}`}></i>
+                    </div>
+                )}
                 {property.availability && (
                     <span className={`ns-prop-availability ${availabilityClass}`}>{property.availability}</span>
                 )}

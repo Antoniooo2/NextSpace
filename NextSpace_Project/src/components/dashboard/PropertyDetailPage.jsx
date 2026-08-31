@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { TYPE_ICON } from './PropertyCard'
+import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 
 export default function PropertyDetailPage({ property, onBack }) {
     const [detail, setDetail] = useState(property || null)
@@ -21,7 +22,7 @@ export default function PropertyDetailPage({ property, onBack }) {
 
             const { data, error } = await supabase
                 .from('add_business')
-                .select('*')
+                .select(`*, ${PROPERTY_PHOTO_EMBED}`)
                 .eq('property_id', property.property_id)
                 .single()
 
@@ -33,7 +34,7 @@ export default function PropertyDetailPage({ property, onBack }) {
                 return
             }
 
-            setDetail(data)
+            setDetail(withCoverPhoto(data))
             setLoading(false)
         }
 
@@ -77,9 +78,13 @@ export default function PropertyDetailPage({ property, onBack }) {
             </button>
 
             <div className="ns-detail-hero">
-                <div className="ns-detail-hero-placeholder">
-                    <i className={`bi ${typeIcon}`}></i>
-                </div>
+                {detail.photo_url ? (
+                    <img src={detail.photo_url} alt={detail.property_name} />
+                ) : (
+                    <div className="ns-detail-hero-placeholder">
+                        <i className={`bi ${typeIcon}`}></i>
+                    </div>
+                )}
             </div>
 
             <div className="ns-detail-grid">
@@ -124,10 +129,6 @@ export default function PropertyDetailPage({ property, onBack }) {
                             </div>
                         </div>
                     )}
-
-                    <button type="button" className="ns-submit-btn">
-                        Request a visit
-                    </button>
                 </aside>
             </div>
         </div>

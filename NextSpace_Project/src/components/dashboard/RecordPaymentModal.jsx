@@ -2,7 +2,11 @@ import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from './NewPropertyModal'
 
+// Full set of values allowed by the payment_method CHECK constraint in the database.
 export const PAYMENT_METHODS = ['Cash', 'Bank Transfer', 'Credit Card', 'Debit Card', 'Mobile Payment']
+// Payments are only simulated in-platform for now (no bank/gateway integration), so the
+// owner can only log a payment as one of these two methods.
+export const SELECTABLE_PAYMENT_METHODS = ['Credit Card', 'Debit Card']
 export const PAYMENT_STATUSES = ['Pending', 'Paid', 'Late', 'Cancelled']
 
 const todayISO = () => new Date().toISOString().slice(0, 10)
@@ -12,7 +16,7 @@ export default function RecordPaymentModal({ contracts, onClose, onSaved }) {
     const [amount, setAmount] = useState(
         contracts[0]?.monthly_rent != null ? String(contracts[0].monthly_rent) : ''
     )
-    const [method, setMethod] = useState(PAYMENT_METHODS[0])
+    const [method, setMethod] = useState(SELECTABLE_PAYMENT_METHODS[0])
     const [paymentDate, setPaymentDate] = useState(todayISO())
     const [status, setStatus] = useState('Paid')
     const [saving, setSaving] = useState(false)
@@ -31,7 +35,7 @@ export default function RecordPaymentModal({ contracts, onClose, onSaved }) {
         const errors = []
         if (!contractId) errors.push('Select a lease.')
         if (!paymentDate) errors.push('Payment date is required.')
-        if (!PAYMENT_METHODS.includes(method)) errors.push('Select a valid payment method.')
+        if (!SELECTABLE_PAYMENT_METHODS.includes(method)) errors.push('Select a valid payment method.')
         if (!PAYMENT_STATUSES.includes(status)) errors.push('Select a valid status.')
 
         const amountNum = Number(amount)
@@ -84,6 +88,9 @@ export default function RecordPaymentModal({ contracts, onClose, onSaved }) {
                     <h2 className="ns-modal-form-title">Record a payment</h2>
                     <p className="ns-modal-form-subtitle">
                         Log a rent payment for one of your active leases.
+                    </p>
+                    <p className="ns-pay-simulation-note">
+                        <i className="bi bi-info-circle"></i> Simulated in-platform payment — no real bank charge occurs yet.
                     </p>
 
                     {errorMsg && (
@@ -142,7 +149,7 @@ export default function RecordPaymentModal({ contracts, onClose, onSaved }) {
                                         id="payMethod" className="form-select"
                                         value={method} onChange={(e) => setMethod(e.target.value)}
                                     >
-                                        {PAYMENT_METHODS.map((m) => (
+                                        {SELECTABLE_PAYMENT_METHODS.map((m) => (
                                             <option key={m} value={m}>{m}</option>
                                         ))}
                                     </select>
