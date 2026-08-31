@@ -319,6 +319,12 @@ body {
   color: #fff;
 }
 
+.ns-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .ns-footer-text {
   text-align: center;
   font-size: 13px;

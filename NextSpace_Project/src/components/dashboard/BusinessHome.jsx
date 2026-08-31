@@ -1,10 +1,16 @@
-import { useMemo, useState } from 'react'
-import { CATEGORIES, PROPERTIES } from '../../data/properties'
+import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
 import PropertyCard from './PropertyCard'
+import { PROPERTY_TYPES } from './NewPropertyModal'
+import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 
 const PAGE_SIZE = 6
+const CATEGORY_PILLS = [{ id: 'all', label: 'All' }, ...PROPERTY_TYPES.map((type) => ({ id: type, label: type }))]
 
 export default function BusinessHome({ search, onViewProperty }) {
+    const [properties, setProperties] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState('')
     const [category, setCategory] = useState('all')
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
     const [showFilters, setShowFilters] = useState(false)
@@ -13,18 +19,58 @@ export default function BusinessHome({ search, onViewProperty }) {
     const [minArea, setMinArea] = useState('')
     const [maxArea, setMaxArea] = useState('')
 
+    useEffect(() => {
+        let cancelled = false
+
+        const load = async () => {
+            setLoading(true)
+            setLoadError('')
+
+            const { data, error } = await supabase
+                .from('add_business')
+                .select(`*, ${PROPERTY_PHOTO_EMBED}`)
+                .eq('availability', 'Available')
+                .order('registration_date', { ascending: false })
+
+            if (cancelled) return
+
+            if (error) {
+                const message = error.message || ''
+                setLoadError(
+                    message.toLowerCase().includes('fetch') || message.toLowerCase().includes('network')
+                        ? 'Could not reach the server. Check your internet connection and try again.'
+                        : message || 'Something went wrong while loading properties.'
+                )
+                setLoading(false)
+                return
+            }
+
+            setProperties((data || []).map(withCoverPhoto))
+            setLoading(false)
+        }
+
+        load()
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
     const filtered = useMemo(() => {
         const query = search.trim().toLowerCase()
-        return PROPERTIES.filter((property) => {
-            const matchesCategory = category === 'all' || property.category === category
+        return properties.filter((property) => {
+            const area = property.business_size_width * property.business_size_length
+            const matchesCategory = category === 'all' || property.property_type === category
             const matchesSearch =
                 !query ||
-                property.title.toLowerCase().includes(query) ||
-                property.city.toLowerCase().includes(query)
-            const matchesMinPrice = !minPrice || property.price >= Number(minPrice)
-            const matchesMaxPrice = !maxPrice || property.price <= Number(maxPrice)
-            const matchesMinArea = !minArea || property.area >= Number(minArea)
-            const matchesMaxArea = !maxArea || property.area <= Number(maxArea)
+                property.property_name.toLowerCase().includes(query) ||
+                property.property_type.toLowerCase().includes(query)
+            const matchesMinPrice =
+                !minPrice || (property.monthly_rent != null && property.monthly_rent >= Number(minPrice))
+            const matchesMaxPrice =
+                !maxPrice || (property.monthly_rent != null && property.monthly_rent <= Number(maxPrice))
+            const matchesMinArea = !minArea || area >= Number(minArea)
+            const matchesMaxArea = !maxArea || area <= Number(maxArea)
             return (
                 matchesCategory &&
                 matchesSearch &&
@@ -34,7 +80,7 @@ export default function BusinessHome({ search, onViewProperty }) {
                 matchesMaxArea
             )
         })
-    }, [category, search, minPrice, maxPrice, minArea, maxArea])
+    }, [properties, category, search, minPrice, maxPrice, minArea, maxArea])
 
     const visible = filtered.slice(0, visibleCount)
     const activeFilterCount = [minPrice, maxPrice, minArea, maxArea].filter(Boolean).length
@@ -49,6 +95,15 @@ export default function BusinessHome({ search, onViewProperty }) {
     const handleCategoryChange = (id) => {
         setCategory(id)
         setVisibleCount(PAGE_SIZE)
+    }
+
+    if (loading) {
+        return (
+            <div className="ns-dash-loading">
+                <div className="ns-dash-spinner" />
+                <p>Loading properties...</p>
+            </div>
+        )
     }
 
     return (
@@ -72,6 +127,12 @@ export default function BusinessHome({ search, onViewProperty }) {
                     </button>
                 </div>
             </div>
+
+            {loadError && (
+                <div className="alert alert-danger py-2" role="alert">
+                    {loadError}
+                </div>
+            )}
 
             {showFilters && (
                 <div className="ns-filter-panel">
@@ -112,7 +173,7 @@ export default function BusinessHome({ search, onViewProperty }) {
             )}
 
             <div className="ns-pill-row">
-                {CATEGORIES.map((cat) => (
+                {CATEGORY_PILLS.map((cat) => (
                     <button
                         type="button"
                         key={cat.id}
@@ -133,7 +194,7 @@ export default function BusinessHome({ search, onViewProperty }) {
             ) : (
                 <div className="ns-prop-grid">
                     {visible.map((property) => (
-                        <PropertyCard key={property.id} property={property} onAction={onViewProperty} />
+                        <PropertyCard key={property.property_id} property={property} onAction={onViewProperty} />
                     ))}
                 </div>
             )}

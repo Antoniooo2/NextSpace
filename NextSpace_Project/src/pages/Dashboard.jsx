@@ -10,6 +10,8 @@ import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
 import '../components/dashboard/dashboard.css'
 import BusinessPayments from '../components/dashboard/BusinessPayments'
 import OwnerPayments from '../components/dashboard/OwnerPayments'
+import OwnerContracts from '../components/dashboard/OwnerContracts'
+import BusinessContracts from '../components/dashboard/BusinessContracts'
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -59,7 +61,14 @@ export default function Dashboard() {
 
     const renderContent = () => {
         if (viewingProperty) {
-            return <PropertyDetailPage property={viewingProperty} onBack={() => setViewingProperty(null)} />
+            return (
+                <PropertyDetailPage
+                    property={viewingProperty}
+                    user={user}
+                    accountType={accountType}
+                    onBack={() => setViewingProperty(null)}
+                />
+            )
         }
 
         switch (section) {
@@ -73,18 +82,16 @@ export default function Dashboard() {
                     />
                 )
             case 'contracts':
-                return (
-                    <ComingSoon
-                        icon="bi-file-earmark-text"
-                        title="Contracts"
-                        description="Digital contracts and e-signatures are coming soon. You'll be able to draft, send, and sign lease agreements right here."
-                    />
+                return accountType === 'property-owner' ? (
+                    <OwnerContracts user={user} />
+                ) : (
+                    <BusinessContracts user={user} />
                 )
             case 'payments':
                 return accountType === 'property-owner' ? (
                     <OwnerPayments />
                 ) : (
-                    <BusinessPayments onNavigate={handleSectionChange} />
+                    <BusinessPayments user={user} onNavigate={handleSectionChange} />
                 )
             case 'notifications':
                 return (
