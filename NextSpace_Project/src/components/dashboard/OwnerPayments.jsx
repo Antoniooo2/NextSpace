@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from './NewPropertyModal'
-import RecordPaymentModal from './RecordPaymentModal'
 import NoticeModal from './NoticeModal'
 
 const STATUS_TAG = { Pending: 'tag-pending', Paid: 'tag-paid', Late: 'tag-late', Cancelled: 'tag-cancelled' }
@@ -17,8 +16,6 @@ export default function OwnerPayments() {
     const [payments, setPayments] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
-    const [actionError, setActionError] = useState('')
-    const [showRecordModal, setShowRecordModal] = useState(false)
     const [notice, setNotice] = useState(false)
 
     const loadData = async () => {
@@ -66,12 +63,6 @@ export default function OwnerPayments() {
 
     const latestPaymentFor = (contractId) => payments.find((p) => p.contract?.contract_id === contractId)
 
-    const handleRecordPayment = async () => {
-        setShowRecordModal(false)
-        setActionError('')
-        await loadData()
-    }
-
     if (loading) {
         return (
             <div className="ns-dash-loading">
@@ -88,31 +79,11 @@ export default function OwnerPayments() {
                     <h1>Payments</h1>
                     <p>Track rent collected from your tenants across all your properties.</p>
                 </div>
-                <div className="ns-dash-header-actions">
-                    <button
-                        type="button" className="ns-filled-btn"
-                        onClick={() => setShowRecordModal(true)}
-                        disabled={activeLeases.length === 0}
-                    >
-                        <i className="bi bi-plus-lg"></i> Record payment
-                    </button>
-                </div>
             </div>
 
             {loadError && (
                 <div className="alert alert-danger py-2" role="alert">
                     {loadError}
-                </div>
-            )}
-            {activeLeases.length === 0 && (
-                <p className="ns-pay-muted mb-3">
-                    You don't have any active leases yet, so there's nothing to record a payment against. Activate a
-                    contract first from the Contracts section.
-                </p>
-            )}
-            {actionError && (
-                <div className="alert alert-danger py-2" role="alert">
-                    {actionError}
                 </div>
             )}
 
@@ -211,14 +182,6 @@ export default function OwnerPayments() {
                     </tbody>
                 </table>
             </div>
-
-            {showRecordModal && (
-                <RecordPaymentModal
-                    contracts={activeLeases}
-                    onClose={() => setShowRecordModal(false)}
-                    onSaved={handleRecordPayment}
-                />
-            )}
 
             {notice && (
                 <NoticeModal
