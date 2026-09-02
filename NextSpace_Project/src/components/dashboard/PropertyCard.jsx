@@ -1,32 +1,50 @@
-export default function PropertyCard({ property, actionLabel = 'View details', onAction, secondaryAction }) {
+export const TYPE_ICON = {
+    'Café/Restaurant': 'bi-cup-hot',
+    'Store/Boutique': 'bi-shop',
+    'Beauty Salon': 'bi-scissors',
+    'Pharmacy/Healthcare': 'bi-capsule',
+    Other: 'bi-building',
+}
+
+const AVAILABILITY_CLASS = {
+    Available: 'available',
+    Occupied: 'occupied',
+    Reserved: 'reserved',
+}
+
+export default function PropertyCard({ property, actionLabel = 'View details', onAction, secondaryActions }) {
+    const typeIcon = TYPE_ICON[property.property_type] || 'bi-building'
+    const availabilityClass = AVAILABILITY_CLASS[property.availability] || 'available'
+    const rent = property.monthly_rent
+
     return (
         <div className="ns-prop-card">
             <div className="ns-prop-media">
-                {property.image ? (
-                    <img src={property.image} alt={property.title} />
+                {property.photo_url ? (
+                    <img src={property.photo_url} alt={property.property_name} />
                 ) : (
                     <div className="ns-prop-media-placeholder">
-                        <i className="bi bi-image"></i>
+                        <i className={`bi ${typeIcon}`}></i>
                     </div>
                 )}
+                {property.availability && (
+                    <span className={`ns-prop-availability ${availabilityClass}`}>{property.availability}</span>
+                )}
                 <span className="ns-prop-price">
-                    ${property.price.toLocaleString()}
-                    <small>/mo</small>
+                    {rent != null ? `$${Number(rent).toLocaleString()}` : 'Contact'}
+                    {rent != null && <small>/mo</small>}
                 </span>
             </div>
 
             <div className="ns-prop-body">
-                <h3 className="ns-prop-title">{property.title}</h3>
+                <h3 className="ns-prop-title">{property.property_name}</h3>
                 <p className="ns-prop-location">
-                    <i className="bi bi-geo-alt"></i> {property.city}
+                    <i className={`bi ${typeIcon}`}></i> {property.property_type}
                 </p>
 
                 <div className="ns-prop-meta">
                     <span>
-                        <i className="bi bi-arrows-angle-expand"></i> {property.area} m²
-                    </span>
-                    <span>
-                        <i className={`bi ${property.feature.icon}`}></i> {property.feature.label}
+                        <i className="bi bi-arrows-angle-expand"></i> {property.business_size_width} × {property.business_size_length} m
                     </span>
                 </div>
 
@@ -34,17 +52,18 @@ export default function PropertyCard({ property, actionLabel = 'View details', o
                     <button type="button" className="ns-prop-btn" onClick={() => onAction && onAction(property)}>
                         {actionLabel}
                     </button>
-                    {secondaryAction && (
+                    {secondaryActions?.map((action) => (
                         <button
+                            key={action.label}
                             type="button"
                             className="ns-prop-btn ns-prop-btn-icon"
-                            onClick={() => secondaryAction.onClick(property)}
-                            aria-label={secondaryAction.label}
-                            title={secondaryAction.label}
+                            onClick={() => action.onClick(property)}
+                            aria-label={action.label}
+                            title={action.label}
                         >
-                            <i className={`bi ${secondaryAction.icon}`}></i>
+                            <i className={`bi ${action.icon}`}></i>
                         </button>
-                    )}
+                    ))}
                 </div>
             </div>
         </div>

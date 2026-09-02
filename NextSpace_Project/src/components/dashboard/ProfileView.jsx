@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { DEMO_OWNER_ID, PROPERTIES } from '../../data/properties'
+import { PROPERTIES } from '../../data/properties'
+import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import EditProfileModal from './EditProfileModal'
 
 const ACCOUNT_TYPE_LABEL = {
@@ -18,12 +19,14 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
 
     const isOwner = accountType === 'property-owner'
 
-    // Every stat is 0 for now since favorites, contracts, profile views, and
-    // messages aren't real features yet. Wire these up to real counts once
-    // those systems exist.
+    const { properties: ownProperties, loading: loadingProperties } = useOwnerProperties(isOwner ? user : null)
+
+    // The remaining stats are 0 for now since contracts, profile views, favorites,
+    // searches, and messages aren't real features yet. Wire these up to real counts
+    // once those systems exist.
     const stats = isOwner
         ? [
-              { icon: 'bi-buildings', label: 'Listings', value: 0 },
+              { icon: 'bi-buildings', label: 'Listings', value: ownProperties.length },
               { icon: 'bi-file-earmark-text', label: 'Contracts', value: 0 },
               { icon: 'bi-eye', label: 'Profile views', value: 0 },
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
@@ -35,9 +38,21 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
           ]
 
-    const previewProperties = isOwner
-        ? PROPERTIES.filter((p) => p.ownerId === DEMO_OWNER_ID).slice(0, 2)
-        : PROPERTIES.slice(0, 2)
+    const previewItems = isOwner
+        ? ownProperties.slice(0, 2).map((p) => ({
+              key: p.property_id,
+              image: p.photo_url,
+              title: p.property_name,
+              subtitle: p.property_type,
+              price: p.monthly_rent,
+          }))
+        : PROPERTIES.slice(0, 2).map((p) => ({
+              key: p.id,
+              image: p.image,
+              title: p.title,
+              subtitle: p.city,
+              price: p.price,
+          }))
 
     return (
         <>
@@ -100,26 +115,32 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                             </button>
                         </div>
 
-                        {previewProperties.length === 0 ? (
+                        {isOwner && loadingProperties ? (
+                            <p className="ns-profile-empty-hint">Loading your listings...</p>
+                        ) : previewItems.length === 0 ? (
                             <p className="ns-profile-empty-hint">
                                 {isOwner ? "You haven't published any spaces yet." : "You haven't saved any properties yet."}
                             </p>
                         ) : (
                             <div className="ns-profile-mini-list">
-                                {previewProperties.map((property) => (
-                                    <div className="ns-profile-mini-card" key={property.id}>
+                                {previewItems.map((item) => (
+                                    <div className="ns-profile-mini-card" key={item.key}>
                                         <div className="ns-profile-mini-img">
-                                            {property.image ? (
-                                                <img src={property.image} alt={property.title} />
+                                            {item.image ? (
+                                                <img src={item.image} alt={item.title} />
                                             ) : (
                                                 <i className="bi bi-image"></i>
                                             )}
                                         </div>
                                         <div className="ns-profile-mini-info">
-                                            <span className="ns-profile-mini-title">{property.title}</span>
-                                            <span className="ns-profile-mini-location">{property.city}</span>
+                                            <span className="ns-profile-mini-title">{item.title}</span>
+                                            <span className="ns-profile-mini-location">{item.subtitle}</span>
                                             <span className="ns-profile-mini-price">
-                                                ${property.price.toLocaleString()}<small>/month</small>
+                                                {item.price != null ? (
+                                                    <>${Number(item.price).toLocaleString()}<small>/month</small></>
+                                                ) : (
+                                                    'Contact for price'
+                                                )}
                                             </span>
                                         </div>
                                         <span className="ns-profile-mini-remove" title="Remove">

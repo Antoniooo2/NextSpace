@@ -349,6 +349,13 @@
   background: var(--ns-navy-light);
 }
 
+.ns-outline-btn:disabled,
+.ns-filled-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Filter panel */
 
 .ns-filter-panel {
@@ -522,6 +529,32 @@
 
 .ns-prop-favorite.active {
   color: #e5484d;
+}
+
+.ns-prop-availability {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 7px;
+  color: #fff;
+  background: var(--ns-navy);
+}
+
+.ns-prop-availability.available {
+  background: #1d9a6c;
+}
+
+.ns-prop-availability.occupied {
+  background: #d64545;
+}
+
+.ns-prop-availability.reserved {
+  background: #c98a1f;
 }
 
 .ns-prop-body {
@@ -1692,6 +1725,15 @@
   opacity: 0.6;
 }
 
+.ns-pay-schedule-chip.status-late {
+  border-color: #e5484d;
+  border-width: 1.5px;
+}
+
+.ns-pay-schedule-chip.status-cancelled {
+  opacity: 0.6;
+}
+
 .ns-pay-schedule-date {
   display: flex;
   align-items: baseline;
@@ -1736,9 +1778,21 @@
   color: var(--ns-blue-accent);
 }
 
-.ns-pay-tag.tag-overdue {
+.ns-pay-tag.tag-overdue,
+.ns-pay-tag.tag-late {
   background: #fdecec;
   color: #e5484d;
+}
+
+.ns-pay-tag.tag-active {
+  background: #e3f6ea;
+  color: #1a8a4a;
+}
+
+.ns-pay-tag.tag-cancelled,
+.ns-pay-tag.tag-expired {
+  background: #eef0f3;
+  color: #5b6474;
 }
 
 .ns-pay-table-wrap {
@@ -1878,6 +1932,75 @@
 .ns-pay-reminder-btn {
   padding: 7px 14px;
   font-size: 12px;
+}
+
+.ns-pay-lease-row select.ns-contract-status-select {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.ns-pay-simulation-note {
+  font-size: 11.5px;
+  color: var(--ns-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 8px 0 0;
+}
+
+/* Property form sections */
+
+.ns-form-section {
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 18px;
+}
+
+.ns-form-section:last-of-type {
+  margin-bottom: 20px;
+}
+
+.ns-photo-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 160px;
+  height: 120px;
+  border: 1.5px dashed var(--ns-border);
+  border-radius: 12px;
+  background: var(--ns-blue-bg);
+  cursor: pointer;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.ns-photo-dropzone img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ns-photo-dropzone-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--ns-blue-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 8px;
+}
+
+.ns-photo-dropzone-empty i {
+  font-size: 22px;
+}
+
+.ns-photo-error {
+  color: #e5484d;
+  font-size: 12px;
+  margin: 4px 0 0;
 }
 
 @media (max-width: 900px) {

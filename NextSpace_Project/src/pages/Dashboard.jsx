@@ -7,10 +7,11 @@ import OwnerHome from '../components/dashboard/OwnerHome'
 import ProfileView from '../components/dashboard/ProfileView'
 import ComingSoon from '../components/dashboard/ComingSoon'
 import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
-import ConfirmDialog from '../components/dashboard/ConfirmDialog'
 import '../components/dashboard/dashboard.css'
 import BusinessPayments from '../components/dashboard/BusinessPayments'
 import OwnerPayments from '../components/dashboard/OwnerPayments'
+import OwnerContracts from '../components/dashboard/OwnerContracts'
+import BusinessContracts from '../components/dashboard/BusinessContracts'
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -19,7 +20,6 @@ export default function Dashboard() {
     const [section, setSection] = useState('home')
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
-    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
     const loadUser = useCallback(async () => {
         const { data, error } = await supabase.auth.getUser()
@@ -61,7 +61,14 @@ export default function Dashboard() {
 
     const renderContent = () => {
         if (viewingProperty) {
-            return <PropertyDetailPage property={viewingProperty} onBack={() => setViewingProperty(null)} />
+            return (
+                <PropertyDetailPage
+                    property={viewingProperty}
+                    user={user}
+                    accountType={accountType}
+                    onBack={() => setViewingProperty(null)}
+                />
+            )
         }
 
         switch (section) {
@@ -75,18 +82,16 @@ export default function Dashboard() {
                     />
                 )
             case 'contracts':
-                return (
-                    <ComingSoon
-                        icon="bi-file-earmark-text"
-                        title="Contracts"
-                        description="Digital contracts and e-signatures are coming soon. You'll be able to draft, send, and sign lease agreements right here."
-                    />
+                return accountType === 'property-owner' ? (
+                    <OwnerContracts user={user} />
+                ) : (
+                    <BusinessContracts user={user} />
                 )
             case 'payments':
                 return accountType === 'property-owner' ? (
                     <OwnerPayments />
                 ) : (
-                    <BusinessPayments onNavigate={handleSectionChange} />
+                    <BusinessPayments user={user} onNavigate={handleSectionChange} />
                 )
             case 'notifications':
                 return (
@@ -114,31 +119,17 @@ export default function Dashboard() {
     }
 
     return (
-        <>
-            <DashboardLayout
-                firstName={firstName}
-                lastName={lastName}
-                accountType={accountType}
-                section={section}
-                onSectionChange={handleSectionChange}
-                onLogoutClick={() => setShowLogoutConfirm(true)}
-                search={search}
-                onSearchChange={setSearch}
-            >
-                {renderContent()}
-            </DashboardLayout>
-
-            {showLogoutConfirm && (
-                <ConfirmDialog
-                    icon="bi-box-arrow-right"
-                    title="Log out of NextSpace?"
-                    description="You'll need to sign in again to access your dashboard."
-                    confirmLabel="Log out"
-                    cancelLabel="Cancel"
-                    onConfirm={handleLogout}
-                    onCancel={() => setShowLogoutConfirm(false)}
-                />
-            )}
-        </>
+        <DashboardLayout
+            firstName={firstName}
+            lastName={lastName}
+            accountType={accountType}
+            section={section}
+            onSectionChange={handleSectionChange}
+            onLogout={handleLogout}
+            search={search}
+            onSearchChange={setSearch}
+        >
+            {renderContent()}
+        </DashboardLayout>
     )
 }
