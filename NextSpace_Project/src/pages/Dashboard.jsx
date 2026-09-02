@@ -17,7 +17,9 @@ export default function Dashboard() {
     const navigate = useNavigate()
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [section, setSection] = useState('home')
+    const [section, setSection] = useState(
+        () => new URLSearchParams(window.location.search).get('section') || 'home'
+    )
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
 

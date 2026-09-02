@@ -73,37 +73,48 @@ export default function BusinessPayments({ user, onNavigate }) {
         }
     }, [user.id])
 
+    const nextDue = [...payments]
+        .filter((p) => p.status === 'Pending' || p.status === 'Late')
+        .sort((a, b) => a.payment_date.localeCompare(b.payment_date))[0]
+
     const handlePayNow = async () => {
         if (!contract) return
 
         setPaying(true)
         setPayError('')
 
-        const { data, error } = await supabase
-            .from('payment')
-            .insert({
-                contract_id: contract.contract_id,
-                payment_date: new Date().toISOString().slice(0, 10),
-                amount: contract.monthly_rent,
-                payment_method: 'Credit Card',
-                status: 'Paid',
+        const { data: sessionData } = await supabase.auth.getSession()
+        const accessToken = sessionData?.session?.access_token
+
+        if (!accessToken) {
+            setPaying(false)
+            setPayError('Your session expired. Please sign in again.')
+            return
+        }
+
+        const body = nextDue ? { paymentId: nextDue.payment_id } : { contractId: contract.contract_id }
+
+        let result
+        try {
+            const response = await fetch('/api/wompi/create-payment-link', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify(body),
             })
-            .select()
-
-        setPaying(false)
-
-        if (error) {
-            setPayError(describeSupabaseError(error))
-            return
-        }
-        if (!data || data.length === 0) {
-            setPayError(
-                "The payment could not be recorded. This is usually caused by a permissions (row-level security) rule blocking it."
-            )
+            result = await response.json()
+            if (!response.ok || !result.url) {
+                throw new Error(result.error || 'Could not start the Wompi payment.')
+            }
+        } catch (err) {
+            setPaying(false)
+            setPayError(err.message || 'Could not start the Wompi payment. Please try again.')
             return
         }
 
-        await loadPayments(contract.contract_id)
+        window.location.href = result.url
     }
 
     if (loading) {
@@ -135,9 +146,6 @@ export default function BusinessPayments({ user, onNavigate }) {
 
     const property = contract.add_business
     const owner = property?.users
-    const nextDue = [...payments]
-        .filter((p) => p.status === 'Pending' || p.status === 'Late')
-        .sort((a, b) => a.payment_date.localeCompare(b.payment_date))[0]
 
     return (
         <>
@@ -213,7 +221,7 @@ export default function BusinessPayments({ user, onNavigate }) {
                         <i className="bi bi-download"></i> Download receipt
                     </button>
                     <p className="ns-pay-simulation-note">
-                        <i className="bi bi-info-circle"></i> Simulated in-platform payment — no real bank charge occurs yet.
+                        <i className="bi bi-shield-lock"></i> Secure checkout powered by Wompi.
                     </p>
                 </div>
             </div>
