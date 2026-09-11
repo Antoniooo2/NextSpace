@@ -60,19 +60,36 @@ export default function NewContractModal({ properties, tenants, onClose, onSaved
             })
             .select()
 
-        setSaving(false)
-
         if (error) {
+            setSaving(false)
             setErrorMsg(describeSupabaseError(error))
             return
         }
         if (!data || data.length === 0) {
+            setSaving(false)
             setErrorMsg(
                 "The contract could not be created. This is usually caused by a permissions (row-level security) rule blocking the insert."
             )
             return
         }
 
+        if (status === 'Active') {
+            const { error: availabilityError } = await supabase
+                .from('add_business')
+                .update({ availability: 'Occupied' })
+                .eq('property_id', Number(propertyId))
+
+            if (availabilityError) {
+                setSaving(false)
+                setErrorMsg(
+                    'The contract was created, but the property could not be marked as occupied: ' +
+                        describeSupabaseError(availabilityError)
+                )
+                return
+            }
+        }
+
+        setSaving(false)
         onSaved(data[0])
     }
 

@@ -86,6 +86,8 @@ export default function OwnerContracts({ user }) {
     }
 
     const handleStatusChange = async (contractId, nextStatus) => {
+        const previous = contracts.find((c) => c.contract_id === contractId)
+
         setUpdatingId(contractId)
         setActionError('')
 
@@ -95,18 +97,38 @@ export default function OwnerContracts({ user }) {
             .eq('contract_id', contractId)
             .select()
 
-        setUpdatingId(null)
-
         if (error) {
+            setUpdatingId(null)
             setActionError(describeSupabaseError(error))
             return
         }
         if (!data || data.length === 0) {
+            setUpdatingId(null)
             setActionError(
                 "The status couldn't be updated. This is usually caused by a permissions (row-level security) rule blocking it."
             )
             return
         }
+
+        const wasActive = previous?.status === 'Active'
+        const willBeActive = nextStatus === 'Active'
+        if (wasActive !== willBeActive && previous?.property_id) {
+            const { error: availabilityError } = await supabase
+                .from('add_business')
+                .update({ availability: willBeActive ? 'Occupied' : 'Available' })
+                .eq('property_id', previous.property_id)
+
+            if (availabilityError) {
+                setUpdatingId(null)
+                setActionError(
+                    'The contract status was updated, but the property availability could not be synced: ' +
+                        describeSupabaseError(availabilityError)
+                )
+                return
+            }
+        }
+
+        setUpdatingId(null)
 
         setContracts((prev) =>
             prev.map((c) => (c.contract_id === contractId ? { ...c, status: nextStatus } : c))

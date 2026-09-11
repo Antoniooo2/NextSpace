@@ -32,15 +32,30 @@ export default function AcceptContractModal({ contract, onClose, onAccepted }) {
             .eq('contract_id', contract.contract_id)
             .select()
 
-        setSaving(false)
-
         if (error) {
+            setSaving(false)
             setErrorMsg(describeSupabaseError(error))
             return
         }
         if (!data || data.length === 0) {
+            setSaving(false)
             setErrorMsg(
                 "The contract could not be accepted. This is usually caused by a permissions (row-level security) rule blocking it."
+            )
+            return
+        }
+
+        const { error: availabilityError } = await supabase
+            .from('add_business')
+            .update({ availability: 'Occupied' })
+            .eq('property_id', contract.property_id)
+
+        setSaving(false)
+
+        if (availabilityError) {
+            setErrorMsg(
+                'The contract was accepted, but the property could not be marked as occupied: ' +
+                    describeSupabaseError(availabilityError)
             )
             return
         }
