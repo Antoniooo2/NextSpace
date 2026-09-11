@@ -105,7 +105,15 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             }
         }
         if (oldPhotos.length > 0) {
-            await supabase.from('business_photos').delete().eq('property_id', propertyId)
+            const { data: deletedPhotos, error: deletePhotosError } = await supabase
+                .from('business_photos')
+                .delete()
+                .eq('property_id', propertyId)
+                .select()
+            if (deletePhotosError) return describeSupabaseError(deletePhotosError)
+            if (!deletedPhotos || deletedPhotos.length === 0) {
+                return 'Could not remove the previous photo. This is usually caused by a permissions (row-level security) rule blocking it.'
+            }
         }
 
         if (!photoFile) return null
@@ -133,6 +141,7 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             .from('business_services')
             .delete()
             .eq('business_id', businessId)
+            .select()
         if (deleteError) return describeSupabaseError(deleteError)
 
         if (selectedServiceIds.length === 0) return null
