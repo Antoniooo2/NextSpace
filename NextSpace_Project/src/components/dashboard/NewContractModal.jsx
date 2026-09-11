@@ -1,15 +1,7 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { describeSupabaseError } from './NewPropertyModal'
-
-export const CONTRACT_STATUSES = ['Pending', 'Active', 'Expired', 'Cancelled']
-
-export const CONTRACT_STATUS_TAG = {
-    Pending: 'tag-pending',
-    Active: 'tag-active',
-    Expired: 'tag-expired',
-    Cancelled: 'tag-cancelled',
-}
+import { describeSupabaseError } from '../../lib/supabaseErrors'
+import { CONTRACT_STATUSES } from '../../lib/contractStatus'
 
 export default function NewContractModal({ properties, tenants, onClose, onSaved }) {
     const [propertyId, setPropertyId] = useState(properties[0]?.property_id ?? '')

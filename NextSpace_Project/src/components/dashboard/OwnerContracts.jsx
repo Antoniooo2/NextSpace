@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { describeSupabaseError } from './NewPropertyModal'
-import NewContractModal, { CONTRACT_STATUSES } from './NewContractModal'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
+import NewContractModal from './NewContractModal'
+import { CONTRACT_STATUSES } from '../../lib/contractStatus'
 import AcceptContractModal from './AcceptContractModal'
 
 const CONTRACT_EMBED =

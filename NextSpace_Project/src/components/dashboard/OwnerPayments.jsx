@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { describeSupabaseError } from './NewPropertyModal'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
 import NoticeModal from './NoticeModal'
 
 const STATUS_TAG = { Pending: 'tag-pending', Paid: 'tag-paid', Late: 'tag-late', Cancelled: 'tag-cancelled' }

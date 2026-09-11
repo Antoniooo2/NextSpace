@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { describeSupabaseError } from '../components/dashboard/NewPropertyModal'
+import { describeSupabaseError } from '../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../lib/propertyPhotos'
 import { PROPERTY_SERVICE_IDS_EMBED, withServiceIds } from '../lib/propertyServices'
 

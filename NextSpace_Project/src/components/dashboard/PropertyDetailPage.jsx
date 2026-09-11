@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { TYPE_ICON } from './PropertyCard'
-import { describeSupabaseError } from './NewPropertyModal'
+import { TYPE_ICON } from '../../lib/propertyTypes'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import { PROPERTY_SERVICE_NAMES_EMBED, withServiceNames } from '../../lib/propertyServices'
 

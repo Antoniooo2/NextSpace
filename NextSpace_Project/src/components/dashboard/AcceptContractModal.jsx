@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { describeSupabaseError } from './NewPropertyModal'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
 
 export default function AcceptContractModal({ contract, onClose, onAccepted }) {
     const [startDate, setStartDate] = useState('')
