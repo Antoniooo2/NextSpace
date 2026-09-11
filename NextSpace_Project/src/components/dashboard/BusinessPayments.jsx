@@ -16,6 +16,8 @@ export default function BusinessPayments({ user, onNavigate }) {
     const [payError, setPayError] = useState('')
     const [paying, setPaying] = useState(false)
     const [notice, setNotice] = useState(false)
+    const [returnState, setReturnState] = useState(null)
+    const [returnPaymentId, setReturnPaymentId] = useState(null)
 
     const loadPayments = async (contractId) => {
         const { data: paymentRows, error: paymentError } = await supabase
@@ -72,6 +74,72 @@ export default function BusinessPayments({ user, onNavigate }) {
             cancelled = true
         }
     }, [user.id])
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('wompi') !== 'return') return
+
+        const returnedPaymentId = Number(params.get('paymentId'))
+
+        params.delete('wompi')
+        params.delete('paymentId')
+        const cleanQuery = params.toString()
+        window.history.replaceState({}, '', `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}`)
+
+        if (!returnedPaymentId) return
+
+        setReturnPaymentId(returnedPaymentId)
+
+        let cancelled = false
+        setReturnState('checking')
+
+        const poll = async (attemptsLeft) => {
+            const { data } = await supabase
+                .from('payment')
+                .select('status, contract_id')
+                .eq('payment_id', returnedPaymentId)
+                .single()
+
+            if (cancelled) return
+
+            if (data?.status === 'Paid') {
+                setReturnState('paid')
+                await loadPayments(data.contract_id)
+                return
+            }
+
+            if (attemptsLeft <= 0) {
+                setReturnState('pending')
+                return
+            }
+
+            setTimeout(() => poll(attemptsLeft - 1), 2000)
+        }
+
+        poll(6)
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    const checkPaymentAgain = async () => {
+        if (!returnPaymentId) return
+        setReturnState('checking')
+
+        const { data } = await supabase
+            .from('payment')
+            .select('status, contract_id')
+            .eq('payment_id', returnPaymentId)
+            .single()
+
+        if (data?.status === 'Paid') {
+            setReturnState('paid')
+            await loadPayments(data.contract_id)
+        } else {
+            setReturnState('pending')
+        }
+    }
 
     const nextDue = [...payments]
         .filter((p) => p.status === 'Pending' || p.status === 'Late')
@@ -160,6 +228,29 @@ export default function BusinessPayments({ user, onNavigate }) {
                     </button>
                 </div>
             </div>
+
+            {returnState === 'checking' && (
+                <div className="alert alert-info d-flex align-items-center gap-2 py-2" role="status">
+                    <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    Confirming your payment with Wompi...
+                </div>
+            )}
+            {returnState === 'paid' && (
+                <div className="alert alert-success d-flex align-items-center gap-2 py-2" role="status">
+                    <i className="bi bi-check-circle-fill"></i> Payment received. Thank you!
+                </div>
+            )}
+            {returnState === 'pending' && (
+                <div className="alert alert-warning d-flex align-items-center justify-content-between gap-2 py-2" role="status">
+                    <span>
+                        <i className="bi bi-hourglass-split"></i> We haven't confirmed this payment yet. It can take a
+                        minute for Wompi to notify us — check again in a moment.
+                    </span>
+                    <button type="button" className="ns-outline-btn" onClick={checkPaymentAgain}>
+                        Check again
+                    </button>
+                </div>
+            )}
 
             <div className="ns-pay-top-grid">
                 <div className="ns-pay-lease-card">

@@ -154,7 +154,7 @@ export default async function handler(req, res) {
                 permitirTarjetaCreditoDebido: true,
             },
             configuracion: {
-                urlRedirect: `${baseUrl}/dashboard?section=payments&wompi=return`,
+                urlRedirect: `${baseUrl}/dashboard?section=payments&wompi=return&paymentId=${payment.payment_id}`,
                 urlWebhook: `${baseUrl}/api/wompi/webhook`,
                 notificarTransaccionCliente: true,
                 duracionInterfazIntentoMinutos: 60,
