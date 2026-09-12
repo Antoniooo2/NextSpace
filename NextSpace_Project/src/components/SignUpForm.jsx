@@ -37,7 +37,7 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
         setSuccessMsg('')
         setLoading(true)
 
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -58,8 +58,7 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
             return
         }
 
-        setSuccessMsg('¡Cuenta creada! Revisa tu correo para confirmar.')
-        console.log('Usuario creado:', data.user)
+        setSuccessMsg('Account created! Check your email to confirm.')
     }
 
     return (
