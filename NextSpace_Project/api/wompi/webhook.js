@@ -76,9 +76,7 @@ export default async function handler(req, res) {
         })
         .eq('payment_id', paymentId)
         .in('status', ['Pending', 'Late'])
-        .select(
-            'contract_id, amount, payment_date, contract:contract_id(tenant_dui, add_business!contract_property_id_fkey(property_name, owner_id))'
-        )
+        .select('payment_id')
 
     if (error) {
         res.status(500).json({ received: true, updated: false })
@@ -86,26 +84,10 @@ export default async function handler(req, res) {
     }
 
     // The .in('status', ['Pending', 'Late']) above makes this update conditional: a
-    // retried webhook call for an already-Paid payment matches zero rows here, so the
-    // notification below only fires on the transition that actually paid it, once.
-    const paidPayment = updatedRows?.[0]
-    if (paidPayment?.contract) {
-        try {
-            const { error: notifyError } = await admin.from('notifications').insert({
-                recipient_dui: paidPayment.contract.add_business?.owner_id,
-                sender_dui: paidPayment.contract.tenant_dui,
-                process: 'Payments',
-                title: `Payment received: ${paidPayment.contract.add_business?.property_name || 'your property'}`,
-                description: `$${Number(paidPayment.amount).toLocaleString()} was paid on ${paidPayment.payment_date}.`,
-                contract_id: paidPayment.contract_id,
-            })
-            if (notifyError) {
-                console.error('Wompi webhook: failed to create payment notification', notifyError)
-            }
-        } catch (notifyError) {
-            console.error('Wompi webhook: failed to create payment notification', notifyError)
-        }
-    } else {
+    // retried webhook call for an already-Paid payment matches zero rows here.
+    const didTransitionToPaid = (updatedRows?.length ?? 0) > 0
+
+    if (!didTransitionToPaid) {
         // Zero rows updated usually just means a retried delivery of the same transaction
         // for an already-Paid payment -- expected and silent. But if the incoming
         // transaction id doesn't match the one already stored, this looks like a second
@@ -135,5 +117,17 @@ export default async function handler(req, res) {
         }
     }
 
-    res.status(200).json({ received: true, updated: (updatedRows?.length ?? 0) > 0 })
+    // Claiming "notify the owner" and sending the notification happen in one DB
+    // transaction (claim_and_notify_payment), deliberately separate from the status
+    // transition above. If this process dies after the status update commits but before
+    // this call completes, notified_at is still null, so the next webhook retry (which
+    // will find the payment already Paid and skip the block above) still reaches this
+    // call and can send the notification -- claiming and sending can no longer succeed
+    // and fail independently of each other.
+    const { error: notifyError } = await admin.rpc('claim_and_notify_payment', { p_payment_id: paymentId })
+    if (notifyError) {
+        console.error('Wompi webhook: failed to claim/send payment notification', notifyError)
+    }
+
+    res.status(200).json({ received: true, updated: didTransitionToPaid })
 }
