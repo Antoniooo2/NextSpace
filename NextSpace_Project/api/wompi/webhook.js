@@ -105,6 +105,34 @@ export default async function handler(req, res) {
         } catch (notifyError) {
             console.error('Wompi webhook: failed to create payment notification', notifyError)
         }
+    } else {
+        // Zero rows updated usually just means a retried delivery of the same transaction
+        // for an already-Paid payment -- expected and silent. But if the incoming
+        // transaction id doesn't match the one already stored, this looks like a second
+        // real approved transaction landing on the same payment reference (e.g. two Wompi
+        // links generated for the same payment_id after a retried checkout). The
+        // idempotency guard above would otherwise swallow that silently, so log it loudly
+        // for manual investigation instead.
+        const incomingTransactionId = payload.IdTransaccion || null
+        if (incomingTransactionId) {
+            const { data: currentPayment } = await admin
+                .from('payment')
+                .select('status, wompi_transaction_id')
+                .eq('payment_id', paymentId)
+                .maybeSingle()
+
+            if (
+                currentPayment?.status === 'Paid' &&
+                currentPayment.wompi_transaction_id &&
+                currentPayment.wompi_transaction_id !== incomingTransactionId
+            ) {
+                console.error(
+                    `Wompi webhook: payment ${paymentId} received a second approved transaction ` +
+                        `(${incomingTransactionId}) after already being paid by transaction ` +
+                        `${currentPayment.wompi_transaction_id}. Possible duplicate charge -- investigate.`
+                )
+            }
+        }
     }
 
     res.status(200).json({ received: true, updated: (updatedRows?.length ?? 0) > 0 })
