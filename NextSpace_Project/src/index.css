@@ -64,29 +64,6 @@ body {
   width: auto;
 }
 
-.ns-logo-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: var(--ns-navy);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 16px;
-}
-
-.ns-logo-text {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--ns-navy);
-  letter-spacing: 0.2px;
-}
-
-.ns-logo-text span {
-  color: var(--ns-blue-accent);
-}
-
 .ns-title {
   text-align: center;
   font-size: 22px;

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { TYPE_ICON } from './PropertyCard'
-import { describeSupabaseError } from './NewPropertyModal'
+import { TYPE_ICON } from '../../lib/propertyTypes'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import { PROPERTY_SERVICE_NAMES_EMBED, withServiceNames } from '../../lib/propertyServices'
+import { createNotification } from '../../lib/notifications'
 
 export default function PropertyDetailPage({ property, user, accountType, onBack }) {
     const [detail, setDetail] = useState(property || null)
@@ -119,6 +120,15 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             )
             return
         }
+
+        createNotification({
+            recipientDui: detail.owner_id,
+            senderDui: tenantDui,
+            process: 'Contracts',
+            title: `New contract request: ${detail.property_name}`,
+            description: 'A business requested to lease this property.',
+            contractId: data[0].contract_id,
+        })
 
         setRequestSuccess(true)
         setHasPendingRequest(true)

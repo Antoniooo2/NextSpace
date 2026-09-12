@@ -12,6 +12,7 @@ import BusinessPayments from '../components/dashboard/BusinessPayments'
 import OwnerPayments from '../components/dashboard/OwnerPayments'
 import OwnerContracts from '../components/dashboard/OwnerContracts'
 import BusinessContracts from '../components/dashboard/BusinessContracts'
+import Notifications from '../components/dashboard/Notifications'
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -22,6 +23,15 @@ export default function Dashboard() {
     )
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
+    const [unreadCount, setUnreadCount] = useState(0)
+
+    const loadUnreadCount = useCallback(async () => {
+        const { count } = await supabase
+            .from('notifications')
+            .select('notification_id', { count: 'exact', head: true })
+            .eq('read', false)
+        setUnreadCount(count || 0)
+    }, [])
 
     const loadUser = useCallback(async () => {
         const { data, error } = await supabase.auth.getUser()
@@ -36,6 +46,10 @@ export default function Dashboard() {
     useEffect(() => {
         loadUser()
     }, [loadUser])
+
+    useEffect(() => {
+        if (user) loadUnreadCount()
+    }, [user, section, loadUnreadCount])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -97,10 +111,11 @@ export default function Dashboard() {
                 )
             case 'notifications':
                 return (
-                    <ComingSoon
-                        icon="bi-bell"
-                        title="Notifications"
-                        description="You're all caught up. New activity on your account will show up here."
+                    <Notifications
+                        onNavigate={handleSectionChange}
+                        onUnreadCountChange={(next) =>
+                            setUnreadCount((prev) => (typeof next === 'function' ? next(prev) : next))
+                        }
                     />
                 )
             case 'advisor':
@@ -130,6 +145,7 @@ export default function Dashboard() {
             onLogout={handleLogout}
             search={search}
             onSearchChange={setSearch}
+            unreadCount={unreadCount}
         >
             {renderContent()}
         </DashboardLayout>

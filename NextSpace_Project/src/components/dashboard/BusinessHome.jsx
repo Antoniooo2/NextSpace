@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import PropertyCard from './PropertyCard'
-import { PROPERTY_TYPES } from './NewPropertyModal'
+import { PROPERTY_TYPES } from '../../lib/propertyTypes'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 
 const PAGE_SIZE = 6
