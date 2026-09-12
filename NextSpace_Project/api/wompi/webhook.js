@@ -11,9 +11,9 @@ const WOMPI_API_SECRET = process.env.WOMPI_CLIENT_SECRET
 
 function readRawBody(req) {
     return new Promise((resolve, reject) => {
-        let data = ''
-        req.on('data', (chunk) => { data += chunk })
-        req.on('end', () => resolve(data))
+        const chunks = []
+        req.on('data', (chunk) => { chunks.push(chunk) })
+        req.on('end', () => resolve(Buffer.concat(chunks)))
         req.on('error', reject)
     })
 }
@@ -32,16 +32,23 @@ export default async function handler(req, res) {
     const rawBody = await readRawBody(req)
 
     const signature = req.headers['wompi_hash'] || req.headers['wompi-hash']
-    const expected = crypto.createHmac('sha256', WOMPI_API_SECRET).update(rawBody, 'utf8').digest('hex')
+    const expected = crypto.createHmac('sha256', WOMPI_API_SECRET).update(rawBody).digest('hex')
 
-    if (!signature || signature.toLowerCase() !== expected.toLowerCase()) {
+    const expectedBuffer = Buffer.from(expected, 'hex')
+    const signatureBuffer = signature ? Buffer.from(signature.toLowerCase(), 'hex') : null
+    const isValidSignature =
+        signatureBuffer &&
+        signatureBuffer.length === expectedBuffer.length &&
+        crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+
+    if (!isValidSignature) {
         res.status(401).json({ error: 'Invalid signature.' })
         return
     }
 
     let payload
     try {
-        payload = JSON.parse(rawBody)
+        payload = JSON.parse(rawBody.toString('utf8'))
     } catch {
         res.status(400).json({ error: 'Invalid JSON.' })
         return
