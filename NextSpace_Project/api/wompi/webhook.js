@@ -59,7 +59,7 @@ export default async function handler(req, res) {
     const paymentId = Number(match[1])
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    const { error } = await admin
+    const { data: updatedRows, error } = await admin
         .from('payment')
         .update({
             status: 'Paid',
@@ -69,11 +69,36 @@ export default async function handler(req, res) {
         })
         .eq('payment_id', paymentId)
         .in('status', ['Pending', 'Late'])
+        .select(
+            'contract_id, amount, payment_date, contract:contract_id(tenant_dui, add_business!contract_property_id_fkey(property_name, owner_id))'
+        )
 
     if (error) {
         res.status(500).json({ received: true, updated: false })
         return
     }
 
-    res.status(200).json({ received: true, updated: true })
+    // The .in('status', ['Pending', 'Late']) above makes this update conditional: a
+    // retried webhook call for an already-Paid payment matches zero rows here, so the
+    // notification below only fires on the transition that actually paid it, once.
+    const paidPayment = updatedRows?.[0]
+    if (paidPayment?.contract) {
+        try {
+            const { error: notifyError } = await admin.from('notifications').insert({
+                recipient_dui: paidPayment.contract.add_business?.owner_id,
+                sender_dui: paidPayment.contract.tenant_dui,
+                process: 'Payments',
+                title: `Payment received: ${paidPayment.contract.add_business?.property_name || 'your property'}`,
+                description: `$${Number(paidPayment.amount).toLocaleString()} was paid on ${paidPayment.payment_date}.`,
+                contract_id: paidPayment.contract_id,
+            })
+            if (notifyError) {
+                console.error('Wompi webhook: failed to create payment notification', notifyError)
+            }
+        } catch (notifyError) {
+            console.error('Wompi webhook: failed to create payment notification', notifyError)
+        }
+    }
+
+    res.status(200).json({ received: true, updated: (updatedRows?.length ?? 0) > 0 })
 }
