@@ -17,6 +17,8 @@ export default function BusinessPayments({ user, onNavigate }) {
     const [payError, setPayError] = useState('')
     const [paying, setPaying] = useState(false)
     const [notice, setNotice] = useState(false)
+    const [returnState, setReturnState] = useState(null)
+    const [returnPaymentId, setReturnPaymentId] = useState(null)
 
     const loadPayments = async (contractId) => {
         const { data: paymentRows, error: paymentError } = await supabase
@@ -74,46 +76,114 @@ export default function BusinessPayments({ user, onNavigate }) {
         }
     }, [user.id])
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search)
+        if (params.get('wompi') !== 'return') return
+
+        const returnedPaymentId = Number(params.get('paymentId'))
+
+        params.delete('wompi')
+        params.delete('paymentId')
+        const cleanQuery = params.toString()
+        window.history.replaceState({}, '', `${window.location.pathname}${cleanQuery ? `?${cleanQuery}` : ''}`)
+
+        if (!returnedPaymentId) return
+
+        setReturnPaymentId(returnedPaymentId)
+
+        let cancelled = false
+        setReturnState('checking')
+
+        const poll = async (attemptsLeft) => {
+            const { data } = await supabase
+                .from('payment')
+                .select('status, contract_id')
+                .eq('payment_id', returnedPaymentId)
+                .single()
+
+            if (cancelled) return
+
+            if (data?.status === 'Paid') {
+                setReturnState('paid')
+                await loadPayments(data.contract_id)
+                return
+            }
+
+            if (attemptsLeft <= 0) {
+                setReturnState('pending')
+                return
+            }
+
+            setTimeout(() => poll(attemptsLeft - 1), 2000)
+        }
+
+        poll(6)
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    const checkPaymentAgain = async () => {
+        if (!returnPaymentId) return
+        setReturnState('checking')
+
+        const { data } = await supabase
+            .from('payment')
+            .select('status, contract_id')
+            .eq('payment_id', returnPaymentId)
+            .single()
+
+        if (data?.status === 'Paid') {
+            setReturnState('paid')
+            await loadPayments(data.contract_id)
+        } else {
+            setReturnState('pending')
+        }
+    }
+
+    const nextDue = [...payments]
+        .filter((p) => p.status === 'Pending' || p.status === 'Late')
+        .sort((a, b) => a.payment_date.localeCompare(b.payment_date))[0]
+
     const handlePayNow = async () => {
         if (!contract) return
 
         setPaying(true)
         setPayError('')
 
-        const { data, error } = await supabase
-            .from('payment')
-            .insert({
-                contract_id: contract.contract_id,
-                payment_date: new Date().toISOString().slice(0, 10),
-                amount: contract.monthly_rent,
-                payment_method: 'Credit Card',
-                status: 'Paid',
+        const { data: sessionData } = await supabase.auth.getSession()
+        const accessToken = sessionData?.session?.access_token
+
+        if (!accessToken) {
+            setPaying(false)
+            setPayError('Your session expired. Please sign in again.')
+            return
+        }
+
+        const body = nextDue ? { paymentId: nextDue.payment_id } : { contractId: contract.contract_id }
+
+        let result
+        try {
+            const response = await fetch('/api/wompi/create-payment-link', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json',
+                    authorization: `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify(body),
             })
-            .select()
-
-        setPaying(false)
-
-        if (error) {
-            setPayError(describeSupabaseError(error))
-            return
-        }
-        if (!data || data.length === 0) {
-            setPayError(
-                "The payment could not be recorded. This is usually caused by a permissions (row-level security) rule blocking it."
-            )
+            result = await response.json()
+            if (!response.ok || !result.url) {
+                throw new Error(result.error || 'Could not start the Wompi payment.')
+            }
+        } catch (err) {
+            setPaying(false)
+            setPayError(err.message || 'Could not start the Wompi payment. Please try again.')
             return
         }
 
-        createNotification({
-            recipientDui: contract.add_business?.owner_id,
-            senderDui: contract.tenant_dui,
-            process: 'Payments',
-            title: `Payment received: ${contract.add_business?.property_name || 'your property'}`,
-            description: `$${Number(contract.monthly_rent).toLocaleString()} was paid on ${data[0].payment_date}.`,
-            contractId: contract.contract_id,
-        })
-
-        await loadPayments(contract.contract_id)
+        window.location.href = result.url
     }
 
     if (loading) {
@@ -145,9 +215,6 @@ export default function BusinessPayments({ user, onNavigate }) {
 
     const property = contract.add_business
     const owner = property?.users
-    const nextDue = [...payments]
-        .filter((p) => p.status === 'Pending' || p.status === 'Late')
-        .sort((a, b) => a.payment_date.localeCompare(b.payment_date))[0]
 
     return (
         <>
@@ -162,6 +229,29 @@ export default function BusinessPayments({ user, onNavigate }) {
                     </button>
                 </div>
             </div>
+
+            {returnState === 'checking' && (
+                <div className="alert alert-info d-flex align-items-center gap-2 py-2" role="status">
+                    <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    Confirming your payment with Wompi...
+                </div>
+            )}
+            {returnState === 'paid' && (
+                <div className="alert alert-success d-flex align-items-center gap-2 py-2" role="status">
+                    <i className="bi bi-check-circle-fill"></i> Payment received. Thank you!
+                </div>
+            )}
+            {returnState === 'pending' && (
+                <div className="alert alert-warning d-flex align-items-center justify-content-between gap-2 py-2" role="status">
+                    <span>
+                        <i className="bi bi-hourglass-split"></i> We haven't confirmed this payment yet. It can take a
+                        minute for Wompi to notify us — check again in a moment.
+                    </span>
+                    <button type="button" className="ns-outline-btn" onClick={checkPaymentAgain}>
+                        Check again
+                    </button>
+                </div>
+            )}
 
             <div className="ns-pay-top-grid">
                 <div className="ns-pay-lease-card">
@@ -223,7 +313,7 @@ export default function BusinessPayments({ user, onNavigate }) {
                         <i className="bi bi-download"></i> Download receipt
                     </button>
                     <p className="ns-pay-simulation-note">
-                        <i className="bi bi-info-circle"></i> Simulated in-platform payment — no real bank charge occurs yet.
+                        <i className="bi bi-shield-lock"></i> Secure checkout powered by Wompi.
                     </p>
                 </div>
             </div>
