@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
+import { createNotification } from '../../lib/notifications'
 
-export default function AcceptContractModal({ contract, onClose, onAccepted }) {
+export default function AcceptContractModal({ contract, ownerDui, onClose, onAccepted }) {
     const [startDate, setStartDate] = useState('')
     const [endDate, setEndDate] = useState('')
     const [saving, setSaving] = useState(false)
@@ -59,6 +60,15 @@ export default function AcceptContractModal({ contract, onClose, onAccepted }) {
             )
             return
         }
+
+        createNotification({
+            recipientDui: contract.tenant_dui,
+            senderDui: ownerDui,
+            process: 'Contracts',
+            title: `Contract accepted: ${contract.add_business?.property_name || 'your lease'}`,
+            description: `Your lease is now active from ${startDate} to ${endDate}.`,
+            contractId: contract.contract_id,
+        })
 
         onAccepted(data[0])
     }

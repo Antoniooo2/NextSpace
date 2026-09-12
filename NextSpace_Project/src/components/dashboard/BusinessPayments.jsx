@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
+import { createNotification } from '../../lib/notifications'
 import NoticeModal from './NoticeModal'
 
 const STATUS_TAG = { Pending: 'tag-pending', Paid: 'tag-paid', Late: 'tag-late', Cancelled: 'tag-cancelled' }
 
 const CONTRACT_EMBED =
-    '*, add_business!contract_property_id_fkey(property_name, monthly_rent, users!add_business_owner_id_fkey(first_name,last_name))'
+    '*, add_business!contract_property_id_fkey(property_name, monthly_rent, owner_id, users!add_business_owner_id_fkey(first_name,last_name))'
 
 export default function BusinessPayments({ user, onNavigate }) {
     const [contract, setContract] = useState(null)
@@ -102,6 +103,15 @@ export default function BusinessPayments({ user, onNavigate }) {
             )
             return
         }
+
+        createNotification({
+            recipientDui: contract.add_business?.owner_id,
+            senderDui: contract.tenant_dui,
+            process: 'Payments',
+            title: `Payment received: ${contract.add_business?.property_name || 'your property'}`,
+            description: `$${Number(contract.monthly_rent).toLocaleString()} was paid on ${data[0].payment_date}.`,
+            contractId: contract.contract_id,
+        })
 
         await loadPayments(contract.contract_id)
     }

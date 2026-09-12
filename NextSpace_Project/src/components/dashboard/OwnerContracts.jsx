@@ -4,6 +4,7 @@ import { describeSupabaseError } from '../../lib/supabaseErrors'
 import NewContractModal from './NewContractModal'
 import { CONTRACT_STATUSES } from '../../lib/contractStatus'
 import AcceptContractModal from './AcceptContractModal'
+import { createNotification } from '../../lib/notifications'
 
 const CONTRACT_EMBED =
     '*, add_business!contract_property_id_fkey(property_name), users!contract_tenant_dui_fkey(first_name,last_name)'
@@ -126,6 +127,20 @@ export default function OwnerContracts({ user }) {
                 )
                 return
             }
+        }
+
+        if ((nextStatus === 'Cancelled' || nextStatus === 'Expired') && previous?.tenant_dui) {
+            createNotification({
+                recipientDui: previous.tenant_dui,
+                senderDui: ownerDui,
+                process: 'Contracts',
+                title: `Contract ${nextStatus.toLowerCase()}: ${previous.add_business?.property_name || 'your lease'}`,
+                description:
+                    nextStatus === 'Cancelled'
+                        ? 'The owner cancelled this lease agreement.'
+                        : 'This lease agreement has expired.',
+                contractId: contractId,
+            })
         }
 
         setUpdatingId(null)
@@ -294,6 +309,7 @@ export default function OwnerContracts({ user }) {
             {acceptTarget && (
                 <AcceptContractModal
                     contract={acceptTarget}
+                    ownerDui={ownerDui}
                     onClose={() => setAcceptTarget(null)}
                     onAccepted={handleAccepted}
                 />
