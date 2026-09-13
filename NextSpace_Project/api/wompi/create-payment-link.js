@@ -147,12 +147,32 @@ export default async function handler(req, res) {
                 .select('payment_id, contract_id, amount, status')
                 .single()
 
-            if (insertError || !inserted) {
+            if (insertError?.code === '23505') {
+                // Lost a race to a concurrent request for the same contract (the
+                // payment_one_pending_per_contract unique index rejected this insert
+                // because the other request's row already exists) -- fetch and reuse
+                // the winner's row instead of failing.
+                const { data: raceWinner, error: raceError } = await userClient
+                    .from('payment')
+                    .select('payment_id, contract_id, amount, status')
+                    .eq('contract_id', contract.contract_id)
+                    .in('status', ['Pending', 'Late'])
+                    .order('payment_date', { ascending: false })
+                    .limit(1)
+                    .maybeSingle()
+
+                if (raceError || !raceWinner) {
+                    res.status(500).json({ error: 'Could not create a pending payment.' })
+                    return
+                }
+
+                payment = { ...raceWinner, contract }
+            } else if (insertError || !inserted) {
                 res.status(500).json({ error: 'Could not create a pending payment.' })
                 return
+            } else {
+                payment = { ...inserted, contract }
             }
-
-            payment = { ...inserted, contract }
         }
     }
 
