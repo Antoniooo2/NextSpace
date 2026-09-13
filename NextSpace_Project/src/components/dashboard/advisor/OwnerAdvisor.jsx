@@ -5,6 +5,7 @@ import OwnerChart from './OwnerChart'
 import SuggestedChips from './SuggestedChips'
 
 const KICKOFF_MESSAGE = 'Give me a quick overview of my portfolio and tell me what needs attention first.'
+const HISTORY_LIMIT = 20
 
 function computeChips(intent) {
     if (intent === 'analyze' || intent === 'audit') {
@@ -20,6 +21,7 @@ function computeChips(intent) {
 }
 
 export default function OwnerAdvisor() {
+    const [historyLoaded, setHistoryLoaded] = useState(false)
     const [messages, setMessages] = useState([])
     const [chatLog, setChatLog] = useState([])
     const [chips, setChips] = useState([])
@@ -30,7 +32,66 @@ export default function OwnerAdvisor() {
     const scrollRef = useRef(null)
 
     useEffect(() => {
-        sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
+        let cancelled = false
+
+        const loadHistory = async () => {
+            const {
+                data: { user },
+            } = await supabase.auth.getUser()
+
+            if (cancelled) return
+            if (!user) {
+                setHistoryLoaded(true)
+                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
+                return
+            }
+
+            const { data, error: historyError } = await supabase
+                .from('advisor_messages')
+                .select('role, content, payload, created_at')
+                .eq('user_auth_id', user.id)
+                .order('created_at', { ascending: true })
+                .limit(HISTORY_LIMIT)
+
+            if (cancelled) return
+
+            if (historyError || !data || data.length === 0) {
+                setHistoryLoaded(true)
+                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
+                return
+            }
+
+            const loadedChatLog = []
+            data.forEach((row, index) => {
+                if (row.role === 'user') {
+                    const isSilentKickoff = index === 0 && row.content === KICKOFF_MESSAGE
+                    if (!isSilentKickoff) {
+                        loadedChatLog.push({ type: 'user', text: row.content })
+                    }
+                    return
+                }
+
+                const payload = row.payload || {}
+                loadedChatLog.push({
+                    type: 'assistant',
+                    text: row.content,
+                    draft: payload.draft || null,
+                    chart: payload.chart || null,
+                    stats: payload.stats || null,
+                    simulation: payload.simulation || null,
+                })
+            })
+
+            setMessages(data.map((row) => ({ role: row.role, content: row.content })))
+            setChatLog(loadedChatLog)
+            setHistoryLoaded(true)
+        }
+
+        loadHistory()
+
+        return () => {
+            cancelled = true
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
@@ -39,6 +100,17 @@ export default function OwnerAdvisor() {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
     }, [chatLog, loading])
+
+    const persistTurn = async (accessTokenUserId, userText, modelText, payload) => {
+        if (!accessTokenUserId) return
+        const { error: insertError } = await supabase.from('advisor_messages').insert([
+            { user_auth_id: accessTokenUserId, role: 'user', content: userText },
+            { user_auth_id: accessTokenUserId, role: 'model', content: modelText, payload },
+        ])
+        if (insertError) {
+            console.error('Advisor: could not save chat history', insertError)
+        }
+    }
 
     const sendTurn = async ({ userVisibleText, silent }) => {
         setError('')
@@ -52,6 +124,7 @@ export default function OwnerAdvisor() {
 
         const { data: sessionData } = await supabase.auth.getSession()
         const accessToken = sessionData?.session?.access_token
+        const userId = sessionData?.session?.user?.id
 
         if (!accessToken) {
             setLoading(false)
@@ -90,6 +163,13 @@ export default function OwnerAdvisor() {
                 },
             ])
             setChips(computeChips(result.intent))
+
+            persistTurn(userId, userVisibleText, result.reply, {
+                draft: result.draft || null,
+                chart: result.chart || null,
+                stats: result.stats || null,
+                simulation: result.simulation || null,
+            })
         } catch (err) {
             setError(err.message || 'Could not reach Rony. Please try again.')
         } finally {
@@ -120,6 +200,15 @@ export default function OwnerAdvisor() {
             // Clipboard access can be blocked by the browser; the text is still
             // selectable and readable in the draft box, so this is not fatal.
         }
+    }
+
+    if (!historyLoaded) {
+        return (
+            <div className="ns-dash-loading">
+                <div className="ns-dash-spinner" />
+                <p>Loading your conversation...</p>
+            </div>
+        )
     }
 
     return (

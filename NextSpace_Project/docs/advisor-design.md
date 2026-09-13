@@ -242,49 +242,66 @@ Vive en estado de React, no en localStorage.
 
 ## 7.1 Guardar las conversaciones
 
-Dos tablas nuevas.
+**Implementado con alcance reducido:** una sola conversación activa por
+usuario (retoma donde quedaste al volver o refrescar), no una lista tipo
+ChatGPT con varias conversaciones para elegir. Por eso, en vez de las dos
+tablas originalmente esbozadas (`advisor_conversations` +
+`advisor_messages` con `conversation_id`), se implementó una sola tabla: no
+hace falta agrupar por conversación si solo existe una por usuario.
 
 ```sql
-create table advisor_conversations (
-  conversation_id uuid primary key default gen_random_uuid(),
-  user_auth_id    uuid not null references auth.users(id) on delete cascade,
-  title           text,
-  created_at      timestamptz default now(),
-  updated_at      timestamptz default now()
+create table advisor_messages (
+  message_id   bigint generated always as identity primary key,
+  user_auth_id uuid not null references auth.users(id) on delete cascade,
+  role         text not null check (role in ('user', 'model')),
+  content      text not null,
+  payload      jsonb,
+  created_at   timestamptz not null default now()
 );
 
-create table advisor_messages (
-  message_id      uuid primary key default gen_random_uuid(),
-  conversation_id uuid not null references advisor_conversations(conversation_id)
-                  on delete cascade,
-  role            text not null check (role in ('user','model')),
-  content         text not null,
-  payload         jsonb,
-  created_at      timestamptz default now()
-);
+create index advisor_messages_user_created_idx
+  on advisor_messages (user_auth_id, created_at);
 ```
 
-**`payload` es el campo que importa.** Guarda el snapshot de ese turno: los
-resultados que se mostraron, el filtro vigente, qué se relajó, y los datos de
-la gráfica.
+RLS: `auth.uid() = user_auth_id` en select/insert/delete. Sin policy de
+update, porque nunca se edita un mensaje ya guardado.
 
-Sin `payload`, al reabrir una conversación vieja aparece solo el texto y las
+**`payload` es el campo que importa.** Guarda el snapshot completo del estado
+después de ese turno, no solo lo nuevo de ese turno:
+
+- Lado business: `{ isSearchTurn, relaxed, filter, results, highlight, chart }`.
+  `isSearchTurn` decide si al reconstruir el historial hay que volver a
+  mostrar la grilla de tarjetas para ese turno, o si fue una pregunta
+  (`explain`/`general`) que no trae resultados nuevos propios. `filter` y
+  `results` van completos (no solo lo que cambió) para no tener que mezclar
+  turnos viejos y nuevos al reconstruir.
+- Lado owner: `{ draft, chart, stats, simulation }`.
+
+Sin este snapshot completo, al recargar la página aparece solo el texto y las
 tarjetas de propiedades desaparecen. Y no se pueden recalcular, porque esa
 propiedad quizás ya está ocupada o cambió de precio. Con el snapshot, el
 historial queda coherente con lo que el usuario vio en su momento.
 
-RLS: una policy `FOR ALL` con `user_auth_id = auth.uid()` en
-`advisor_conversations`, y en `advisor_messages` scoped vía el
-`conversation_id` del dueño. Mismo patrón que `saved_properties`.
-
-**Título:** generarlo de las primeras palabras del primer mensaje del usuario,
-no pedírselo. Si se quiere algo más prolijo, una llamada extra al modelo, pero
-solo una vez por conversación.
+**El mensaje de arranque del owner** (`KICKOFF_MESSAGE`, el que dispara la
+apertura automática con el overview de cartera) se guarda como cualquier otro
+mensaje `user`, pero el frontend lo reconoce por su texto exacto en la
+primera posición y no lo vuelve a mostrar como burbuja al reconstruir --
+sigue pareciendo que la conversación arranca directo con la respuesta de
+Rony, incluso después de recargar.
 
 **Límite de historial:** el historial se manda completo en cada request, así
-que una conversación larga empieza a costar tokens y a tardar. Mandar los
-últimos 20 mensajes como máximo. Si hace falta más contexto, resumir los viejos
-en una sola línea de sistema. No mandar 50 mensajes nunca.
+que una conversación larga empieza a costar tokens y a tardar. Se carga y se
+manda un máximo de los últimos 20 mensajes (`HISTORY_LIMIT` en el frontend,
+`MAX_HISTORY_MESSAGES` en `api/advisor.js`). No mandar 50 mensajes nunca.
+
+**Nota de implementación (bug real encontrado):** el primer intento guardaba
+el payload leyéndolo de una variable asignada dentro del callback de
+`setChatLog(prev => ...)`, asumiendo que React ejecuta ese callback en el
+momento del llamado. React no lo hace así: el callback corre más tarde,
+así que el valor se leía como `null` un instante después. Se resolvió
+manteniendo un `useRef` que espeja `chatLog` y se actualiza de forma
+síncrona, para poder construir el array completo del turno como un valor
+plano antes de llamar a `setChatLog` y a la función que persiste.
 
 ---
 

@@ -19,6 +19,8 @@ const RELAXED_LABELS = {
     property_type_other: 'included other property types',
 }
 
+const HISTORY_LIMIT = 20
+
 function computeChips(lastTurn) {
     if (!lastTurn) return []
 
@@ -38,8 +40,19 @@ function computeChips(lastTurn) {
     return ['Something cheaper', 'What should I check before signing?']
 }
 
+function buildResultsBlock(payload) {
+    return {
+        type: 'results',
+        items: payload.results || [],
+        highlight: payload.highlight || [],
+        chart: payload.chart || null,
+        budgetMax: payload.filter?.budget_max ?? null,
+    }
+}
+
 export default function BusinessAdvisor({ onViewProperty }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
+    const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
     const [filter, setFilter] = useState(null)
     const [results, setResults] = useState([])
@@ -51,6 +64,12 @@ export default function BusinessAdvisor({ onViewProperty }) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const scrollRef = useRef(null)
+    // React does not run a setState updater synchronously, so anything computed
+    // inside one (like the highlight-move logic below) is not readable right
+    // after the call. This ref mirrors chatLog so sendTurn can build the next
+    // array as a plain synchronous value instead, and read the result
+    // immediately for persistTurn.
+    const chatLogRef = useRef([])
 
     useEffect(() => {
         let cancelled = false
@@ -70,10 +89,92 @@ export default function BusinessAdvisor({ onViewProperty }) {
     }, [])
 
     useEffect(() => {
+        let cancelled = false
+
+        const loadHistory = async () => {
+            const {
+                data: { user },
+            } = await supabase.auth.getUser()
+
+            if (cancelled) return
+            if (!user) {
+                setHistoryLoaded(true)
+                return
+            }
+
+            const { data, error: historyError } = await supabase
+                .from('advisor_messages')
+                .select('role, content, payload, created_at')
+                .eq('user_auth_id', user.id)
+                .order('created_at', { ascending: true })
+                .limit(HISTORY_LIMIT)
+
+            if (cancelled) return
+
+            if (historyError || !data || data.length === 0) {
+                setHistoryLoaded(true)
+                return
+            }
+
+            const loadedChatLog = []
+            let lastFilter = null
+            let lastResults = []
+            let lastRelaxed = []
+
+            for (const row of data) {
+                if (row.role === 'user') {
+                    loadedChatLog.push({ type: 'user', text: row.content })
+                    continue
+                }
+
+                const payload = row.payload || {}
+                loadedChatLog.push({
+                    type: 'assistant',
+                    text: row.content,
+                    relaxed: payload.isSearchTurn ? payload.relaxed || [] : [],
+                })
+                if (payload.isSearchTurn) {
+                    loadedChatLog.push(buildResultsBlock(payload))
+                }
+
+                lastFilter = payload.filter ?? null
+                lastResults = payload.results || []
+                lastRelaxed = payload.relaxed || []
+            }
+
+            setMessages(data.map((row) => ({ role: row.role, content: row.content })))
+            chatLogRef.current = loadedChatLog
+            setChatLog(loadedChatLog)
+            setFilter(lastFilter)
+            setResults(lastResults)
+            setRelaxed(lastRelaxed)
+            setFormOpen(lastFilter === null)
+            setHistoryLoaded(true)
+        }
+
+        loadHistory()
+
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
     }, [chatLog, loading])
+
+    const persistTurn = async (accessTokenUserId, userText, modelText, payload) => {
+        if (!accessTokenUserId) return
+        const { error: insertError } = await supabase.from('advisor_messages').insert([
+            { user_auth_id: accessTokenUserId, role: 'user', content: userText },
+            { user_auth_id: accessTokenUserId, role: 'model', content: modelText, payload },
+        ])
+        if (insertError) {
+            console.error('Advisor: could not save chat history', insertError)
+        }
+    }
 
     const sendTurn = async ({ formFilter, userVisibleText }) => {
         if (loading) return
@@ -84,10 +185,12 @@ export default function BusinessAdvisor({ onViewProperty }) {
 
         const nextMessages = [...messages, { role: 'user', content: userVisibleText }]
         setMessages(nextMessages)
-        setChatLog((prev) => [...prev, { type: 'user', text: userVisibleText }])
+        chatLogRef.current = [...chatLogRef.current, { type: 'user', text: userVisibleText }]
+        setChatLog(chatLogRef.current)
 
         const { data: sessionData } = await supabase.auth.getSession()
         const accessToken = sessionData?.session?.access_token
+        const userId = sessionData?.session?.user?.id
 
         if (!accessToken) {
             setLoading(false)
@@ -123,38 +226,50 @@ export default function BusinessAdvisor({ onViewProperty }) {
             setRelaxed(result.relaxed ?? [])
 
             const isSearch = result.intent === 'search' || result.intent === 'refine'
-            setChatLog((prev) => {
-                let next = [
-                    ...prev,
-                    { type: 'assistant', text: result.reply, relaxed: isSearch ? result.relaxed || [] : [] },
-                ]
-                if (isSearch) {
-                    next.push({
-                        type: 'results',
-                        items: result.results || [],
-                        highlight: result.highlight || [],
-                        chart: result.chart || null,
-                        budgetMax: result.filter?.budget_max ?? null,
-                    })
-                } else if (result.highlight?.length > 0) {
-                    // An explain/general turn can still point back at a result
-                    // already on screen ("why do you recommend that one?"). Move
-                    // the pick to the most recent results block instead of
-                    // leaving whatever was highlighted during the original search.
-                    const lastResultsIndex = [...next].reverse().findIndex((item) => item.type === 'results')
-                    if (lastResultsIndex !== -1) {
-                        const index = next.length - 1 - lastResultsIndex
-                        const targetItem = next[index]
-                        const validIds = new Set(targetItem.items.map((p) => p.property_id))
-                        const newHighlight = result.highlight.filter((id) => validIds.has(id))
-                        if (newHighlight.length > 0) {
-                            next = [...next]
-                            next[index] = { ...targetItem, highlight: newHighlight }
-                        }
+
+            let next = [
+                ...chatLogRef.current,
+                { type: 'assistant', text: result.reply, relaxed: isSearch ? result.relaxed || [] : [] },
+            ]
+
+            let finalHighlight = result.highlight || []
+            let finalResults = result.results || []
+            let finalChart = result.chart || null
+
+            if (isSearch) {
+                next.push(buildResultsBlock(result))
+            } else if (result.highlight?.length > 0) {
+                // An explain/general turn can still point back at a result
+                // already on screen ("why do you recommend that one?"). Move
+                // the pick to the most recent results block instead of
+                // leaving whatever was highlighted during the original search.
+                const lastResultsIndex = [...next].reverse().findIndex((item) => item.type === 'results')
+                if (lastResultsIndex !== -1) {
+                    const index = next.length - 1 - lastResultsIndex
+                    const targetItem = next[index]
+                    const validIds = new Set(targetItem.items.map((p) => p.property_id))
+                    const newHighlight = result.highlight.filter((id) => validIds.has(id))
+                    if (newHighlight.length > 0) {
+                        next = [...next]
+                        next[index] = { ...targetItem, highlight: newHighlight }
+                        finalHighlight = newHighlight
+                        finalResults = targetItem.items
+                        finalChart = targetItem.chart
                     }
                 }
-                return next
-            })
+            }
+
+            const persistPayload = {
+                isSearchTurn: isSearch,
+                relaxed: result.relaxed || [],
+                filter: result.filter ?? null,
+                results: finalResults,
+                highlight: finalHighlight,
+                chart: finalChart,
+            }
+
+            chatLogRef.current = next
+            setChatLog(next)
 
             setChips(
                 computeChips({
@@ -163,6 +278,8 @@ export default function BusinessAdvisor({ onViewProperty }) {
                     relaxedCount: (result.relaxed || []).length,
                 })
             )
+
+            persistTurn(userId, userVisibleText, result.reply, persistPayload)
         } catch (err) {
             setError(err.message || 'Could not reach Rony. Please try again.')
         } finally {
@@ -185,6 +302,15 @@ export default function BusinessAdvisor({ onViewProperty }) {
     const handleChipPick = (text) => {
         setChips([])
         sendTurn({ userVisibleText: text })
+    }
+
+    if (!historyLoaded) {
+        return (
+            <div className="ns-dash-loading">
+                <div className="ns-dash-spinner" />
+                <p>Loading your conversation...</p>
+            </div>
+        )
     }
 
     return (
