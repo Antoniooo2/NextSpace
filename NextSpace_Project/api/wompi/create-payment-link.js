@@ -5,6 +5,7 @@ const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const WOMPI_CLIENT_ID = process.env.WOMPI_CLIENT_ID
 const WOMPI_CLIENT_SECRET = process.env.WOMPI_CLIENT_SECRET
+const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL
 
 const CONTRACT_EMBED = 'contract_id, monthly_rent, tenant_dui, add_business!contract_property_id_fkey(property_name)'
 
@@ -37,6 +38,11 @@ async function getWompiAccessToken() {
 }
 
 function getBaseUrl(req) {
+    // urlWebhook and urlRedirect below get built from this. Prefer an explicit,
+    // trusted origin over x-forwarded-host/host, which a caller can set on the
+    // request and which this handler has no way to validate on its own.
+    if (PUBLIC_BASE_URL) return PUBLIC_BASE_URL.replace(/\/+$/, '')
+
     const proto = req.headers['x-forwarded-proto'] || 'https'
     const host = req.headers['x-forwarded-host'] || req.headers.host
     return `${proto}://${host}`
@@ -109,24 +115,65 @@ export default async function handler(req, res) {
             return
         }
 
-        const { data: inserted, error: insertError } = await userClient
+        const { data: existingPending, error: existingError } = await userClient
             .from('payment')
-            .insert({
-                contract_id: contract.contract_id,
-                payment_date: new Date().toISOString().slice(0, 10),
-                amount: contract.monthly_rent,
-                payment_method: 'Credit Card',
-                status: 'Pending',
-            })
             .select('payment_id, contract_id, amount, status')
-            .single()
+            .eq('contract_id', contract.contract_id)
+            .in('status', ['Pending', 'Late'])
+            .order('payment_date', { ascending: false })
+            .limit(1)
+            .maybeSingle()
 
-        if (insertError || !inserted) {
-            res.status(500).json({ error: 'Could not create a pending payment.' })
+        if (existingError) {
+            res.status(500).json({ error: 'Could not check for an existing pending payment.' })
             return
         }
 
-        payment = { ...inserted, contract }
+        if (existingPending) {
+            // Reuse the existing Pending/Late payment instead of creating a new one, so
+            // retrying an interrupted checkout (page reload, closed Wompi tab, etc.)
+            // doesn't leave behind duplicate pending payment rows for the same contract.
+            payment = { ...existingPending, contract }
+        } else {
+            const { data: inserted, error: insertError } = await userClient
+                .from('payment')
+                .insert({
+                    contract_id: contract.contract_id,
+                    payment_date: new Date().toISOString().slice(0, 10),
+                    amount: contract.monthly_rent,
+                    payment_method: 'Credit Card',
+                    status: 'Pending',
+                })
+                .select('payment_id, contract_id, amount, status')
+                .single()
+
+            if (insertError?.code === '23505') {
+                // Lost a race to a concurrent request for the same contract (the
+                // payment_one_pending_per_contract unique index rejected this insert
+                // because the other request's row already exists) -- fetch and reuse
+                // the winner's row instead of failing.
+                const { data: raceWinner, error: raceError } = await userClient
+                    .from('payment')
+                    .select('payment_id, contract_id, amount, status')
+                    .eq('contract_id', contract.contract_id)
+                    .in('status', ['Pending', 'Late'])
+                    .order('payment_date', { ascending: false })
+                    .limit(1)
+                    .maybeSingle()
+
+                if (raceError || !raceWinner) {
+                    res.status(500).json({ error: 'Could not create a pending payment.' })
+                    return
+                }
+
+                payment = { ...raceWinner, contract }
+            } else if (insertError || !inserted) {
+                res.status(500).json({ error: 'Could not create a pending payment.' })
+                return
+            } else {
+                payment = { ...inserted, contract }
+            }
+        }
     }
 
     const propertyName = payment.contract?.add_business?.property_name || 'NextSpace rent'
@@ -173,7 +220,14 @@ export default async function handler(req, res) {
     const link = await wompiRes.json()
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    await adminClient.from('payment').update({ wompi_link_id: link.idEnlace }).eq('payment_id', payment.payment_id)
+    const { error: linkIdError } = await adminClient
+        .from('payment')
+        .update({ wompi_link_id: link.idEnlace })
+        .eq('payment_id', payment.payment_id)
+
+    if (linkIdError) {
+        console.error('Wompi create-payment-link: failed to store wompi_link_id', linkIdError)
+    }
 
     res.status(200).json({ url: link.urlEnlace, paymentId: payment.payment_id })
 }
