@@ -1,15 +1,14 @@
-<svg viewBox="0 0 100 100" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <clipPath id="ronyHairClip">
-      <path d="M24.5 58 C23 40 33 27 50 27 C65 27 76 36 77.5 50 C74 42 67 38 60 39 C54 40 50 44 45 45 C37 46 29 50 24.5 58 Z" />
-    </clipPath>
-  </defs>
-  <circle cx="50" cy="50" r="50" fill="#2f5fe0" />
-  <ellipse cx="50" cy="56" rx="25.5" ry="28" fill="#eef3fd" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Rony">
+  <clipPath id="ronyHairClip">
+    <path d="M7 34 A25 25 0 0 1 57 34 L56 30.5 C45 17.5 30 21.5 14 40 Z"></path>
+  </clipPath>
+  <circle cx="32" cy="32" r="32" fill="#93AFDA"></circle>
+  <circle cx="32" cy="34" r="25" fill="#F5F7FA"></circle>
+  <path d="M7 34 A25 25 0 0 1 57 34 L56 30.5 C45 17.5 30 21.5 14 40 Z" fill="#0F2A52"></path>
   <g clip-path="url(#ronyHairClip)">
-    <rect x="0" y="0" width="100" height="100" fill="#0f1c3f" />
+    <path d="M52 28 C43 19.5 31 23.5 16 38.5" fill="none" stroke="#4A7FAE" stroke-width="3.6" stroke-linecap="round"></path>
   </g>
-  <rect x="38.5" y="56" width="7" height="10.5" rx="3.5" fill="#0f1c3f" />
-  <rect x="54.5" y="56" width="7" height="10.5" rx="3.5" fill="#0f1c3f" />
-  <path d="M42 73 Q50 79 58 73" fill="none" stroke="#0f1c3f" stroke-width="4" stroke-linecap="round" />
+  <rect x="20" y="36" width="6" height="10" rx="3" fill="#0B1F3D"></rect>
+  <rect x="38" y="36" width="6" height="10" rx="3" fill="#0B1F3D"></rect>
+  <path d="M25 50 Q32 56.5 39 50" fill="none" stroke="#0B1F3D" stroke-width="4" stroke-linecap="round"></path>
 </svg>
