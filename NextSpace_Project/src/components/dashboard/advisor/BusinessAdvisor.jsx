@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
 import RonyAvatar from '../../RonyAvatar'
 import AdvisorForm from './AdvisorForm'
+import BusinessChart from './BusinessChart'
 import FilterPill from './FilterPill'
 import PropertyResultCard from './PropertyResultCard'
 import SuggestedChips from './SuggestedChips'
@@ -36,7 +37,7 @@ function computeChips(lastTurn) {
     return ['Something cheaper', 'What should I check before signing?']
 }
 
-export default function BusinessAdvisor() {
+export default function BusinessAdvisor({ onViewProperty }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [formOpen, setFormOpen] = useState(true)
     const [filter, setFilter] = useState(null)
@@ -131,6 +132,8 @@ export default function BusinessAdvisor() {
                         type: 'results',
                         items: result.results || [],
                         highlight: result.highlight || [],
+                        chart: result.chart || null,
+                        budgetMax: result.filter?.budget_max ?? null,
                     })
                 }
                 return next
@@ -252,14 +255,18 @@ export default function BusinessAdvisor() {
                         if (item.type === 'results') {
                             if (item.items.length === 0) return null
                             return (
-                                <div key={i} className="advisor-results-grid">
-                                    {item.items.map((property) => (
-                                        <PropertyResultCard
-                                            key={property.property_id}
-                                            property={property}
-                                            isHighlighted={item.highlight.includes(property.property_id)}
-                                        />
-                                    ))}
+                                <div key={i}>
+                                    <BusinessChart chart={item.chart} results={item.items} budgetMax={item.budgetMax} />
+                                    <div className="advisor-results-grid">
+                                        {item.items.map((property) => (
+                                            <PropertyResultCard
+                                                key={property.property_id}
+                                                property={property}
+                                                isHighlighted={item.highlight.includes(property.property_id)}
+                                                onView={onViewProperty ? () => onViewProperty(property) : undefined}
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             )
                         }

@@ -119,7 +119,7 @@ export default function Dashboard() {
                     />
                 )
             case 'advisor':
-                return <AdvisorRouter accountType={accountType} />
+                return <AdvisorRouter accountType={accountType} onViewProperty={setViewingProperty} />
             default:
                 return accountType === 'property-owner' ? (
                     <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />

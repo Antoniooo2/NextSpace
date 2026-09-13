@@ -17,7 +17,7 @@ export default function FilterPill({ filter, servicesCatalog, onEdit }) {
     return (
         <div className="advisor-pill">
             <i className="bi bi-sliders"></i>
-            <span className="advisor-pill-text">{parts.join(' · ')}</span>
+            <span className="advisor-pill-text">{parts.join(' - ')}</span>
             <button type="button" className="advisor-pill-edit" onClick={onEdit}>
                 <i className="bi bi-pencil"></i> Edit
             </button>

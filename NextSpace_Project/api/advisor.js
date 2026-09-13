@@ -98,6 +98,10 @@ the data provided.
 4. If they are asking general leasing questions, answer from your own
 knowledge without citing platform data.
 
+After a search that returns two or more results, set chart to "budget_fit" so
+the user can see rent against their budget visually. Leave chart null for a
+single result, an explanation, or a general question.
+
 Keep replies short. Two or three sentences unless they ask for detail.
 Write in English.
 
@@ -169,7 +173,10 @@ const BUSINESS_RESPONSE_SCHEMA = {
         },
         missing: { type: 'ARRAY', items: { type: 'STRING' } },
         highlight: { type: 'ARRAY', items: { type: 'INTEGER' } },
-        chart: { type: 'STRING', nullable: true, enum: ['occupancy', 'income_by_month', 'payment_status', 'budget_fit'] },
+        // Only budget_fit applies here: the other three chart types are
+        // portfolio-owner concepts (occupancy, income, payment status) that a
+        // business searching for space has no data for.
+        chart: { type: 'STRING', nullable: true, enum: ['budget_fit'] },
     },
     propertyOrdering: ['reply', 'intent', 'filter', 'missing', 'highlight', 'chart'],
 }

@@ -271,11 +271,28 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
+}
+
+.advisor-prop-card:hover {
+  border-color: var(--ns-blue-accent);
+}
+
+.advisor-prop-card:focus-visible {
+  outline: 2px solid var(--ns-blue-accent);
+  outline-offset: 2px;
 }
 
 .advisor-prop-card-pick {
   border-color: var(--ns-blue-accent);
   box-shadow: 0 0 0 2px var(--ns-blue-bg);
+}
+
+.advisor-prop-services {
+  margin: 6px 0 0;
+  font-size: 10.5px;
+  color: var(--ns-text-muted);
+  line-height: 1.4;
 }
 
 .advisor-prop-media {
@@ -418,9 +435,8 @@
 
 .advisor-chart-bars {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px;
-  height: 100px;
 }
 
 .advisor-chart-col {
@@ -437,11 +453,23 @@
   color: var(--ns-navy);
 }
 
+.advisor-chart-bar-track {
+  height: 90px;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
 .advisor-chart-bar {
   width: 100%;
   max-width: 40px;
   border-radius: 5px 5px 0 0;
   background: var(--ns-blue-accent);
+}
+
+.advisor-chart-col-emphasis .advisor-chart-bar {
+  background: var(--ns-navy);
 }
 
 .advisor-chart-label {
