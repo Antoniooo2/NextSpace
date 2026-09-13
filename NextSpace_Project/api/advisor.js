@@ -380,6 +380,11 @@ export default async function handler(req, res) {
     }
 
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !GEMINI_API_KEY) {
+        console.error('Advisor: missing env vars', {
+            VITE_SUPABASE_URL: Boolean(SUPABASE_URL),
+            VITE_SUPABASE_PUBLISHABLE_KEY: Boolean(SUPABASE_ANON_KEY),
+            GEMINI_API_KEY: Boolean(GEMINI_API_KEY),
+        })
         res.status(500).json({ error: 'Server is missing Gemini/Supabase configuration.' })
         return
     }
