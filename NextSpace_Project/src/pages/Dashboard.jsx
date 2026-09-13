@@ -5,7 +5,7 @@ import DashboardLayout from '../components/dashboard/DashboardLayout'
 import BusinessHome from '../components/dashboard/BusinessHome'
 import OwnerHome from '../components/dashboard/OwnerHome'
 import ProfileView from '../components/dashboard/ProfileView'
-import AIAdvisor from '../components/dashboard/AIAdvisor'
+import AdvisorRouter from '../components/dashboard/advisor/AdvisorRouter'
 import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
 import '../components/dashboard/dashboard.css'
 import BusinessPayments from '../components/dashboard/BusinessPayments'
@@ -119,7 +119,7 @@ export default function Dashboard() {
                     />
                 )
             case 'advisor':
-                return <AIAdvisor accountType={accountType} />
+                return <AdvisorRouter accountType={accountType} />
             default:
                 return accountType === 'property-owner' ? (
                     <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />
