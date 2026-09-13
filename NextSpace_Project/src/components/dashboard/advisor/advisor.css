@@ -366,6 +366,90 @@
   cursor: not-allowed;
 }
 
+/* Drafted message */
+
+.advisor-draft {
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.advisor-draft p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.advisor-draft-copy {
+  background: #fff;
+  border: 1.5px solid var(--ns-border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ns-navy);
+  cursor: pointer;
+}
+
+.advisor-draft-copy:hover {
+  border-color: var(--ns-blue-accent);
+}
+
+/* Chart */
+
+.advisor-chart {
+  margin-top: 10px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 10px;
+  padding: 14px;
+  max-width: 360px;
+}
+
+.advisor-chart h5 {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: var(--ns-navy);
+}
+
+.advisor-chart-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  height: 100px;
+}
+
+.advisor-chart-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+}
+
+.advisor-chart-value {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ns-navy);
+}
+
+.advisor-chart-bar {
+  width: 100%;
+  max-width: 40px;
+  border-radius: 5px 5px 0 0;
+  background: var(--ns-blue-accent);
+}
+
+.advisor-chart-label {
+  font-size: 10px;
+  color: var(--ns-text-muted);
+  text-align: center;
+}
+
 /* Composer */
 
 .advisor-composer {

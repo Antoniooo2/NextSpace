@@ -462,3 +462,169 @@ Requisitos:
 5. **Gráficas.** Calculadas en el código, elegidas por el modelo.
 
 Cada paso deja algo que funciona. Se puede parar en el 3 y ya hay producto.
+
+---
+
+## 13. Lado owner: contrato e implementacion
+
+Adenda escrita al construir el lado owner, despues de que el lado business ya
+funcionaba en produccion. Mismo principio que la seccion 2: el codigo calcula,
+el modelo comenta. La diferencia con business es que aca casi todos los datos
+ya se conocen de entrada (no hay busqueda con filtro dinamico), asi que la
+mayoria de los turnos son de una sola llamada. Solo `simulate` necesita dos.
+
+### 13.1 Alcance de esta pasada
+
+Cuatro capacidades, elegidas por relacion esfuerzo/impacto:
+
+1. **Prioridad de cartera** (ya estaba en la seccion 1): ocupacion, mora,
+   contratos por vencer, auditoria de listings incompletos.
+2. **Diagnostico de vacancia correlacionado**: el codigo calcula si las
+   propiedades vacias comparten un patron (mismo tipo, sin fotos, precio por
+   encima de la mediana de la plataforma para ese tipo), el modelo lo explica
+   en una frase.
+3. **Redactor de comunicaciones**: el owner pide un recordatorio de pago o de
+   renovacion para un inquilino/contrato especifico. El modelo redacta el
+   texto usando los datos reales del contrato, listo para copiar.
+4. **Riesgo de mora por inquilino**: en vez de solo listar quien debe, el
+   codigo calcula el historial de atrasos por inquilino (a partir de
+   `payment.status = 'Late'` y dias de atraso), y el modelo prioriza a quien
+   contactar primero.
+5. **Simulador "que pasaria si"**: el owner propone un cambio de renta
+   hipotetico. El codigo hace el calculo real (nunca el modelo), el modelo
+   narra el resultado.
+
+No entran en esta pasada: comparacion completa contra la plataforma como
+feature independiente (el diagnostico de vacancia ya cubre el caso principal)
+ni el asistente de redaccion para listings nuevos (vive en el flujo de crear
+propiedad, no en el chat del advisor).
+
+### 13.2 Verificado por SQL antes de codear
+
+- `contract.status` CHECK: `Pending, Active, Expired, Cancelled`.
+- `payment.status` CHECK: `Pending, Paid, Late, Cancelled`.
+- `payment.payment_date` es NOT NULL: funciona como fecha de vencimiento del
+  ciclo, no solo como fecha de pago efectivo. No hay trigger que pase
+  `Pending` a `Late` solo; el estado `Late` ya viene seteado correctamente en
+  los datos reales (verificado: la unica fila `Late` de hoy tiene
+  `payment_date` de hace 14 dias, consistente). Los dias de atraso se calculan
+  como `hoy - payment_date` sobre filas en `Late`.
+- `contract.end_date` existe y tiene datos reales; `end_date - current_date`
+  da los dias que faltan, funciona para filtrar contratos por vencer en 30/60
+  dias.
+- RLS en `contract` y `payment`: el owner puede leer (SELECT) contratos y
+  pagos de sus propias propiedades via la cadena
+  `add_business.owner_id = users.dui`, igual que ya usa `create-payment-link.js`.
+  Confirmado con el JWT del owner, sin service_role.
+
+### 13.3 Contrato JSON (owner)
+
+Distinto al de business: no hay `filter` de busqueda, hay `simulation_request`
+y `draft`.
+
+```json
+{
+  "reply": "Texto que se muestra al usuario",
+  "intent": "analyze",
+  "simulation_request": {
+    "property_id": 12,
+    "new_rent": 350,
+    "rent_delta_percent": null
+  },
+  "draft": null,
+  "highlight_property_id": 12,
+  "chart": "occupancy"
+}
+```
+
+| Campo | Tipo | Para que |
+|---|---|---|
+| `reply` | string | Lo unico que se renderiza como texto |
+| `intent` | enum | `analyze`, `audit`, `draft_message`, `simulate`, `general`, `out_of_scope` |
+| `simulation_request` | object o null | Solo cuando `intent` es `simulate`. `new_rent` o `rent_delta_percent`, no los dos |
+| `draft` | string o null | El texto redactado, solo cuando `intent` es `draft_message` |
+| `highlight_property_id` | integer o null | Que propiedad destacar en la respuesta |
+| `chart` | enum o null | `occupancy`, `income_by_month`, `payment_status`, `budget_fit` |
+
+`intent`:
+
+- `analyze`: pregunta general de cartera, se responde con las estadisticas ya
+  calculadas que van en el contexto. Una llamada.
+- `audit`: pregunta sobre calidad de listings. Una llamada, usa la auditoria
+  ya calculada.
+- `draft_message`: pide redactar un mensaje para un inquilino/contrato. El
+  contexto ya trae todos los contratos con sus datos, asi que el modelo
+  redacta directo. Una llamada.
+- `simulate`: propone un cambio de renta. El modelo NO calcula el impacto,
+  solo extrae que propiedad y que cambio. Dos llamadas (ver 13.4).
+- `general`: duda de arrendamiento que no depende de datos de la plataforma.
+- `out_of_scope`: fuera de tema.
+
+### 13.4 Secuencia de llamadas para `simulate`
+
+Igual patron que business:
+
+```
+usuario -> [llamada 1: entender] -> simulation_request
+                                       |
+                                       v
+                             codigo calcula el impacto real
+                             (renta actual vs nueva, delta mensual
+                              y anual, sobre ESTA propiedad)
+                                       |
+                                       v
+            [llamada 2: narrar] <------+
+                      |
+                      v
+             reply -> pantalla
+```
+
+El calculo es aritmetica simple sobre datos reales del owner (su propia
+renta actual contra la propuesta), nunca una comparacion de mercado. Si
+`property_id` no es una propiedad del owner, el codigo no calcula nada y
+pide aclaracion en la llamada 2.
+
+Para `analyze`, `audit`, `draft_message`, `general` y `out_of_scope` alcanza
+una sola llamada porque el contexto ya trae todo: no hay nada que el codigo
+tenga que ir a buscar despues de la primera respuesta del modelo.
+
+### 13.5 Datos que el codigo calcula (contexto para toda llamada)
+
+Todo con el JWT del owner, nunca con service_role.
+
+**Estadisticas generales:**
+- Conteo de propiedades por `availability` (`Available`, `Occupied`, `Reserved`).
+- Conteo de contratos por `status`.
+- Pagos `Late`: cuantos y monto total, con dias de atraso por cada uno.
+- Contratos `Active` con `end_date` dentro de 30 y 60 dias.
+- Renta promedio de las propiedades del owner.
+
+**Auditoria de listings** (una fila por propiedad del owner):
+- Tiene fotos (si/no, cuantas).
+- Largo de la descripcion (para detectar "9 palabras" como en el prototipo).
+- Cuantos servicios cargados.
+- Tiene `municipality` y `monthly_rent` (sin `monthly_rent` la propiedad no
+  puede recibir pedidos, es el caso mas grave).
+
+**Diagnostico de vacancia** (solo si hay propiedades `Available` sin contrato
+activo): para cada una, si comparte `property_type` con otra vacia, y si su
+`monthly_rent` esta por encima de la mediana de esa `property_type` en TODA
+la plataforma (no solo las del owner) -- esto es dato de plataforma, no de
+mercado externo, permitido por la seccion 1.
+
+**Riesgo de mora por inquilino**: por cada `tenant_dui` con al menos un pago
+`Late` historico, cuantos pagos `Late` tuvo en total sobre sus pagos totales,
+y el mas reciente.
+
+**Contratos para redactar mensajes**: lista compacta de contratos activos con
+tenant, propiedad, renta, `end_date`, y si tiene algun pago `Pending`/`Late`
+vigente -- para que `draft_message` tenga de donde sacar los datos sin
+inventar nada.
+
+### 13.6 Graficas
+
+Mismo principio que la seccion 9: los datos los calcula el codigo, el modelo
+solo elige cual mostrar via `chart`. Reusa las cuatro ya definidas
+(`occupancy`, `income_by_month`, `payment_status`, `budget_fit` -- este
+ultimo se reusa para mostrar el resultado de una simulacion, renta actual
+contra la propuesta).
