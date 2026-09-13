@@ -30,6 +30,13 @@
   font-weight: 500;
 }
 
+.advisor-edit-form {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
 .advisor-pill-edit {
   margin-left: auto;
   background: none;

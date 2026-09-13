@@ -71,7 +71,7 @@ export default function BusinessAdvisor() {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
-    }, [chatLog, loading, formOpen])
+    }, [chatLog, loading])
 
     const sendTurn = async ({ formFilter, userVisibleText }) => {
         if (loading) return
@@ -177,12 +177,22 @@ export default function BusinessAdvisor() {
             </div>
 
             <div className="advisor-shell">
-                {filter && (
+                {filter && !formOpen && (
                     <FilterPill
                         filter={filter}
                         servicesCatalog={servicesCatalog}
                         onEdit={() => setFormOpen(true)}
                     />
+                )}
+
+                {filter && formOpen && (
+                    <div className="advisor-edit-form">
+                        <AdvisorForm
+                            initialFilter={filter}
+                            servicesCatalog={servicesCatalog}
+                            onSubmit={handleFormSubmit}
+                        />
+                    </div>
                 )}
 
                 <div className="advisor-stream" ref={scrollRef}>
@@ -195,7 +205,7 @@ export default function BusinessAdvisor() {
                         </div>
                     </div>
 
-                    {formOpen && (
+                    {!filter && formOpen && (
                         <div className="advisor-msg advisor-msg-assistant">
                             <div className="advisor-avatar">
                                 <RonyAvatar size={30} />
