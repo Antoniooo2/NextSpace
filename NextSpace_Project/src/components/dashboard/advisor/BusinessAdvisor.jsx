@@ -3,6 +3,7 @@ import { supabase } from '../../../lib/supabaseClient'
 import RonyAvatar from '../../RonyAvatar'
 import AdvisorForm from './AdvisorForm'
 import BusinessChart from './BusinessChart'
+import CompareTable from './CompareTable'
 import FilterPill from './FilterPill'
 import PropertyResultCard from './PropertyResultCard'
 import SuggestedChips from './SuggestedChips'
@@ -273,6 +274,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
                             return (
                                 <div key={i}>
                                     <BusinessChart chart={item.chart} results={item.items} budgetMax={item.budgetMax} />
+                                    <CompareTable results={item.items} highlight={item.highlight} />
                                     <div className="advisor-results-grid">
                                         {item.items.map((property) => (
                                             <PropertyResultCard
