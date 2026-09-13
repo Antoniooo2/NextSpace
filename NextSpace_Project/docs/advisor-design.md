@@ -550,17 +550,25 @@ y `draft`.
   },
   "draft": null,
   "highlight_property_id": 12,
+  "highlight_contract_id": null,
   "chart": "occupancy"
 }
 ```
 
+Este es el shape que produce el schema de Gemini (snake_case, fijo por el
+JSON schema). La respuesta HTTP real de `api/advisor.js` lo traduce a
+camelCase y agrega dos campos que el modelo nunca ve (`recipientDui` y
+`audit`, ver 13.7) -- el frontend consume ese shape, no el de Gemini
+directamente.
+
 | Campo | Tipo | Para que |
 |---|---|---|
 | `reply` | string | Lo unico que se renderiza como texto |
-| `intent` | enum | `analyze`, `audit`, `draft_message`, `simulate`, `general`, `out_of_scope` |
+| `intent` | enum | `analyze`, `audit`, `draft_message`, `rewrite_listing`, `simulate`, `general`, `out_of_scope` |
 | `simulation_request` | object o null | Solo cuando `intent` es `simulate`. `new_rent` o `rent_delta_percent`, no los dos |
-| `draft` | string o null | El texto redactado, solo cuando `intent` es `draft_message` |
+| `draft` | string o null | El texto redactado, cuando `intent` es `draft_message` o `rewrite_listing` |
 | `highlight_property_id` | integer o null | Que propiedad destacar en la respuesta |
+| `highlight_contract_id` | integer o null | Que contrato destacar, solo con `draft_message` (de ahi se resuelve el `tenant_dui` destinatario) |
 | `chart` | enum o null | `occupancy`, `income_by_month`, `payment_status`, `budget_fit` |
 
 `intent`:
@@ -572,6 +580,10 @@ y `draft`.
 - `draft_message`: pide redactar un mensaje para un inquilino/contrato. El
   contexto ya trae todos los contratos con sus datos, asi que el modelo
   redacta directo. Una llamada.
+- `rewrite_listing`: pide reescribir la descripcion de una propiedad (desde
+  la auditoria, o por nombre). El modelo redacta usando solo datos reales del
+  contexto (`property_type`, `municipality`, servicios) y nunca inventa
+  amenidades. Una llamada.
 - `simulate`: propone un cambio de renta. El modelo NO calcula el impacto,
   solo extrae que propiedad y que cambio. Dos llamadas (ver 13.4).
 - `general`: duda de arrendamiento que no depende de datos de la plataforma.
@@ -645,3 +657,62 @@ solo elige cual mostrar via `chart`. Reusa las cuatro ya definidas
 (`occupancy`, `income_by_month`, `payment_status`, `budget_fit` -- este
 ultimo se reusa para mostrar el resultado de una simulacion, renta actual
 contra la propuesta).
+
+### 13.7 De redactar a actuar: guardar y enviar
+
+Las primeras pasadas del lado owner solo mostraban texto para copiar. Esta
+pasada agrega tres piezas para que el draft se convierta en una accion real
+sobre la plataforma, sin salir del chat:
+
+**Tabla de auditoria visual.** `AuditTable.jsx` renderiza el array `audit`
+(ya calculado por el codigo, ver 13.5) como tabla, filtrando a solo las
+propiedades con `issues.length > 0` -- si todo esta bien no se muestra nada.
+Cada fila tiene un boton "Rewrite" que dispara `sendTurn` con un mensaje de
+usuario sintetico (`"Rewrite the description for <property_name>."`), como
+si el usuario lo hubiera escrito. Se muestra cuando `intent === 'audit'`.
+
+**Guardar la descripcion reescrita.** Cuando `intent === 'rewrite_listing'`,
+el draft bubble muestra un boton "Save to listing" ademas de "Copy". Al
+hacer click, el frontend corre:
+
+```js
+supabase.from('add_business')
+  .update({ description: item.draft })
+  .eq('property_id', item.highlightPropertyId)
+  .select()
+```
+
+El `.select()` encadenado es obligatorio (regla del proyecto): si RLS
+rechaza el update (la propiedad no es del owner autenticado), el resultado
+vuelve vacio/con error en vez de un no-op silencioso. La policy `Owners can
+update own properties` ya cubre este caso (`owner_id` debe matchear el
+`dui` del usuario autenticado via `auth.uid()`).
+
+**Enviar el mensaje redactado como notificacion real.** Cuando
+`intent === 'draft_message'`, el draft bubble muestra "Send" en vez de
+requerir copiar y pegar. El backend nunca pone el `tenant_dui` del
+destinatario en el contexto de Gemini (no hay razon para que el modelo vea
+un numero de identidad); en cambio, `handleOwnerTurn` lo resuelve del lado
+del servidor a partir del `contract_id` real (`highlight_contract_id`) y lo
+manda en la respuesta HTTP como `recipientDui`. El frontend resuelve su
+propio `dui` (mismo patron que `PropertyDetailPage.jsx`,
+`.from('users').select('dui').eq('id_supabase_auth', user.id).single()`) y
+llama a `createNotification({ recipientDui, senderDui, process: 'Advisor',
+title, description: item.draft, contractId })`. La policy de insert en
+`notifications` ("Contract parties can notify each other") exige que
+emisor y receptor esten atados al mismo `contract_id`, lo cual siempre se
+cumple aca porque el `contract_id` es el mismo del que se resolvio el
+`tenant_dui`.
+
+El valor `'Advisor'` para la columna `process` de `notifications` se agrego
+via migracion (el CHECK constraint original solo permitia `'Contracts'` y
+`'Payments'`) -- un mensaje redactado por IA no es ninguno de los dos
+eventos automaticos existentes.
+
+Los tres casos muestran un mensaje de exito o error debajo del draft
+(`actionStatus` en el frontend, keyed por indice del turno) y persisten
+igual que cualquier otro turno: el `payload` guardado en `advisor_messages`
+ahora incluye tambien `intent`, `highlightPropertyId`, `highlightContractId`,
+`recipientDui` y `audit`, para que al recargar la pagina la tabla de
+auditoria y los botones de accion se reconstruyan igual que en la sesion
+original.

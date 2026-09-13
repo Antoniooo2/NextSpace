@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
+import { createNotification } from '../../../lib/notifications'
 import RonyAvatar from '../../RonyAvatar'
 import OwnerChart from './OwnerChart'
 import SuggestedChips from './SuggestedChips'
+import AuditTable from './AuditTable'
 
 const KICKOFF_MESSAGE = 'Give me a quick overview of my portfolio and tell me what needs attention first.'
 const HISTORY_LIMIT = 20
@@ -29,6 +31,7 @@ export default function OwnerAdvisor() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [copiedIndex, setCopiedIndex] = useState(null)
+    const [actionStatus, setActionStatus] = useState({})
     const scrollRef = useRef(null)
 
     useEffect(() => {
@@ -79,6 +82,11 @@ export default function OwnerAdvisor() {
                     chart: payload.chart || null,
                     stats: payload.stats || null,
                     simulation: payload.simulation || null,
+                    intent: payload.intent || null,
+                    highlightPropertyId: payload.highlightPropertyId || null,
+                    highlightContractId: payload.highlightContractId || null,
+                    recipientDui: payload.recipientDui || null,
+                    audit: payload.audit || null,
                 })
             })
 
@@ -160,6 +168,11 @@ export default function OwnerAdvisor() {
                     chart: result.chart || null,
                     stats: result.stats || null,
                     simulation: result.simulation || null,
+                    intent: result.intent || null,
+                    highlightPropertyId: result.highlightPropertyId || null,
+                    highlightContractId: result.highlightContractId || null,
+                    recipientDui: result.recipientDui || null,
+                    audit: result.audit || null,
                 },
             ])
             setChips(computeChips(result.intent))
@@ -169,6 +182,11 @@ export default function OwnerAdvisor() {
                 chart: result.chart || null,
                 stats: result.stats || null,
                 simulation: result.simulation || null,
+                intent: result.intent || null,
+                highlightPropertyId: result.highlightPropertyId || null,
+                highlightContractId: result.highlightContractId || null,
+                recipientDui: result.recipientDui || null,
+                audit: result.audit || null,
             })
         } catch (err) {
             setError(err.message || 'Could not reach Rony. Please try again.')
@@ -200,6 +218,69 @@ export default function OwnerAdvisor() {
             // Clipboard access can be blocked by the browser; the text is still
             // selectable and readable in the draft box, so this is not fatal.
         }
+    }
+
+    const handleRewrite = (row) => {
+        if (loading) return
+        sendTurn({ userVisibleText: `Rewrite the description for ${row.property_name}.` })
+    }
+
+    const handleSaveListing = async (item, index) => {
+        if (!item.highlightPropertyId || !item.draft) return
+        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'pending' } }))
+
+        const { error: updateError } = await supabase
+            .from('add_business')
+            .update({ description: item.draft })
+            .eq('property_id', item.highlightPropertyId)
+            .select()
+
+        if (updateError) {
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not save the listing.' } }))
+            return
+        }
+
+        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'success', text: 'Saved to listing' } }))
+    }
+
+    const handleSendMessage = async (item, index) => {
+        if (!item.recipientDui || !item.draft || !item.highlightContractId) return
+        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'pending' } }))
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser()
+        if (!user) {
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not send the message.' } }))
+            return
+        }
+
+        const { data: userRow, error: userError } = await supabase
+            .from('users')
+            .select('dui')
+            .eq('id_supabase_auth', user.id)
+            .single()
+
+        if (userError || !userRow) {
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not send the message.' } }))
+            return
+        }
+
+        const { error: notifyError } = await createNotification({
+            recipientDui: item.recipientDui,
+            senderDui: userRow.dui,
+            process: 'Advisor',
+            title: 'Message from your property owner',
+            description: item.draft,
+            contractId: item.highlightContractId,
+        })
+
+        if (notifyError) {
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not send the message.' } }))
+            return
+        }
+
+        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'success', text: 'Message sent' } }))
     }
 
     if (!historyLoaded) {
@@ -254,12 +335,52 @@ export default function OwnerAdvisor() {
                                 </div>
                                 <div className="advisor-bubble">
                                     <p>{item.text}</p>
+                                    {item.intent === 'audit' && item.audit && (
+                                        <AuditTable audit={item.audit} onRewrite={handleRewrite} disabled={loading} />
+                                    )}
                                     {item.draft && (
                                         <div className="advisor-draft">
                                             <p>{item.draft}</p>
-                                            <button type="button" className="advisor-draft-copy" onClick={() => copyDraft(item.draft, i)}>
-                                                <i className="bi bi-clipboard"></i> {copiedIndex === i ? 'Copied' : 'Copy'}
-                                            </button>
+                                            <div className="advisor-draft-actions">
+                                                <button type="button" className="advisor-draft-copy" onClick={() => copyDraft(item.draft, i)}>
+                                                    <i className="bi bi-clipboard"></i> {copiedIndex === i ? 'Copied' : 'Copy'}
+                                                </button>
+                                                {item.intent === 'rewrite_listing' &&
+                                                    item.highlightPropertyId &&
+                                                    actionStatus[i]?.kind !== 'success' && (
+                                                        <button
+                                                            type="button"
+                                                            className="advisor-draft-copy"
+                                                            onClick={() => handleSaveListing(item, i)}
+                                                            disabled={actionStatus[i]?.kind === 'pending'}
+                                                        >
+                                                            <i className="bi bi-check2"></i> Save to listing
+                                                        </button>
+                                                    )}
+                                                {item.intent === 'draft_message' &&
+                                                    item.recipientDui &&
+                                                    item.highlightContractId &&
+                                                    actionStatus[i]?.kind !== 'success' && (
+                                                        <button
+                                                            type="button"
+                                                            className="advisor-draft-copy"
+                                                            onClick={() => handleSendMessage(item, i)}
+                                                            disabled={actionStatus[i]?.kind === 'pending'}
+                                                        >
+                                                            <i className="bi bi-send"></i> Send
+                                                        </button>
+                                                    )}
+                                            </div>
+                                            {actionStatus[i]?.kind === 'success' && (
+                                                <p className="advisor-action-success">
+                                                    <i className="bi bi-check-circle"></i> {actionStatus[i].text}
+                                                </p>
+                                            )}
+                                            {actionStatus[i]?.kind === 'error' && (
+                                                <div className="alert alert-danger py-1 px-2 mb-0 mt-2" style={{ fontSize: '11.5px' }}>
+                                                    {actionStatus[i].text}
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                     <OwnerChart chart={item.chart} stats={item.stats} simulation={item.simulation} />

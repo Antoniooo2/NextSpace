@@ -137,15 +137,21 @@ Your job each turn:
    and offer to rewrite the description.
 4. If they ask you to draft a reminder or renewal message for a tenant or
    contract, write it using the real contract data given to you: intent
-   "draft_message". Put the drafted text in the draft field, and in reply
-   just briefly say who it is for. Never draft for a contract not in the
-   context.
-5. If they propose a hypothetical rent change ("what if I dropped rent on X
+   "draft_message". Put the drafted text in the draft field, set
+   highlight_contract_id to that contract_id, and in reply just briefly say
+   who it is for. Never draft for a contract not in the context.
+5. If they ask you to rewrite the description of a specific listing (from the
+   listing audit, or by name), write a short, honest description using only
+   the real property_type, municipality, and services already in the
+   context: intent "rewrite_listing". Put the new text in the draft field and
+   set highlight_property_id to that property. Never invent an amenity or
+   feature not already in the context.
+6. If they propose a hypothetical rent change ("what if I dropped rent on X
    to $400", "what if I raised it 10 percent"), do NOT calculate the impact
    yourself. Set intent "simulate" and fill simulation_request with the
    property_id and either new_rent or rent_delta_percent, never both. The
    real computed numbers will be given to you on the next turn to narrate.
-6. If they ask a general leasing question unrelated to their own data,
+7. If they ask a general leasing question unrelated to their own data,
    answer from your own knowledge: intent "general".
 
 Keep replies short. Two or three sentences unless they ask for detail.
@@ -186,7 +192,10 @@ const OWNER_RESPONSE_SCHEMA = {
     type: 'OBJECT',
     properties: {
         reply: { type: 'STRING' },
-        intent: { type: 'STRING', enum: ['analyze', 'audit', 'draft_message', 'simulate', 'general', 'out_of_scope'] },
+        intent: {
+            type: 'STRING',
+            enum: ['analyze', 'audit', 'draft_message', 'rewrite_listing', 'simulate', 'general', 'out_of_scope'],
+        },
         simulation_request: {
             type: 'OBJECT',
             nullable: true,
@@ -199,9 +208,18 @@ const OWNER_RESPONSE_SCHEMA = {
         },
         draft: { type: 'STRING', nullable: true },
         highlight_property_id: { type: 'INTEGER', nullable: true },
+        highlight_contract_id: { type: 'INTEGER', nullable: true },
         chart: { type: 'STRING', nullable: true, enum: ['occupancy', 'income_by_month', 'payment_status', 'budget_fit'] },
     },
-    propertyOrdering: ['reply', 'intent', 'simulation_request', 'draft', 'highlight_property_id', 'chart'],
+    propertyOrdering: [
+        'reply',
+        'intent',
+        'simulation_request',
+        'draft',
+        'highlight_property_id',
+        'highlight_contract_id',
+        'chart',
+    ],
 }
 
 function mapMessageRole(role) {
@@ -948,13 +966,27 @@ async function handleOwnerTurn(userClient, user, body, contents, res) {
     const intent = call1.result.intent
 
     if (intent !== OWNER_SIMULATE_INTENT) {
+        // The tenant's dui is never put in the Gemini context (no reason for the
+        // model to see a national ID number to draft a message) -- resolved here
+        // instead, straight from the real contract, only when a message was
+        // actually drafted for one.
+        let recipientDui = null
+        const contractId = call1.result.highlight_contract_id ?? null
+        if (intent === 'draft_message' && contractId != null) {
+            const contract = contracts.find((c) => c.contract_id === contractId)
+            recipientDui = contract?.tenant_dui ?? null
+        }
+
         res.status(200).json({
             reply: call1.result.reply,
             intent,
             draft: call1.result.draft ?? null,
-            highlight_property_id: call1.result.highlight_property_id ?? null,
+            highlightPropertyId: call1.result.highlight_property_id ?? null,
+            highlightContractId: contractId,
+            recipientDui,
             chart: call1.result.chart ?? null,
             stats,
+            audit,
         })
         return
     }
@@ -980,9 +1012,10 @@ async function handleOwnerTurn(userClient, user, body, contents, res) {
         reply: call2.result.reply,
         intent,
         simulation: simulationResult,
-        highlight_property_id: call2.result.highlight_property_id ?? simulationResult?.property_id ?? null,
+        highlightPropertyId: call2.result.highlight_property_id ?? simulationResult?.property_id ?? null,
         chart: call2.result.chart ?? null,
         stats,
+        audit,
     })
 }
 
