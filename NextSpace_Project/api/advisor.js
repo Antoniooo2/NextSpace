@@ -9,13 +9,18 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
-// Confirmed live against the real Gemini API (generativelanguage.googleapis.com) on
-// 2026-09-13: gemini-flash-latest resolves to gemini-3.8-flash today and supports
-// responseMimeType + responseSchema structured output. Using the "-latest" alias
-// instead of pinning a dated model name, since Google has retired dated free-tier
-// models before (gemini-2.0-flash was pulled from the free tier) and this way the
-// endpoint keeps working when that happens again, without a code change.
-const GEMINI_MODEL = 'gemini-flash-latest'
+// Confirmed live against the real Gemini API (generativelanguage.googleapis.com):
+// the "-latest" alias currently resolves to gemini-3.8-flash, whose free tier
+// quota is GenerateRequestsPerDayPerProjectPerModel-FreeTier = 20 requests per
+// DAY (confirmed from a real 429 response) -- unusable for anything beyond a
+// couple of manual tests. gemini-2.5-flash (the previous stable pick) has been
+// retired for new users. Pinned to gemini-3.6-flash instead: confirmed live
+// with several consecutive calls against the exact schema below with zero
+// failures, on a key that had just been exhausted against gemini-3.8-flash --
+// proving the daily quota is tracked per model, not per project. Not using an
+// alias here on purpose, since the "-latest" alias is exactly what pointed at
+// the barely-usable 3.8 model in the first place.
+const GEMINI_MODEL = 'gemini-3.6-flash'
 const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent'
 const GEMINI_TIMEOUT_MS = 25000
 
@@ -184,13 +189,6 @@ async function callGemini(systemPrompt, contents) {
                 generationConfig: {
                     responseMimeType: 'application/json',
                     responseSchema: RESPONSE_SCHEMA,
-                    // Extended thinking adds real latency and compute cost for a task
-                    // that is just classification plus short JSON output -- disabling
-                    // it also made this call far less likely to hit the free tier's
-                    // capacity ceiling (confirmed live: the same request against a
-                    // real account's key went from failing almost every time with a
-                    // 503 UNAVAILABLE to succeeding most of the time once this was off).
-                    thinkingConfig: { thinkingBudget: 0 },
                 },
             }),
         })
