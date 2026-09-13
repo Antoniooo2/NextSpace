@@ -184,6 +184,13 @@ async function callGemini(systemPrompt, contents) {
                 generationConfig: {
                     responseMimeType: 'application/json',
                     responseSchema: RESPONSE_SCHEMA,
+                    // Extended thinking adds real latency and compute cost for a task
+                    // that is just classification plus short JSON output -- disabling
+                    // it also made this call far less likely to hit the free tier's
+                    // capacity ceiling (confirmed live: the same request against a
+                    // real account's key went from failing almost every time with a
+                    // 503 UNAVAILABLE to succeeding most of the time once this was off).
+                    thinkingConfig: { thinkingBudget: 0 },
                 },
             }),
         })
@@ -192,25 +199,42 @@ async function callGemini(systemPrompt, contents) {
     }
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Gemini's free tier returns 503 UNAVAILABLE intermittently under its own
+// capacity limits, on top of and separate from the 429 rate limit below.
+// Confirmed live: retrying the exact same request shortly after a 503 often
+// succeeds, so one retry is worth it before giving up.
+const GEMINI_503_RETRY_DELAY_MS = 800
+
 // Wraps one Gemini call end to end: network/timeout errors and an unparseable
 // response envelope or body all turn into a { errorStatus, errorBody } result
 // instead of throwing, so the handler can always return a clear JSON error and
 // never an empty body (an empty body is exactly what broke the Wompi screen once).
 async function runGeminiCall(systemPrompt, contents) {
     let geminiResponse
-    try {
-        geminiResponse = await callGemini(systemPrompt, contents)
-    } catch (err) {
-        const timedOut = err?.name === 'AbortError'
-        console.error('Advisor: Gemini request failed', err)
-        return {
-            errorStatus: timedOut ? 504 : 502,
-            errorBody: {
-                error: timedOut
-                    ? 'The assistant took too long to respond. Please try again.'
-                    : 'Could not reach the assistant. Please try again.',
-            },
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            geminiResponse = await callGemini(systemPrompt, contents)
+        } catch (err) {
+            const timedOut = err?.name === 'AbortError'
+            console.error('Advisor: Gemini request failed', err)
+            return {
+                errorStatus: timedOut ? 504 : 502,
+                errorBody: {
+                    error: timedOut
+                        ? 'The assistant took too long to respond. Please try again.'
+                        : 'Could not reach the assistant. Please try again.',
+                },
+            }
         }
+
+        if (geminiResponse.status === 503 && attempt === 0) {
+            console.error('Advisor: Gemini returned 503, retrying once')
+            await sleep(GEMINI_503_RETRY_DELAY_MS)
+            continue
+        }
+        break
     }
 
     if (geminiResponse.status === 429) {
@@ -228,7 +252,15 @@ async function runGeminiCall(systemPrompt, contents) {
             // ignore, detail stays empty
         }
         console.error('Advisor: Gemini API error', geminiResponse.status, detail)
-        return { errorStatus: 502, errorBody: { error: 'The assistant could not process this request. Please try again.' } }
+        return {
+            errorStatus: 502,
+            errorBody: {
+                error:
+                    geminiResponse.status === 503
+                        ? 'The assistant is experiencing high demand right now. Please try again in a moment.'
+                        : 'The assistant could not process this request. Please try again.',
+            },
+        }
     }
 
     let payload
