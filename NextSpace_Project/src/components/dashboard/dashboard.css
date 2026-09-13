@@ -1846,3 +1846,158 @@
   background: #e5484d;
   border: 1.5px solid #fff;
 }
+
+/* AI Advisor */
+
+.ns-advisor-chat {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 220px);
+  min-height: 420px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ns-advisor-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ns-advisor-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 80%;
+}
+
+.ns-advisor-msg-user {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+
+.ns-advisor-avatar {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.ns-advisor-bubble {
+  background: var(--ns-page-bg);
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 10px 14px;
+}
+
+.ns-advisor-bubble p {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #1a1f2b;
+  white-space: pre-wrap;
+}
+
+.ns-advisor-msg-user .ns-advisor-bubble {
+  background: var(--ns-navy);
+  border-color: var(--ns-navy);
+}
+
+.ns-advisor-msg-user .ns-advisor-bubble p {
+  color: #fff;
+}
+
+.ns-advisor-filter-chip {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.ns-advisor-missing {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-advisor-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 14px;
+}
+
+.ns-advisor-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ns-text-muted);
+  animation: ns-advisor-bounce 1.1s infinite ease-in-out;
+}
+
+.ns-advisor-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.ns-advisor-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes ns-advisor-bounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.ns-advisor-error {
+  margin: 0 20px;
+}
+
+.ns-advisor-input-row {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--ns-border);
+}
+
+.ns-advisor-input-row input {
+  flex: 1;
+  border: 1.5px solid var(--ns-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  outline: none;
+}
+
+.ns-advisor-input-row input:focus {
+  border-color: var(--ns-blue-accent);
+}
+
+.ns-advisor-send-btn {
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

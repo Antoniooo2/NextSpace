@@ -5,7 +5,7 @@ import DashboardLayout from '../components/dashboard/DashboardLayout'
 import BusinessHome from '../components/dashboard/BusinessHome'
 import OwnerHome from '../components/dashboard/OwnerHome'
 import ProfileView from '../components/dashboard/ProfileView'
-import ComingSoon from '../components/dashboard/ComingSoon'
+import AIAdvisor from '../components/dashboard/AIAdvisor'
 import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
 import '../components/dashboard/dashboard.css'
 import BusinessPayments from '../components/dashboard/BusinessPayments'
@@ -119,13 +119,7 @@ export default function Dashboard() {
                     />
                 )
             case 'advisor':
-                return (
-                    <ComingSoon
-                        icon="bi-stars"
-                        title="AI Advisor"
-                        description="Your personal AI advisor is warming up. Soon it'll help you find the right space, or the right tenant, automatically."
-                    />
-                )
+                return <AIAdvisor accountType={accountType} />
             default:
                 return accountType === 'property-owner' ? (
                     <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />
