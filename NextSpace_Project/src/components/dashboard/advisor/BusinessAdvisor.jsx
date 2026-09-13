@@ -123,7 +123,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
 
             const isSearch = result.intent === 'search' || result.intent === 'refine'
             setChatLog((prev) => {
-                const next = [
+                let next = [
                     ...prev,
                     { type: 'assistant', text: result.reply, relaxed: isSearch ? result.relaxed || [] : [] },
                 ]
@@ -135,6 +135,22 @@ export default function BusinessAdvisor({ onViewProperty }) {
                         chart: result.chart || null,
                         budgetMax: result.filter?.budget_max ?? null,
                     })
+                } else if (result.highlight?.length > 0) {
+                    // An explain/general turn can still point back at a result
+                    // already on screen ("why do you recommend that one?"). Move
+                    // the pick to the most recent results block instead of
+                    // leaving whatever was highlighted during the original search.
+                    const lastResultsIndex = [...next].reverse().findIndex((item) => item.type === 'results')
+                    if (lastResultsIndex !== -1) {
+                        const index = next.length - 1 - lastResultsIndex
+                        const targetItem = next[index]
+                        const validIds = new Set(targetItem.items.map((p) => p.property_id))
+                        const newHighlight = result.highlight.filter((id) => validIds.has(id))
+                        if (newHighlight.length > 0) {
+                            next = [...next]
+                            next[index] = { ...targetItem, highlight: newHighlight }
+                        }
+                    }
                 }
                 return next
             })
