@@ -14,14 +14,20 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 // quota is GenerateRequestsPerDayPerProjectPerModel-FreeTier = 20 requests per
 // DAY (confirmed from a real 429 response) -- unusable for anything beyond a
 // couple of manual tests. gemini-2.5-flash (the previous stable pick) has been
-// retired for new users. Pinned to gemini-3.6-flash instead: confirmed live
-// with several consecutive calls against the exact schema below with zero
-// failures, on a key that had just been exhausted against gemini-3.8-flash --
-// proving the daily quota is tracked per model, not per project. Not using an
-// alias here on purpose, since the "-latest" alias is exactly what pointed at
-// the barely-usable 3.8 model in the first place.
-const GEMINI_MODEL = 'gemini-3.6-flash'
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/' + GEMINI_MODEL + ':generateContent'
+// retired for new users. Pinned to gemini-3.6-flash as the primary model:
+// confirmed live with several consecutive calls against the exact schema below
+// with zero failures, on a key that had just been exhausted against
+// gemini-3.8-flash -- proving the daily quota is tracked per model, not per
+// project. Not using an alias here on purpose, since the "-latest" alias is
+// exactly what pointed at the barely-usable 3.8 model in the first place.
+//
+// Because that quota is per model, listing a second pinned model here lets
+// runGeminiCall fall back to it automatically the moment the primary model
+// returns 429, roughly doubling the free-tier headroom in a day without any
+// action from the user. Order matters: the first entry is the one used unless
+// it is exhausted.
+const GEMINI_MODELS = ['gemini-3.6-flash', 'gemini-3.8-flash']
+const GEMINI_URL_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/'
 const GEMINI_TIMEOUT_MS = 25000
 
 const MAX_HISTORY_MESSAGES = 20
@@ -236,12 +242,12 @@ function buildGeminiContents(messages) {
         }))
 }
 
-async function callGemini(systemPrompt, contents, schema) {
+async function callGemini(systemPrompt, contents, schema, model) {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS)
 
     try {
-        return await fetch(GEMINI_URL + '?key=' + GEMINI_API_KEY, {
+        return await fetch(GEMINI_URL_BASE + model + ':generateContent?key=' + GEMINI_API_KEY, {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             signal: controller.signal,
@@ -267,15 +273,16 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 // succeeds, so one retry is worth it before giving up.
 const GEMINI_503_RETRY_DELAY_MS = 800
 
-// Wraps one Gemini call end to end: network/timeout errors and an unparseable
-// response envelope or body all turn into a { errorStatus, errorBody } result
-// instead of throwing, so the handler can always return a clear JSON error and
-// never an empty body (an empty body is exactly what broke the Wompi screen once).
-async function runGeminiCall(systemPrompt, contents, schema) {
+// Wraps one Gemini call, against a single model, end to end: network/timeout
+// errors and an unparseable response envelope or body all turn into a
+// { errorStatus, errorBody } result instead of throwing, so the handler can
+// always return a clear JSON error and never an empty body (an empty body is
+// exactly what broke the Wompi screen once).
+async function attemptGeminiCall(systemPrompt, contents, schema, model) {
     let geminiResponse
     for (let attempt = 0; attempt < 2; attempt++) {
         try {
-            geminiResponse = await callGemini(systemPrompt, contents, schema)
+            geminiResponse = await callGemini(systemPrompt, contents, schema, model)
         } catch (err) {
             const timedOut = err?.name === 'AbortError'
             console.error('Advisor: Gemini request failed', err)
@@ -343,6 +350,24 @@ async function runGeminiCall(systemPrompt, contents, schema) {
         console.error('Advisor: Gemini API returned unparseable JSON', rawText)
         return { errorStatus: 502, errorBody: { error: 'The assistant returned something we could not read. Please try again.' } }
     }
+}
+
+// Tries each model in GEMINI_MODELS in order, only moving to the next one when
+// the current model's daily quota is exhausted (a 429). Any other outcome --
+// success, or a non-quota error like a timeout or a malformed response --
+// returns immediately without touching the fallback model, since those are
+// not quota problems and retrying them against a different model would not
+// help. Only once every model has hit its quota does the caller see the 429.
+async function runGeminiCall(systemPrompt, contents, schema) {
+    let result
+    for (const model of GEMINI_MODELS) {
+        result = await attemptGeminiCall(systemPrompt, contents, schema, model)
+        if (result.errorStatus !== 429) {
+            return result
+        }
+        console.error(`Advisor: model ${model} hit its daily quota, falling back to the next model`)
+    }
+    return result
 }
 
 // ---------------------------------------------------------------------------
