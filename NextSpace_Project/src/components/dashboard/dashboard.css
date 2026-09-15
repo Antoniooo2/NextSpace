@@ -442,6 +442,7 @@
 .ns-prop-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 280px));
+  align-items: stretch;
   gap: 20px;
 }
 
@@ -452,6 +453,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  height: 100%;
   transition: box-shadow 0.15s ease, transform 0.15s ease;
 }
 
@@ -481,7 +483,7 @@
   justify-content: center;
   color: var(--ns-blue-accent);
   font-size: 28px;
-  background: linear-gradient(135deg, #edf4ff 0%, #dfeafe 100%);
+  background: var(--ns-periwinkle);
 }
 
 .ns-prop-price {
@@ -541,6 +543,9 @@
   font-weight: 700;
   color: #1a1f2b;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ns-prop-location {
