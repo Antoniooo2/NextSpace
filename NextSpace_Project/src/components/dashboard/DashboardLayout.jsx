@@ -31,6 +31,7 @@ export default function DashboardLayout({
     onLogout,
     search,
     onSearchChange,
+    unreadCount = 0,
     children,
 }) {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -75,6 +76,9 @@ export default function DashboardLayout({
                         >
                             <i className={`bi ${item.icon}`}></i>
                             <span>{item.label}</span>
+                            {item.id === 'notifications' && unreadCount > 0 && (
+                                <span className="ns-dash-nav-badge">{unreadCount}</span>
+                            )}
                         </button>
                     ))}
                 </nav>
@@ -115,8 +119,9 @@ export default function DashboardLayout({
                         />
                     </div>
                     <div className="ns-dash-topbar-actions">
-                        <button type="button" className="ns-dash-icon-btn" aria-label="Notifications" onClick={() => goTo('notifications')}>
+                        <button type="button" className="ns-dash-icon-btn" aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`} onClick={() => goTo('notifications')}>
                             <i className="bi bi-bell"></i>
+                            {unreadCount > 0 && <span className="ns-dash-icon-btn-dot" aria-hidden="true" />}
                         </button>
                     </div>
                 </header>

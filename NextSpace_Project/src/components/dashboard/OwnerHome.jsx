@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import PropertyCard from './PropertyCard'
-import NewPropertyModal, { describeSupabaseError } from './NewPropertyModal'
+import NewPropertyModal from './NewPropertyModal'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
 import ConfirmDialog from './ConfirmDialog'
 
 export default function OwnerHome({ user, firstName, search, onViewProperty }) {

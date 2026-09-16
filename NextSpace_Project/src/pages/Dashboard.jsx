@@ -5,21 +5,33 @@ import DashboardLayout from '../components/dashboard/DashboardLayout'
 import BusinessHome from '../components/dashboard/BusinessHome'
 import OwnerHome from '../components/dashboard/OwnerHome'
 import ProfileView from '../components/dashboard/ProfileView'
-import ComingSoon from '../components/dashboard/ComingSoon'
+import AdvisorRouter from '../components/dashboard/advisor/AdvisorRouter'
 import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
 import '../components/dashboard/dashboard.css'
 import BusinessPayments from '../components/dashboard/BusinessPayments'
 import OwnerPayments from '../components/dashboard/OwnerPayments'
 import OwnerContracts from '../components/dashboard/OwnerContracts'
 import BusinessContracts from '../components/dashboard/BusinessContracts'
+import Notifications from '../components/dashboard/Notifications'
 
 export default function Dashboard() {
     const navigate = useNavigate()
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [section, setSection] = useState('home')
+    const [section, setSection] = useState(
+        () => new URLSearchParams(window.location.search).get('section') || 'home'
+    )
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
+    const [unreadCount, setUnreadCount] = useState(0)
+
+    const loadUnreadCount = useCallback(async () => {
+        const { count } = await supabase
+            .from('notifications')
+            .select('notification_id', { count: 'exact', head: true })
+            .eq('read', false)
+        setUnreadCount(count || 0)
+    }, [])
 
     const loadUser = useCallback(async () => {
         const { data, error } = await supabase.auth.getUser()
@@ -34,6 +46,10 @@ export default function Dashboard() {
     useEffect(() => {
         loadUser()
     }, [loadUser])
+
+    useEffect(() => {
+        if (user) loadUnreadCount()
+    }, [user, section, loadUnreadCount])
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -95,20 +111,15 @@ export default function Dashboard() {
                 )
             case 'notifications':
                 return (
-                    <ComingSoon
-                        icon="bi-bell"
-                        title="Notifications"
-                        description="You're all caught up. New activity on your account will show up here."
+                    <Notifications
+                        onNavigate={handleSectionChange}
+                        onUnreadCountChange={(next) =>
+                            setUnreadCount((prev) => (typeof next === 'function' ? next(prev) : next))
+                        }
                     />
                 )
             case 'advisor':
-                return (
-                    <ComingSoon
-                        icon="bi-stars"
-                        title="AI Advisor"
-                        description="Your personal AI advisor is warming up. Soon it'll help you find the right space, or the right tenant, automatically."
-                    />
-                )
+                return <AdvisorRouter accountType={accountType} onViewProperty={setViewingProperty} />
             default:
                 return accountType === 'property-owner' ? (
                     <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />
@@ -128,6 +139,7 @@ export default function Dashboard() {
             onLogout={handleLogout}
             search={search}
             onSearchChange={setSearch}
+            unreadCount={unreadCount}
         >
             {renderContent()}
         </DashboardLayout>

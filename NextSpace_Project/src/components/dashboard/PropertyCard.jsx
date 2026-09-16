@@ -1,10 +1,4 @@
-export const TYPE_ICON = {
-    'Café/Restaurant': 'bi-cup-hot',
-    'Store/Boutique': 'bi-shop',
-    'Beauty Salon': 'bi-scissors',
-    'Pharmacy/Healthcare': 'bi-capsule',
-    Other: 'bi-building',
-}
+import { TYPE_ICON } from '../../lib/propertyTypes'
 
 const AVAILABILITY_CLASS = {
     Available: 'available',

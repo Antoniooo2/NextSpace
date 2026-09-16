@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { describeSupabaseError } from './NewPropertyModal'
-import { CONTRACT_STATUS_TAG } from './NewContractModal'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
+import { CONTRACT_STATUS_TAG } from '../../lib/contractStatus'
 
 const CONTRACT_EMBED =
     '*, add_business!contract_property_id_fkey(property_name, users!add_business_owner_id_fkey(first_name,last_name))'

@@ -1,43 +1,12 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { EL_SALVADOR_DEPARTMENTS, EL_SALVADOR_DEPARTMENT_NAMES } from '../../lib/elSalvadorLocations'
-
-export const PROPERTY_TYPES = [
-    'Café/Restaurant',
-    'Store/Boutique',
-    'Beauty Salon',
-    'Pharmacy/Healthcare',
-    'Other',
-]
-
-export const AVAILABILITY_OPTIONS = ['Available', 'Occupied', 'Reserved']
-
-const TYPE_ICON = {
-    'Café/Restaurant': 'bi-cup-hot',
-    'Store/Boutique': 'bi-shop',
-    'Beauty Salon': 'bi-scissors',
-    'Pharmacy/Healthcare': 'bi-capsule',
-    Other: 'bi-building',
-}
+import { PROPERTY_TYPES, AVAILABILITY_OPTIONS, TYPE_ICON } from '../../lib/propertyTypes'
+import { describeSupabaseError } from '../../lib/supabaseErrors'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 const PHOTO_URL_MARKER = '/property-photos/'
-
-export function describeSupabaseError(error) {
-    if (!error) return 'Something went wrong. Please try again.'
-    if (error.code === '23514') {
-        return 'One of the values you entered is not allowed by the database (check the property type, availability, or size/rent values).'
-    }
-    if (error.code === '42501') {
-        return "You don't have permission to perform this action on this property."
-    }
-    const message = error.message || ''
-    if (message.toLowerCase().includes('fetch') || message.toLowerCase().includes('network')) {
-        return 'Could not reach the server. Check your internet connection and try again.'
-    }
-    return message || 'Something went wrong. Please try again.'
-}
 
 export default function NewPropertyModal({ property, ownerDui, onClose, onSaved }) {
     const isEditMode = Boolean(property)
@@ -136,7 +105,15 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             }
         }
         if (oldPhotos.length > 0) {
-            await supabase.from('business_photos').delete().eq('property_id', propertyId)
+            const { data: deletedPhotos, error: deletePhotosError } = await supabase
+                .from('business_photos')
+                .delete()
+                .eq('property_id', propertyId)
+                .select()
+            if (deletePhotosError) return describeSupabaseError(deletePhotosError)
+            if (!deletedPhotos || deletedPhotos.length === 0) {
+                return 'Could not remove the previous photo. This is usually caused by a permissions (row-level security) rule blocking it.'
+            }
         }
 
         if (!photoFile) return null
@@ -164,6 +141,7 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             .from('business_services')
             .delete()
             .eq('business_id', businessId)
+            .select()
         if (deleteError) return describeSupabaseError(deleteError)
 
         if (selectedServiceIds.length === 0) return null
