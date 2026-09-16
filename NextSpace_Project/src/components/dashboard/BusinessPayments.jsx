@@ -9,7 +9,7 @@ const STATUS_TAG = { Pending: 'tag-pending', Paid: 'tag-paid', Late: 'tag-late',
 const CONTRACT_EMBED =
     '*, add_business!contract_property_id_fkey(property_name, monthly_rent, owner_id, users!add_business_owner_id_fkey(first_name,last_name))'
 
-export default function BusinessPayments({ user, onNavigate }) {
+export default function BusinessPayments({ user, onNavigate, onAskRony }) {
     const [contract, setContract] = useState(null)
     const [payments, setPayments] = useState([])
     const [loading, setLoading] = useState(true)
@@ -312,6 +312,18 @@ export default function BusinessPayments({ user, onNavigate }) {
                     <button type="button" className="ns-outline-btn ns-pay-full-btn" onClick={() => setNotice(true)}>
                         <i className="bi bi-download"></i> Download receipt
                     </button>
+                    {onAskRony && (
+                        <button
+                            type="button" className="ns-outline-btn ns-pay-full-btn"
+                            onClick={() =>
+                                onAskRony({
+                                    text: `Explain my payment situation for "${property?.property_name || 'my lease'}" — am I up to date, and what's coming up?`,
+                                })
+                            }
+                        >
+                            <i className="bi bi-stars"></i> Ask Rony
+                        </button>
+                    )}
                     <p className="ns-pay-simulation-note">
                         <i className="bi bi-shield-lock"></i> Secure checkout powered by Wompi.
                     </p>

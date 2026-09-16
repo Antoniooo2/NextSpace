@@ -62,9 +62,9 @@ export default function Dashboard() {
         setSection(nextSection)
     }
 
-    const handleAskRony = (propertyCard) => {
+    const handleAskRony = (seed) => {
         setViewingProperty(null)
-        setAdvisorSeed(propertyCard)
+        setAdvisorSeed(seed)
         setSection('advisor')
     }
 
@@ -107,15 +107,15 @@ export default function Dashboard() {
                 )
             case 'contracts':
                 return accountType === 'property-owner' ? (
-                    <OwnerContracts user={user} />
+                    <OwnerContracts user={user} onAskRony={handleAskRony} />
                 ) : (
-                    <BusinessContracts user={user} />
+                    <BusinessContracts user={user} onAskRony={handleAskRony} />
                 )
             case 'payments':
                 return accountType === 'property-owner' ? (
-                    <OwnerPayments />
+                    <OwnerPayments onAskRony={handleAskRony} />
                 ) : (
-                    <BusinessPayments user={user} onNavigate={handleSectionChange} />
+                    <BusinessPayments user={user} onNavigate={handleSectionChange} onAskRony={handleAskRony} />
                 )
             case 'notifications':
                 return (
@@ -131,7 +131,7 @@ export default function Dashboard() {
                     <AdvisorRouter
                         accountType={accountType}
                         onViewProperty={setViewingProperty}
-                        seedProperty={advisorSeed}
+                        seed={advisorSeed}
                         onSeedConsumed={() => setAdvisorSeed(null)}
                     />
                 )

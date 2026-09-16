@@ -22,7 +22,7 @@ function computeChips(intent) {
     return ['What needs my attention?', 'Improve my listings']
 }
 
-export default function OwnerAdvisor() {
+export default function OwnerAdvisor({ seed, onSeedConsumed }) {
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [messages, setMessages] = useState([])
     const [chatLog, setChatLog] = useState([])
@@ -45,7 +45,7 @@ export default function OwnerAdvisor() {
             if (cancelled) return
             if (!user) {
                 setHistoryLoaded(true)
-                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
+                if (!seed) sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
                 return
             }
 
@@ -60,7 +60,7 @@ export default function OwnerAdvisor() {
 
             if (historyError || !data || data.length === 0) {
                 setHistoryLoaded(true)
-                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
+                if (!seed) sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
                 return
             }
 
@@ -208,6 +208,16 @@ export default function OwnerAdvisor() {
         setChips([])
         sendTurn({ userVisibleText: text })
     }
+
+    // Arriving here from a page-level "Ask Rony" action (a contract, a payment
+    // reminder): ask on the user's behalf instead of dropping them in an empty
+    // composer, so they land straight in a conversation about that lease.
+    useEffect(() => {
+        if (!historyLoaded || !seed) return
+        sendTurn({ userVisibleText: seed.text })
+        onSeedConsumed?.()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [historyLoaded, seed])
 
     const copyDraft = async (text, index) => {
         try {

@@ -11,7 +11,7 @@ const CONTRACT_EMBED =
 
 const STATUS_FILTERS = [{ id: 'all', label: 'All' }, ...CONTRACT_STATUSES.map((s) => ({ id: s, label: s }))]
 
-export default function OwnerContracts({ user }) {
+export default function OwnerContracts({ user, onAskRony }) {
     const [ownerDui, setOwnerDui] = useState(null)
     const [properties, setProperties] = useState([])
     const [tenants, setTenants] = useState([])
@@ -262,6 +262,19 @@ export default function OwnerContracts({ user }) {
                                         ? `${contract.start_date} – ${contract.end_date}`
                                         : 'Dates pending'}
                                 </span>
+                                {onAskRony && (
+                                    <button
+                                        type="button"
+                                        className="ns-outline-btn ns-pay-reminder-btn"
+                                        onClick={() =>
+                                            onAskRony({
+                                                text: `What should I know about the contract with ${tenant ? `${tenant.first_name} ${tenant.last_name}` : 'the tenant'} for "${property?.property_name || 'this property'}"?`,
+                                            })
+                                        }
+                                    >
+                                        <i className="bi bi-stars"></i> Ask Rony
+                                    </button>
+                                )}
                                 {contract.status === 'Pending' ? (
                                     <>
                                         <button

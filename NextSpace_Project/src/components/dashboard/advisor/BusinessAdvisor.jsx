@@ -50,7 +50,7 @@ function buildResultsBlock(payload) {
     }
 }
 
-export default function BusinessAdvisor({ onViewProperty, seedProperty, onSeedConsumed }) {
+export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
@@ -291,26 +291,29 @@ export default function BusinessAdvisor({ onViewProperty, seedProperty, onSeedCo
         sendTurn({ formFilter, userVisibleText: description })
     }
 
-    // Arriving here from "Analyze with Rony" on a property detail page: drop that
-    // listing into the chat as a result card, then ask about it on the user's
-    // behalf so they land straight in a conversation about that specific space.
+    // Arriving here from a page-level "Ask Rony" action (a property detail page,
+    // a contract, a payment): ask on the user's behalf so they land straight in
+    // a conversation about that specific thing instead of an empty chat. When
+    // the seed carries a property, drop it into the chat as a result card too.
     useEffect(() => {
-        if (!historyLoaded || !seedProperty) return
+        if (!historyLoaded || !seed) return
 
-        setResults([seedProperty])
-        chatLogRef.current = [
-            ...chatLogRef.current,
-            { type: 'results', items: [seedProperty], highlight: [seedProperty.property_id], chart: null, budgetMax: null },
-        ]
-        setChatLog(chatLogRef.current)
+        if (seed.property) {
+            setResults([seed.property])
+            chatLogRef.current = [
+                ...chatLogRef.current,
+                { type: 'results', items: [seed.property], highlight: [seed.property.property_id], chart: null, budgetMax: null },
+            ]
+            setChatLog(chatLogRef.current)
 
-        sendTurn({
-            userVisibleText: `Is "${seedProperty.property_name}" a good fit for my business?`,
-            resultsOverride: [seedProperty],
-        })
+            sendTurn({ userVisibleText: seed.text, resultsOverride: [seed.property] })
+        } else {
+            sendTurn({ userVisibleText: seed.text })
+        }
+
         onSeedConsumed?.()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [historyLoaded, seedProperty])
+    }, [historyLoaded, seed])
 
     const handleComposerSubmit = (e) => {
         e.preventDefault()

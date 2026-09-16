@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
-import NoticeModal from './NoticeModal'
 
 const STATUS_TAG = { Pending: 'tag-pending', Paid: 'tag-paid', Late: 'tag-late', Cancelled: 'tag-cancelled' }
 
@@ -11,12 +10,11 @@ const CONTRACT_EMBED =
 const PAYMENT_EMBED =
     '*, contract(contract_id, add_business!contract_property_id_fkey(property_name), users!contract_tenant_dui_fkey(first_name,last_name))'
 
-export default function OwnerPayments() {
+export default function OwnerPayments({ onAskRony }) {
     const [contracts, setContracts] = useState([])
     const [payments, setPayments] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
-    const [notice, setNotice] = useState(false)
 
     const loadData = async () => {
         const [{ data: contractRows, error: contractError }, { data: paymentRows, error: paymentError }] =
@@ -134,11 +132,15 @@ export default function OwnerPayments() {
                                 <span className={`ns-pay-tag ${latest ? STATUS_TAG[latest.status] || 'tag-pending' : 'tag-pending'}`}>
                                     {latest ? latest.status : 'No payments yet'}
                                 </span>
-                                {(!latest || latest.status === 'Pending' || latest.status === 'Late') && (
+                                {(!latest || latest.status === 'Pending' || latest.status === 'Late') && onAskRony && (
                                     <button
                                         type="button"
                                         className="ns-outline-btn ns-pay-reminder-btn"
-                                        onClick={() => setNotice(true)}
+                                        onClick={() =>
+                                            onAskRony({
+                                                text: `Draft a payment reminder for ${tenant ? `${tenant.first_name} ${tenant.last_name}` : 'the tenant'} about their ${latest ? latest.status.toLowerCase() : 'upcoming'} payment on "${property?.property_name || 'the property'}".`,
+                                            })
+                                        }
                                     >
                                         Send reminder
                                     </button>
@@ -182,15 +184,6 @@ export default function OwnerPayments() {
                     </tbody>
                 </table>
             </div>
-
-            {notice && (
-                <NoticeModal
-                    icon="bi-bell"
-                    title="Reminders are coming soon"
-                    description="Automatic payment reminders to tenants aren't connected yet — this is a preview of how it'll work."
-                    onClose={() => setNotice(false)}
-                />
-            )}
         </>
     )
 }

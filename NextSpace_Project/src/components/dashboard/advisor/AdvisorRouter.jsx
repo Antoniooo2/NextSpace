@@ -2,15 +2,15 @@ import BusinessAdvisor from './BusinessAdvisor'
 import OwnerAdvisor from './OwnerAdvisor'
 import './advisor.css'
 
-export default function AdvisorRouter({ accountType, onViewProperty, seedProperty, onSeedConsumed }) {
+export default function AdvisorRouter({ accountType, onViewProperty, seed, onSeedConsumed }) {
     if (accountType === 'property-owner') {
-        return <OwnerAdvisor />
+        return <OwnerAdvisor seed={seed} onSeedConsumed={onSeedConsumed} />
     }
 
     return (
         <BusinessAdvisor
             onViewProperty={onViewProperty}
-            seedProperty={seedProperty}
+            seed={seed}
             onSeedConsumed={onSeedConsumed}
         />
     )

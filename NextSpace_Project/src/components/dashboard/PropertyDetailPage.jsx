@@ -209,7 +209,10 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
 
     const handleAskRony = () => {
         if (!detail || !onAskRony) return
-        onAskRony(toAdvisorPropertyCard(detail))
+        onAskRony({
+            text: `Is "${detail.property_name}" a good fit for my business?`,
+            property: toAdvisorPropertyCard(detail),
+        })
     }
 
     if (!property) return null
