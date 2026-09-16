@@ -1334,15 +1334,6 @@
   color: #1a1f2b;
 }
 
-.ns-detail-contact-btn {
-  width: 100%;
-  justify-content: center;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  text-decoration: none;
-}
-
 .ns-detail-protect-note {
   display: flex;
   align-items: flex-start;
@@ -1424,20 +1415,6 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-}
-
-.ns-detail-ai-btn:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
-
-.ns-detail-ai-reply {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 12px;
-  font-size: 12.5px;
-  line-height: 1.6;
-  margin: 0;
 }
 
 @media (max-width: 800px) {

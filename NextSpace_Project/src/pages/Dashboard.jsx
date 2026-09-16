@@ -24,6 +24,7 @@ export default function Dashboard() {
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
     const [unreadCount, setUnreadCount] = useState(0)
+    const [advisorSeed, setAdvisorSeed] = useState(null)
 
     const loadUnreadCount = useCallback(async () => {
         const { count } = await supabase
@@ -61,6 +62,12 @@ export default function Dashboard() {
         setSection(nextSection)
     }
 
+    const handleAskRony = (propertyCard) => {
+        setViewingProperty(null)
+        setAdvisorSeed(propertyCard)
+        setSection('advisor')
+    }
+
     if (loading || !user) {
         return (
             <div className="ns-dash-loading">
@@ -83,7 +90,7 @@ export default function Dashboard() {
                     user={user}
                     accountType={accountType}
                     onBack={() => setViewingProperty(null)}
-                    onNavigate={handleSectionChange}
+                    onAskRony={handleAskRony}
                 />
             )
         }
@@ -120,7 +127,14 @@ export default function Dashboard() {
                     />
                 )
             case 'advisor':
-                return <AdvisorRouter accountType={accountType} onViewProperty={setViewingProperty} />
+                return (
+                    <AdvisorRouter
+                        accountType={accountType}
+                        onViewProperty={setViewingProperty}
+                        seedProperty={advisorSeed}
+                        onSeedConsumed={() => setAdvisorSeed(null)}
+                    />
+                )
             default:
                 return accountType === 'property-owner' ? (
                     <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />

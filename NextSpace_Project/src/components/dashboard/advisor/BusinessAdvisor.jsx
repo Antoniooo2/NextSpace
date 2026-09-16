@@ -50,7 +50,7 @@ function buildResultsBlock(payload) {
     }
 }
 
-export default function BusinessAdvisor({ onViewProperty }) {
+export default function BusinessAdvisor({ onViewProperty, seedProperty, onSeedConsumed }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
@@ -176,7 +176,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
         }
     }
 
-    const sendTurn = async ({ formFilter, userVisibleText }) => {
+    const sendTurn = async ({ formFilter, userVisibleText, resultsOverride }) => {
         if (loading) return
 
         setError('')
@@ -209,7 +209,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
                     role: 'business',
                     messages: nextMessages,
                     filter,
-                    results,
+                    results: resultsOverride ?? results,
                     relaxed,
                     formFilter: formFilter || undefined,
                 }),
@@ -290,6 +290,27 @@ export default function BusinessAdvisor({ onViewProperty }) {
     const handleFormSubmit = (formFilter, description) => {
         sendTurn({ formFilter, userVisibleText: description })
     }
+
+    // Arriving here from "Analyze with Rony" on a property detail page: drop that
+    // listing into the chat as a result card, then ask about it on the user's
+    // behalf so they land straight in a conversation about that specific space.
+    useEffect(() => {
+        if (!historyLoaded || !seedProperty) return
+
+        setResults([seedProperty])
+        chatLogRef.current = [
+            ...chatLogRef.current,
+            { type: 'results', items: [seedProperty], highlight: [seedProperty.property_id], chart: null, budgetMax: null },
+        ]
+        setChatLog(chatLogRef.current)
+
+        sendTurn({
+            userVisibleText: `Is "${seedProperty.property_name}" a good fit for my business?`,
+            resultsOverride: [seedProperty],
+        })
+        onSeedConsumed?.()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [historyLoaded, seedProperty])
 
     const handleComposerSubmit = (e) => {
         e.preventDefault()
