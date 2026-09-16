@@ -1,7 +1,7 @@
 import { useState } from "react";
 import logo from '../assets/NextSpace_logo.png'
 import premisesSantaTecla from '../assets/premisesSantaTecla.jpg'
-import medicalColonyOffice from '../assets/medicalColonyOffice.jpg'
+import medicalColonyOffice from '../assets/MedicalColonyOffice.jpg'
 
 
 export default function OwnerProfile({ onNavigate = () => {} }) {
