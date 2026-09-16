@@ -83,6 +83,7 @@ export default function Dashboard() {
                     user={user}
                     accountType={accountType}
                     onBack={() => setViewingProperty(null)}
+                    onNavigate={handleSectionChange}
                 />
             )
         }
