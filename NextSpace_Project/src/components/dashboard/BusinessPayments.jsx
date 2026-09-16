@@ -224,6 +224,19 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
                     <p>Track your rent and payment history for {property?.property_name || 'your space'}.</p>
                 </div>
                 <div className="ns-dash-header-actions">
+                    {onAskRony && (
+                        <button
+                            type="button"
+                            className="ns-outline-btn"
+                            onClick={() =>
+                                onAskRony({
+                                    text: `Explain my payment situation for "${property?.property_name || 'my lease'}" — am I up to date, and what's coming up?`,
+                                })
+                            }
+                        >
+                            <i className="bi bi-stars"></i> Ask Rony
+                        </button>
+                    )}
                     <button type="button" className="ns-outline-btn" onClick={() => setNotice(true)}>
                         <i className="bi bi-download"></i> Export report
                     </button>
@@ -312,18 +325,6 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
                     <button type="button" className="ns-outline-btn ns-pay-full-btn" onClick={() => setNotice(true)}>
                         <i className="bi bi-download"></i> Download receipt
                     </button>
-                    {onAskRony && (
-                        <button
-                            type="button" className="ns-outline-btn ns-pay-full-btn"
-                            onClick={() =>
-                                onAskRony({
-                                    text: `Explain my payment situation for "${property?.property_name || 'my lease'}" — am I up to date, and what's coming up?`,
-                                })
-                            }
-                        >
-                            <i className="bi bi-stars"></i> Ask Rony
-                        </button>
-                    )}
                     <p className="ns-pay-simulation-note">
                         <i className="bi bi-shield-lock"></i> Secure checkout powered by Wompi.
                     </p>

@@ -45,7 +45,7 @@ export default function OwnerAdvisor({ seed, onSeedConsumed }) {
             if (cancelled) return
             if (!user) {
                 setHistoryLoaded(true)
-                if (!seed) sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
+                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
                 return
             }
 
@@ -60,7 +60,7 @@ export default function OwnerAdvisor({ seed, onSeedConsumed }) {
 
             if (historyError || !data || data.length === 0) {
                 setHistoryLoaded(true)
-                if (!seed) sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
+                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
                 return
             }
 
@@ -210,11 +210,11 @@ export default function OwnerAdvisor({ seed, onSeedConsumed }) {
     }
 
     // Arriving here from a page-level "Ask Rony" action (a contract, a payment
-    // reminder): ask on the user's behalf instead of dropping them in an empty
-    // composer, so they land straight in a conversation about that lease.
+    // reminder): pre-fill the composer with a default question instead of
+    // sending it right away, so the user can read, edit, or just hit send.
     useEffect(() => {
         if (!historyLoaded || !seed) return
-        sendTurn({ userVisibleText: seed.text })
+        setInput(seed.text || '')
         onSeedConsumed?.()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [historyLoaded, seed])

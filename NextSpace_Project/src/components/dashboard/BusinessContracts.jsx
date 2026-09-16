@@ -58,6 +58,17 @@ export default function BusinessContracts({ user, onAskRony }) {
                     <h1>Contracts</h1>
                     <p>Lease agreements you've signed with property owners.</p>
                 </div>
+                {onAskRony && (
+                    <div className="ns-dash-header-actions">
+                        <button
+                            type="button"
+                            className="ns-outline-btn"
+                            onClick={() => onAskRony({ text: 'Tell me about my leases — what should I know?' })}
+                        >
+                            <i className="bi bi-stars"></i> Ask Rony
+                        </button>
+                    </div>
+                )}
             </div>
 
             {loadError && (
@@ -99,19 +110,6 @@ export default function BusinessContracts({ user, onAskRony }) {
                                 <span className={`ns-pay-tag ${CONTRACT_STATUS_TAG[contract.status] || 'tag-pending'}`}>
                                     {contract.status}
                                 </span>
-                                {onAskRony && (
-                                    <button
-                                        type="button"
-                                        className="ns-outline-btn ns-pay-reminder-btn"
-                                        onClick={() =>
-                                            onAskRony({
-                                                text: `Tell me about my lease for "${property?.property_name || 'this property'}" — anything I should know?`,
-                                            })
-                                        }
-                                    >
-                                        <i className="bi bi-stars"></i> Ask Rony
-                                    </button>
-                                )}
                             </div>
                         )
                     })}
