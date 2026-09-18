@@ -6,7 +6,7 @@ import { CONTRACT_STATUS_TAG } from '../../lib/contractStatus'
 const CONTRACT_EMBED =
     '*, add_business!contract_property_id_fkey(property_name, users!add_business_owner_id_fkey(first_name,last_name))'
 
-export default function BusinessContracts({ user }) {
+export default function BusinessContracts({ user, onAskRony }) {
     const [contracts, setContracts] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
@@ -58,6 +58,17 @@ export default function BusinessContracts({ user }) {
                     <h1>Contracts</h1>
                     <p>Lease agreements you've signed with property owners.</p>
                 </div>
+                {onAskRony && (
+                    <div className="ns-dash-header-actions">
+                        <button
+                            type="button"
+                            className="ns-outline-btn"
+                            onClick={() => onAskRony({ text: 'Tell me about my leases — what should I know?' })}
+                        >
+                            <i className="bi bi-stars"></i> Ask Rony
+                        </button>
+                    </div>
+                )}
             </div>
 
             {loadError && (

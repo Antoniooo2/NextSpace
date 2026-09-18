@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from '../../lib/supabaseClient'
 import { PROPERTIES } from '../../data/properties'
 import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import EditProfileModal from './EditProfileModal'
+import ChangePasswordModal from './ChangePasswordModal'
 
 const ACCOUNT_TYPE_LABEL = {
     business: 'Business',
@@ -10,6 +12,8 @@ const ACCOUNT_TYPE_LABEL = {
 
 export default function ProfileView({ user, accountType, onNavigate, onUserUpdated }) {
     const [showEditModal, setShowEditModal] = useState(false)
+    const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
+    const [contractsCount, setContractsCount] = useState(0)
 
     const meta = user.user_metadata || {}
     const firstName = meta.first_name || ''
@@ -21,19 +25,53 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
 
     const { properties: ownProperties, loading: loadingProperties } = useOwnerProperties(isOwner ? user : null)
 
-    // The remaining stats are 0 for now since contracts, profile views, favorites,
-    // searches, and messages aren't real features yet. Wire these up to real counts
-    // once those systems exist.
+    useEffect(() => {
+        let cancelled = false
+
+        const loadContractsCount = async () => {
+            if (isOwner) {
+                if (loadingProperties || ownProperties.length === 0) {
+                    if (!cancelled) setContractsCount(0)
+                    return
+                }
+                const propertyIds = ownProperties.map((p) => p.property_id)
+                const { count } = await supabase
+                    .from('contract')
+                    .select('contract_id', { count: 'exact', head: true })
+                    .in('property_id', propertyIds)
+                if (!cancelled) setContractsCount(count || 0)
+            } else {
+                if (!meta.dui) {
+                    if (!cancelled) setContractsCount(0)
+                    return
+                }
+                const { count } = await supabase
+                    .from('contract')
+                    .select('contract_id', { count: 'exact', head: true })
+                    .eq('tenant_dui', meta.dui)
+                if (!cancelled) setContractsCount(count || 0)
+            }
+        }
+
+        loadContractsCount()
+
+        return () => {
+            cancelled = true
+        }
+    }, [isOwner, loadingProperties, ownProperties, meta.dui])
+
+    // Profile views, favorites, and searches stay at 0 since those aren't real
+    // features yet (no supporting tables). Wire these up once those systems exist.
     const stats = isOwner
         ? [
               { icon: 'bi-buildings', label: 'Listings', value: ownProperties.length },
-              { icon: 'bi-file-earmark-text', label: 'Contracts', value: 0 },
+              { icon: 'bi-file-earmark-text', label: 'Contracts', value: contractsCount },
               { icon: 'bi-eye', label: 'Profile views', value: 0 },
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
           ]
         : [
               { icon: 'bi-heart', label: 'Favorites', value: 0 },
-              { icon: 'bi-file-earmark-text', label: 'Contracts', value: 0 },
+              { icon: 'bi-file-earmark-text', label: 'Contracts', value: contractsCount },
               { icon: 'bi-search', label: 'Searches', value: 0 },
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
           ]
@@ -151,6 +189,40 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                             </div>
                         )}
                     </div>
+
+                    <div className="ns-profile-section">
+                        <div className="ns-profile-section-head">
+                            <h3>Account settings</h3>
+                        </div>
+
+                        <div className="list-group list-group-flush">
+                            <button
+                                type="button"
+                                className="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3"
+                                onClick={() => setShowChangePasswordModal(true)}
+                            >
+                                <i className="bi bi-key fs-5" style={{ width: 22 }}></i>
+                                <span className="flex-grow-1 d-flex flex-column lh-sm text-start">
+                                    <span className="fw-semibold">Change password</span>
+                                    <span className="text-muted small">Update your access key for security</span>
+                                </span>
+                                <i className="bi bi-chevron-right text-muted small"></i>
+                            </button>
+
+                            <button
+                                type="button"
+                                className="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3"
+                                onClick={() => onNavigate('notifications')}
+                            >
+                                <i className="bi bi-bell fs-5" style={{ width: 22 }}></i>
+                                <span className="flex-grow-1 d-flex flex-column lh-sm text-start">
+                                    <span className="fw-semibold">Notifications</span>
+                                    <span className="text-muted small">Manage email and push alerts</span>
+                                </span>
+                                <i className="bi bi-chevron-right text-muted small"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -160,6 +232,10 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                     onClose={() => setShowEditModal(false)}
                     onUpdated={onUserUpdated}
                 />
+            )}
+
+            {showChangePasswordModal && (
+                <ChangePasswordModal onClose={() => setShowChangePasswordModal(false)} />
             )}
         </>
     )

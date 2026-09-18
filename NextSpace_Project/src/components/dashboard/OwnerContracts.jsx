@@ -11,7 +11,7 @@ const CONTRACT_EMBED =
 
 const STATUS_FILTERS = [{ id: 'all', label: 'All' }, ...CONTRACT_STATUSES.map((s) => ({ id: s, label: s }))]
 
-export default function OwnerContracts({ user }) {
+export default function OwnerContracts({ user, onAskRony }) {
     const [ownerDui, setOwnerDui] = useState(null)
     const [properties, setProperties] = useState([])
     const [tenants, setTenants] = useState([])
@@ -190,6 +190,15 @@ export default function OwnerContracts({ user }) {
                     <p>Manage lease agreements for the properties you own.</p>
                 </div>
                 <div className="ns-dash-header-actions">
+                    {onAskRony && (
+                        <button
+                            type="button"
+                            className="ns-outline-btn"
+                            onClick={() => onAskRony({ text: 'Give me an update on my contracts — what needs my attention?' })}
+                        >
+                            <i className="bi bi-stars"></i> Ask Rony
+                        </button>
+                    )}
                     <button
                         type="button" className="ns-filled-btn"
                         onClick={() => setShowNewModal(true)}

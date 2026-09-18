@@ -22,7 +22,7 @@ function computeChips(intent) {
     return ['What needs my attention?', 'Improve my listings']
 }
 
-export default function OwnerAdvisor() {
+export default function OwnerAdvisor({ seed, onSeedConsumed }) {
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [messages, setMessages] = useState([])
     const [chatLog, setChatLog] = useState([])
@@ -208,6 +208,16 @@ export default function OwnerAdvisor() {
         setChips([])
         sendTurn({ userVisibleText: text })
     }
+
+    // Arriving here from a page-level "Ask Rony" action (a contract, a payment
+    // reminder): pre-fill the composer with a default question instead of
+    // sending it right away, so the user can read, edit, or just hit send.
+    useEffect(() => {
+        if (!historyLoaded || !seed) return
+        setInput(seed.text || '')
+        onSeedConsumed?.()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [historyLoaded, seed])
 
     const copyDraft = async (text, index) => {
         try {

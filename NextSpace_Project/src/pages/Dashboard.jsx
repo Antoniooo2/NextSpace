@@ -24,6 +24,7 @@ export default function Dashboard() {
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
     const [unreadCount, setUnreadCount] = useState(0)
+    const [advisorSeed, setAdvisorSeed] = useState(null)
 
     const loadUnreadCount = useCallback(async () => {
         const { count } = await supabase
@@ -61,6 +62,12 @@ export default function Dashboard() {
         setSection(nextSection)
     }
 
+    const handleAskRony = (seed) => {
+        setViewingProperty(null)
+        setAdvisorSeed(seed)
+        setSection('advisor')
+    }
+
     if (loading || !user) {
         return (
             <div className="ns-dash-loading">
@@ -83,6 +90,7 @@ export default function Dashboard() {
                     user={user}
                     accountType={accountType}
                     onBack={() => setViewingProperty(null)}
+                    onAskRony={handleAskRony}
                 />
             )
         }
@@ -99,15 +107,15 @@ export default function Dashboard() {
                 )
             case 'contracts':
                 return accountType === 'property-owner' ? (
-                    <OwnerContracts user={user} />
+                    <OwnerContracts user={user} onAskRony={handleAskRony} />
                 ) : (
-                    <BusinessContracts user={user} />
+                    <BusinessContracts user={user} onAskRony={handleAskRony} />
                 )
             case 'payments':
                 return accountType === 'property-owner' ? (
-                    <OwnerPayments />
+                    <OwnerPayments onAskRony={handleAskRony} />
                 ) : (
-                    <BusinessPayments user={user} onNavigate={handleSectionChange} />
+                    <BusinessPayments user={user} onNavigate={handleSectionChange} onAskRony={handleAskRony} />
                 )
             case 'notifications':
                 return (
@@ -119,7 +127,14 @@ export default function Dashboard() {
                     />
                 )
             case 'advisor':
-                return <AdvisorRouter accountType={accountType} onViewProperty={setViewingProperty} />
+                return (
+                    <AdvisorRouter
+                        accountType={accountType}
+                        onViewProperty={setViewingProperty}
+                        seed={advisorSeed}
+                        onSeedConsumed={() => setAdvisorSeed(null)}
+                    />
+                )
             default:
                 return accountType === 'property-owner' ? (
                     <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />

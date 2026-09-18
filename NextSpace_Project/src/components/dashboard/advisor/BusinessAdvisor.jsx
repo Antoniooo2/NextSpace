@@ -50,7 +50,7 @@ function buildResultsBlock(payload) {
     }
 }
 
-export default function BusinessAdvisor({ onViewProperty }) {
+export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
@@ -61,6 +61,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
     const [chatLog, setChatLog] = useState([])
     const [chips, setChips] = useState([])
     const [input, setInput] = useState('')
+    const [pendingAttachment, setPendingAttachment] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const scrollRef = useRef(null)
@@ -176,7 +177,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
         }
     }
 
-    const sendTurn = async ({ formFilter, userVisibleText }) => {
+    const sendTurn = async ({ formFilter, userVisibleText, resultsOverride, attachment }) => {
         if (loading) return
 
         setError('')
@@ -185,7 +186,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
 
         const nextMessages = [...messages, { role: 'user', content: userVisibleText }]
         setMessages(nextMessages)
-        chatLogRef.current = [...chatLogRef.current, { type: 'user', text: userVisibleText }]
+        chatLogRef.current = [...chatLogRef.current, { type: 'user', text: userVisibleText, attachment: attachment || null }]
         setChatLog(chatLogRef.current)
 
         const { data: sessionData } = await supabase.auth.getSession()
@@ -209,7 +210,7 @@ export default function BusinessAdvisor({ onViewProperty }) {
                     role: 'business',
                     messages: nextMessages,
                     filter,
-                    results,
+                    results: resultsOverride ?? results,
                     relaxed,
                     formFilter: formFilter || undefined,
                 }),
@@ -291,12 +292,37 @@ export default function BusinessAdvisor({ onViewProperty }) {
         sendTurn({ formFilter, userVisibleText: description })
     }
 
+    // Arriving here from a page-level "Ask Rony" action (a property detail page,
+    // a contract, a payment): pre-fill the composer with a default question
+    // instead of sending it right away, so the user can read, edit, or just
+    // hit send. When the seed carries a property, attach it to the composer
+    // like a file attachment - it rides along once the message is sent.
+    useEffect(() => {
+        if (!historyLoaded || !seed) return
+
+        setFormOpen(false)
+        setInput(seed.text || '')
+        if (seed.property) {
+            setResults([seed.property])
+            setPendingAttachment(seed.property)
+        }
+
+        onSeedConsumed?.()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [historyLoaded, seed])
+
     const handleComposerSubmit = (e) => {
         e.preventDefault()
         const text = input.trim()
         if (!text) return
         setInput('')
-        sendTurn({ userVisibleText: text })
+        const attachment = pendingAttachment
+        setPendingAttachment(null)
+        sendTurn({
+            userVisibleText: text,
+            resultsOverride: attachment ? [attachment] : undefined,
+            attachment,
+        })
     }
 
     const handleChipPick = (text) => {
@@ -372,6 +398,16 @@ export default function BusinessAdvisor({ onViewProperty }) {
                                 <div key={i} className="advisor-msg advisor-msg-user">
                                     <div className="advisor-user-avatar">You</div>
                                     <div className="advisor-bubble">
+                                        {item.attachment && (
+                                            <div className="advisor-attachment-chip">
+                                                {item.attachment.photo_url ? (
+                                                    <img src={item.attachment.photo_url} alt={item.attachment.property_name} />
+                                                ) : (
+                                                    <i className="bi bi-shop"></i>
+                                                )}
+                                                <span>{item.attachment.property_name}</span>
+                                            </div>
+                                        )}
                                         <p>{item.text}</p>
                                     </div>
                                 </div>
@@ -439,17 +475,40 @@ export default function BusinessAdvisor({ onViewProperty }) {
 
                 <SuggestedChips chips={chips} onPick={handleChipPick} disabled={loading} />
 
-                <form className="advisor-composer" onSubmit={handleComposerSubmit}>
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask anything, or say what to change..."
-                        disabled={loading}
-                    />
-                    <button type="submit" className="advisor-composer-send" disabled={loading || !input.trim()}>
-                        <i className="bi bi-send"></i>
-                    </button>
+                <form className="advisor-composer-wrap" onSubmit={handleComposerSubmit}>
+                    {pendingAttachment && (
+                        <div className="advisor-attachment-preview">
+                            {pendingAttachment.photo_url ? (
+                                <img src={pendingAttachment.photo_url} alt={pendingAttachment.property_name} />
+                            ) : (
+                                <i className="bi bi-shop"></i>
+                            )}
+                            <span>{pendingAttachment.property_name}</span>
+                            <button
+                                type="button"
+                                className="advisor-attachment-remove"
+                                onClick={() => {
+                                    setPendingAttachment(null)
+                                    setResults([])
+                                }}
+                                aria-label="Remove attachment"
+                            >
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    )}
+                    <div className="advisor-composer">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            placeholder="Ask anything, or say what to change..."
+                            disabled={loading}
+                        />
+                        <button type="submit" className="advisor-composer-send" disabled={loading || !input.trim()}>
+                            <i className="bi bi-send"></i>
+                        </button>
+                    </div>
                 </form>
             </div>
         </>
