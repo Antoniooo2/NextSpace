@@ -1703,6 +1703,72 @@ button.ns-profile-mini-remove:hover {
   color: #1a8a4a;
 }
 
+/* Payment detail modal + clickable schedule/history */
+button.ns-pay-schedule-chip {
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+button.ns-pay-schedule-chip:hover {
+  border-color: var(--ns-blue-accent);
+  transform: translateY(-1px);
+}
+
+.ns-pay-row-clickable {
+  cursor: pointer;
+}
+
+.ns-pay-row-clickable:hover td {
+  background: #f7f9fc;
+}
+
+.ns-pay-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ns-pay-detail-head .ns-pay-countdown {
+  margin-bottom: 0;
+}
+
+.ns-pay-detail-amount {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1a1f2b;
+  margin: 12px 0 2px;
+}
+
+.ns-pay-detail-list {
+  margin: 0 0 18px;
+  border-top: 1px solid var(--ns-border);
+}
+
+.ns-pay-detail-list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ns-border);
+  font-size: 13px;
+}
+
+.ns-pay-detail-list dt {
+  font-weight: 500;
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-detail-list dd {
+  margin: 0;
+  font-weight: 600;
+  color: #1a1f2b;
+  text-align: right;
+  word-break: break-all;
+}
+
 /* Compact lease card: a thumbnail instead of a full-width placeholder banner */
 .ns-pay-lease-card-compact {
   padding: 20px;

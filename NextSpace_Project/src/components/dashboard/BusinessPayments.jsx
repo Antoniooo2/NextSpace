@@ -13,7 +13,8 @@ import {
     refreshPaymentStatuses,
     todayInElSalvador,
 } from '../../lib/rentSchedule'
-import NoticeModal from './NoticeModal'
+import { downloadReceiptPdf, downloadScheduleCsv } from '../../lib/paymentDocuments'
+import PaymentDetailModal from './PaymentDetailModal'
 
 const CONTRACT_EMBED = `*, add_business!contract_property_id_fkey(property_name, owner_id, ${PROPERTY_PHOTO_EMBED}, users!add_business_owner_id_fkey(first_name,last_name))`
 
@@ -40,7 +41,8 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
     const [loadError, setLoadError] = useState('')
     const [payError, setPayError] = useState(null)
     const [paying, setPaying] = useState(false)
-    const [notice, setNotice] = useState(false)
+    const [detailPaymentId, setDetailPaymentId] = useState(null)
+    const [receiptBusyId, setReceiptBusyId] = useState(null)
     const [returnState, setReturnState] = useState(null)
     const [returnPaymentId, setReturnPaymentId] = useState(null)
 
@@ -199,7 +201,23 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
     const monthsElapsed = installments.filter((p) => p.payment_date <= today).length
     const monthNumber = Math.min(Math.max(monthsElapsed, 1), installments.length)
     const progressPct = leaseTotal > 0 ? Math.round((paidTotal / leaseTotal) * 100) : 0
+    const detailPayment = installments.find((p) => p.payment_id === detailPaymentId) || null
     const history = [...installments].filter((p) => p.status !== 'Scheduled').reverse()
+
+    const meta = user.user_metadata || {}
+    const tenantInfo = { first_name: meta.first_name, last_name: meta.last_name, dui: meta.dui }
+
+    const handleQuickReceipt = async (payment) => {
+        setReceiptBusyId(payment.payment_id)
+        try {
+            await downloadReceiptPdf({ payment, contract, tenant: tenantInfo })
+        } catch (err) {
+            console.error('Could not build the receipt PDF', err)
+            setPayError({ text: 'Could not create the receipt. Please try again.' })
+        } finally {
+            setReceiptBusyId(null)
+        }
+    }
 
     const handlePayNow = async () => {
         if (!contract || !nextToPay) return
@@ -332,9 +350,16 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                             <i className="bi bi-stars"></i> Ask Rony
                         </button>
                     )}
-                    <button type="button" className="ns-outline-btn" onClick={() => setNotice(true)}>
-                        <i className="bi bi-download"></i> Export report
-                    </button>
+                    {installments.length > 0 && (
+                        <button
+                            type="button"
+                            className="ns-outline-btn"
+                            onClick={() => downloadScheduleCsv({ contract, installments })}
+                            title="Download this lease's rent schedule and payments as a spreadsheet (CSV)"
+                        >
+                            <i className="bi bi-download"></i> Export report
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -533,11 +558,14 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
             ) : (
                 <div className="ns-pay-schedule-row">
                     {installments.map((payment) => (
-                        <div
+                        <button
+                            type="button"
                             key={payment.payment_id}
                             className={`ns-pay-schedule-chip status-${payment.status.toLowerCase()} ${
                                 nextToPay?.payment_id === payment.payment_id ? 'is-next' : ''
                             }`}
+                            onClick={() => setDetailPaymentId(payment.payment_id)}
+                            aria-label={`Details for ${formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' })} rent`}
                         >
                             <div className="ns-pay-schedule-date">
                                 <span>{formatDueDate(payment.payment_date, { month: 'short' }).toUpperCase()}</span>
@@ -547,7 +575,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                             <span className={`ns-pay-tag ${PAYMENT_STATUS_TAG[payment.status] || 'tag-pending'}`}>
                                 {PAYMENT_STATUS_LABEL[payment.status] || payment.status}
                             </span>
-                        </div>
+                        </button>
                     ))}
                 </div>
             )}
@@ -570,7 +598,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                         </thead>
                         <tbody>
                             {history.map((row) => (
-                                <tr key={row.payment_id}>
+                                <tr
+                                    key={row.payment_id}
+                                    className="ns-pay-row-clickable"
+                                    onClick={() => setDetailPaymentId(row.payment_id)}
+                                >
                                     <td className="ns-pay-muted">{formatDueDate(row.payment_date)}</td>
                                     <td className="ns-pay-muted">
                                         {row.paid_at ? new Date(row.paid_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
@@ -587,10 +619,15 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                             <button
                                                 type="button"
                                                 className="ns-pay-icon-btn"
-                                                onClick={() => setNotice(true)}
-                                                title="Download receipt"
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleQuickReceipt(row)
+                                                }}
+                                                disabled={receiptBusyId === row.payment_id}
+                                                title="Download receipt (PDF)"
+                                                aria-label="Download receipt (PDF)"
                                             >
-                                                <i className="bi bi-download"></i>
+                                                <i className="bi bi-file-earmark-pdf"></i>
                                             </button>
                                         )}
                                     </td>
@@ -601,12 +638,15 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                 </div>
             )}
 
-            {notice && (
-                <NoticeModal
-                    icon="bi-credit-card"
-                    title="Receipts are coming soon"
-                    description="You can already pay your rent online with Wompi. Downloadable receipts and exported reports aren't connected yet."
-                    onClose={() => setNotice(false)}
+            {detailPayment && (
+                <PaymentDetailModal
+                    payment={detailPayment}
+                    contract={contract}
+                    tenant={tenantInfo}
+                    canPay={nextToPay?.payment_id === detailPayment.payment_id}
+                    paying={paying}
+                    onPay={handlePayNow}
+                    onClose={() => setDetailPaymentId(null)}
                 />
             )}
         </>
