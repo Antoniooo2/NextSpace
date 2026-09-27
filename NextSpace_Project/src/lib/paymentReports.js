@@ -36,7 +36,7 @@ function paidOnShort(p) {
 // PDF helpers
 // ---------------------------------------------------------------------------
 
-async function newDoc() {
+export async function newDoc() {
     const { jsPDF } = await import('jspdf')
     const doc = new jsPDF({ unit: 'pt', format: 'letter' })
     const width = doc.internal.pageSize.getWidth()
@@ -44,7 +44,7 @@ async function newDoc() {
     return { doc, width, height, left: 48, right: width - 48, bottom: height - 56 }
 }
 
-function header(ctx, title, subtitle) {
+export function header(ctx, title, subtitle) {
     const { doc, width, left, right } = ctx
     doc.setFillColor(...NAVY)
     doc.rect(0, 0, width, 84, 'F')
@@ -63,7 +63,7 @@ function header(ctx, title, subtitle) {
     return 116
 }
 
-function sectionTitle(ctx, y, text) {
+export function sectionTitle(ctx, y, text) {
     const { doc, left } = ctx
     // Room for the title plus a header and a couple of rows, so a title is
     // never left alone at the bottom of a page.
@@ -75,14 +75,14 @@ function sectionTitle(ctx, y, text) {
     return y + 14
 }
 
-function ensureSpace(ctx, y, needed) {
+export function ensureSpace(ctx, y, needed) {
     if (y + needed <= ctx.bottom) return y
     ctx.doc.addPage()
     return 56
 }
 
 // Key/value grid, two columns.
-function facts(ctx, y, pairs) {
+export function facts(ctx, y, pairs) {
     const { doc, left, right } = ctx
     const colW = (right - left) / 2
     pairs.forEach(([label, value], i) => {
@@ -175,7 +175,7 @@ function table(ctx, y, columns, rows) {
     return y + 10
 }
 
-function paragraph(ctx, y, text, { boxed = false } = {}) {
+export function paragraph(ctx, y, text, { boxed = false } = {}) {
     const { doc, left, right } = ctx
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
@@ -192,7 +192,7 @@ function paragraph(ctx, y, text, { boxed = false } = {}) {
     return y + h + 8
 }
 
-function footer(ctx, note) {
+export function footer(ctx, note) {
     const { doc, left, right, height } = ctx
     const pages = doc.getNumberOfPages()
     for (let i = 1; i <= pages; i++) {

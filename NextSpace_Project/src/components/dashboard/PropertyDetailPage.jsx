@@ -34,7 +34,8 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
     const [tenantDui, setTenantDui] = useState(null)
-    const [hasPendingRequest, setHasPendingRequest] = useState(false)
+    // Status of this business's open request on the space: 'Pending', 'Offered' or null.
+    const [openRequest, setOpenRequest] = useState(null)
     const [requesting, setRequesting] = useState(false)
     const [requestError, setRequestError] = useState('')
     const [requestSuccess, setRequestSuccess] = useState(false)
@@ -105,14 +106,14 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
 
             const { data: existing, error: existingError } = await supabase
                 .from('contract')
-                .select('contract_id')
+                .select('contract_id, status')
                 .eq('property_id', detail.property_id)
                 .eq('tenant_dui', userRow.dui)
-                .eq('status', 'Pending')
+                .in('status', ['Pending', 'Offered'])
 
             if (cancelled || existingError) return
 
-            setHasPendingRequest((existing || []).length > 0)
+            setOpenRequest(existing?.some((c) => c.status === 'Offered') ? 'Offered' : existing?.length ? 'Pending' : null)
         }
 
         checkExistingRequest()
@@ -189,7 +190,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         })
 
         setRequestSuccess(true)
-        setHasPendingRequest(true)
+        setOpenRequest('Pending')
     }
 
     const handleToggleSave = async () => {
@@ -393,7 +394,12 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                 <p className="ns-pay-muted mt-3 mb-0">
                                     This property doesn't have a rent price set yet.
                                 </p>
-                            ) : hasPendingRequest ? (
+                            ) : openRequest === 'Offered' ? (
+                                <p className="ns-pay-muted mt-3 mb-0">
+                                    <i className="bi bi-pen"></i> The owner sent you a lease offer for this space. Review and
+                                    sign it in Contracts.
+                                </p>
+                            ) : openRequest ? (
                                 <button type="button" className="ns-submit-btn mt-3" disabled>
                                     <i className="bi bi-file-earmark-check"></i> Request pending
                                 </button>

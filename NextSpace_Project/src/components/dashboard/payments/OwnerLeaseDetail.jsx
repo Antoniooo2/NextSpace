@@ -8,6 +8,7 @@ import ProgressRing from './ProgressRing'
 import RiskBadge from './RiskBadge'
 import ExportMenu from './ExportMenu'
 import { downloadLeaseStatementPdf, downloadLeaseWorkbook } from '../../../lib/paymentReports'
+import { EVENT_META } from '../../../lib/contracts'
 
 const ACTIVITY_PAGE = 8
 
@@ -40,23 +41,19 @@ function activityFor(lease, events, today) {
     }
 
     for (const e of events) {
+        const meta = EVENT_META[e.kind] || { icon: 'bi-bell-fill', label: e.kind }
         items.push({
             at: e.created_at,
-            icon:
-                e.kind === 'renewal_offer' || e.kind === 'renewal_request'
-                    ? 'bi-arrow-repeat'
-                    : e.kind === 'reminder'
-                      ? 'bi-send-fill'
-                      : 'bi-bell-fill',
-            tone: e.kind === 'renewal_request' ? 'success' : e.kind === 'renewal_offer' ? 'info' : 'neutral',
+            icon: meta.icon,
+            tone: e.kind === 'renewal_request' || e.kind === 'signed' ? 'success' : e.kind === 'renewal_offer' ? 'info' : 'neutral',
             text:
                 e.kind === 'renewal_request'
                     ? `${contract.users?.first_name || 'Your tenant'} asked to renew`
                     : e.kind === 'renewal_offer'
-                    ? 'You offered a renewal'
-                    : e.kind === 'reminder'
-                      ? `You sent a ${e.tone || ''} reminder`.replace('  ', ' ')
-                      : 'Automatic reminder sent',
+                      ? 'You offered a renewal'
+                      : e.kind === 'reminder'
+                        ? `You sent a ${e.tone || ''} reminder`.replace('  ', ' ')
+                        : meta.label,
             sub: e.message,
         })
     }

@@ -85,6 +85,8 @@ export default function Dashboard() {
         setViewingProperty(property)
     }
 
+    const openPaymentsFor = (contractId) => handleSectionChange('payments', { contractId })
+
     const openRonyPanel = (seed) => setRonyPanel({ open: true, seed: seed || null })
 
     const handleAskRony = (seed) => {
@@ -134,9 +136,19 @@ export default function Dashboard() {
                 )
             case 'contracts':
                 return accountType === 'property-owner' ? (
-                    <OwnerContracts user={user} onAskRony={handleAskRony} />
+                    <OwnerContracts
+                        user={user}
+                        onAskRony={openRonyPanel}
+                        onOpenPayments={openPaymentsFor}
+                        initialContractId={paymentsContractId}
+                    />
                 ) : (
-                    <BusinessContracts user={user} onAskRony={handleAskRony} />
+                    <BusinessContracts
+                        user={user}
+                        onAskRony={openRonyPanel}
+                        onOpenPayments={openPaymentsFor}
+                        initialContractId={paymentsContractId}
+                    />
                 )
             case 'payments':
                 return accountType === 'property-owner' ? (
@@ -195,7 +207,7 @@ export default function Dashboard() {
         >
             {renderContent()}
             <RonyDrawer
-                open={ronyPanel.open && section === 'payments' && !viewingProperty}
+                open={ronyPanel.open && (section === 'payments' || section === 'contracts') && !viewingProperty}
                 accountType={accountType}
                 seed={ronyPanel.seed}
                 onSeedConsumed={() => setRonyPanel((prev) => ({ ...prev, seed: null }))}

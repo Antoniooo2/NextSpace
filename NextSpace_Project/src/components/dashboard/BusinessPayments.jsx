@@ -114,7 +114,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                 .filter((c) => c.status === 'Active')
                 .map((c) => ({ ...c, add_business: c.add_business && withCoverPhoto(c.add_business) }))
             setContracts(active)
-            setHasPendingRequest((contractRows || []).some((c) => c.status === 'Pending'))
+            setHasPendingRequest((contractRows || []).some((c) => c.status === 'Pending' || c.status === 'Offered'))
 
             const rows = await loadPayments(active.map((c) => c.contract_id))
             if (cancelled) return
@@ -311,8 +311,8 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                 <h3>{hasPendingRequest ? 'Waiting on the owner' : 'No active lease'}</h3>
                 <p>
                     {hasPendingRequest
-                        ? "Your contract request hasn't been accepted yet. Once the owner accepts it, your rent schedule will show up here."
-                        : 'Find a space, request its contract, and once the owner accepts it your rent schedule will show up here.'}
+                        ? "You have a lease request or offer in progress. Once the lease is signed, your rent schedule will show up here."
+                        : 'Find a space and request a lease. Once you sign the owner’s offer, your rent schedule will show up here.'}
                 </p>
                 {onNavigate && (
                     <button
