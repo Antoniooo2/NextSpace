@@ -13,6 +13,13 @@ import OwnerPayments from '../components/dashboard/OwnerPayments'
 import OwnerContracts from '../components/dashboard/OwnerContracts'
 import BusinessContracts from '../components/dashboard/BusinessContracts'
 import Notifications from '../components/dashboard/Notifications'
+import SavedProperties from '../components/dashboard/SavedProperties'
+
+const BACK_LABEL = {
+    home: 'Back to listings',
+    saved: 'Back to saved',
+    advisor: 'Back to Rony',
+}
 
 export default function Dashboard() {
     const navigate = useNavigate()
@@ -98,13 +105,25 @@ export default function Dashboard() {
                     user={user}
                     accountType={accountType}
                     onBack={() => setViewingProperty(null)}
-                    backLabel={viewingFrom === 'advisor' ? 'Back to Rony' : 'Back to listings'}
+                    backLabel={BACK_LABEL[viewingFrom] || 'Back'}
                     onAskRony={handleAskRony}
                 />
             )
         }
 
-        switch (section) {
+        // Saved is business-only; an owner who lands on ?section=saved sees their
+        // properties instead of a blank page.
+        const activeSection = section === 'saved' && accountType === 'property-owner' ? 'home' : section
+
+        switch (activeSection) {
+            case 'saved':
+                return (
+                    <SavedProperties
+                        user={user}
+                        onViewProperty={openProperty('saved')}
+                        onNavigate={handleSectionChange}
+                    />
+                )
             case 'profile':
                 return (
                     <ProfileView

@@ -88,7 +88,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
           ]
         : [
-              { icon: 'bi-heart', label: 'Favorites', value: favoritesCount },
+              { icon: 'bi-heart', label: 'Saved', value: favoritesCount },
               { icon: 'bi-file-earmark-text', label: 'Contracts', value: contractsCount },
               { icon: 'bi-search', label: 'Searches', value: 0 },
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
