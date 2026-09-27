@@ -3,8 +3,6 @@ import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import {
-    PAYMENT_STATUS_LABEL,
-    PAYMENT_STATUS_TAG,
     daysUntil,
     dueCountdown,
     formatDueDate,
@@ -23,7 +21,9 @@ import {
     svDateOf,
     tenantName,
 } from '../../lib/leaseInsights'
-import { downloadOwnerPaymentsCsv } from '../../lib/paymentDocuments'
+import { downloadOwnerPaymentsCsv, downloadReceiptPdf } from '../../lib/paymentDocuments'
+import PaymentDetailModal from './PaymentDetailModal'
+import PaymentHistory from './payments/PaymentHistory'
 import CollectionsChart from './CollectionsChart'
 import IncomeProjectionChart from './payments/IncomeProjectionChart'
 import OwnerLeaseDetail from './payments/OwnerLeaseDetail'
@@ -65,6 +65,8 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
     const [loadError, setLoadError] = useState('')
     const [selectedId, setSelectedId] = useState(initialContractId ? Number(initialContractId) : null)
     const [chartRange, setChartRange] = useState(6)
+    const [historyDetailId, setHistoryDetailId] = useState(null)
+    const [receiptBusyId, setReceiptBusyId] = useState(null)
 
     const ownerFirstName = user.user_metadata?.first_name || ''
 
@@ -210,10 +212,24 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
         .sort((a, b) => a.p.payment_date.localeCompare(b.p.payment_date))
     const upcomingTotal = sumAmount(upcoming.map((u) => u.p))
 
-    const recentPaid = allRows
-        .filter((p) => p.status === 'Paid' && p.paid_at)
-        .sort((a, b) => b.paid_at.localeCompare(a.paid_at))
-        .slice(0, 5)
+    const historyDetail = allRows.find((p) => p.payment_id === historyDetailId) || null
+    const tenantOf = (contract) => ({
+        first_name: contract.users?.first_name,
+        last_name: contract.users?.last_name,
+        dui: contract.tenant_dui,
+    })
+
+    const handleReceipt = async (p) => {
+        if (!p.contract) return
+        setReceiptBusyId(p.payment_id)
+        try {
+            await downloadReceiptPdf({ payment: p, contract: p.contract, tenant: tenantOf(p.contract) })
+        } catch (err) {
+            console.error('Could not build the receipt PDF', err)
+        } finally {
+            setReceiptBusyId(null)
+        }
+    }
 
     const handleInsightAction = (action) => {
         if (action.type === 'open-lease') setSelectedId(action.contractId)
@@ -459,28 +475,27 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
 
             <section className="ns-panel">
                 <div className="ns-panel-head">
-                    <h3>Recent payments</h3>
-                    <span>Latest rent received through Wompi</span>
+                    <h3>Payment history</h3>
+                    <span>Every month that has come due, newest first</span>
                 </div>
-                {recentPaid.length === 0 ? (
-                    <p className="ns-pay-muted mb-0">No rent has been paid yet.</p>
-                ) : (
-                    <ul className="ns-recent">
-                        {recentPaid.map((p) => (
-                            <li key={p.payment_id}>
-                                <i className="bi bi-check-circle-fill"></i>
-                                <span>
-                                    <strong>{tenantName(p.contract?.users)}</strong> paid {money(p.amount)} ·{' '}
-                                    {p.contract?.add_business?.property_name} ·{' '}
-                                    {formatDueDate(p.payment_date, { month: 'long' })} rent
-                                </span>
-                                <span className={`ns-pay-tag ${PAYMENT_STATUS_TAG.Paid}`}>{PAYMENT_STATUS_LABEL.Paid}</span>
-                                <time>{formatDueDate(svDateOf(p.paid_at), { month: 'short', day: 'numeric' })}</time>
-                            </li>
-                        ))}
-                    </ul>
-                )}
+                <PaymentHistory
+                    rows={allRows}
+                    viewer="owner"
+                    onOpen={(p) => setHistoryDetailId(p.payment_id)}
+                    onReceipt={handleReceipt}
+                    receiptBusyId={receiptBusyId}
+                />
             </section>
+
+            {historyDetail && historyDetail.contract && (
+                <PaymentDetailModal
+                    payment={historyDetail}
+                    contract={historyDetail.contract}
+                    tenant={tenantOf(historyDetail.contract)}
+                    viewer="owner"
+                    onClose={() => setHistoryDetailId(null)}
+                />
+            )}
         </>
     )
 }

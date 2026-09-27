@@ -40,10 +40,17 @@ function activityFor(lease, events, today) {
     for (const e of events) {
         items.push({
             at: e.created_at,
-            icon: e.kind === 'renewal_offer' ? 'bi-arrow-repeat' : e.kind === 'reminder' ? 'bi-send-fill' : 'bi-bell-fill',
-            tone: e.kind === 'renewal_offer' ? 'info' : 'neutral',
+            icon:
+                e.kind === 'renewal_offer' || e.kind === 'renewal_request'
+                    ? 'bi-arrow-repeat'
+                    : e.kind === 'reminder'
+                      ? 'bi-send-fill'
+                      : 'bi-bell-fill',
+            tone: e.kind === 'renewal_request' ? 'success' : e.kind === 'renewal_offer' ? 'info' : 'neutral',
             text:
-                e.kind === 'renewal_offer'
+                e.kind === 'renewal_request'
+                    ? `${contract.users?.first_name || 'Your tenant'} asked to renew`
+                    : e.kind === 'renewal_offer'
                     ? 'You offered a renewal'
                     : e.kind === 'reminder'
                       ? `You sent a ${e.tone || ''} reminder`.replace('  ', ' ')

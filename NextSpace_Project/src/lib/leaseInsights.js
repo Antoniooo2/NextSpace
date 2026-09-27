@@ -217,3 +217,81 @@ export function ownerInsights({ leases, thisMonth, projection, today = todayInEl
 
     return items
 }
+
+// What Rony points out on the tenant's Payments screen, most urgent first.
+// leases: [{ contract, installments, stats }].
+export function tenantInsights({ leases, today = todayInElSalvador() }) {
+    const items = []
+
+    for (const { contract, stats } of leases) {
+        const name = contract.add_business?.property_name || 'your lease'
+        if (stats.lateMonths > 0) {
+            items.push({
+                tone: 'danger',
+                icon: 'bi-exclamation-octagon-fill',
+                text: `Your rent for ${name} is ${stats.oldestLateDays} ${stats.oldestLateDays === 1 ? 'day' : 'days'} late — ${money(stats.owedNow)} owed${stats.lateMonths > 1 ? ` over ${stats.lateMonths} months` : ''}. Months are paid oldest first.`,
+                action: { type: 'select-lease', contractId: contract.contract_id, label: 'Pay now' },
+            })
+        } else if (stats.owedNow > 0 && stats.nextUnpaid) {
+            const d = daysUntil(stats.nextUnpaid.payment_date, today)
+            items.push({
+                tone: 'warning',
+                icon: 'bi-clock-fill',
+                text: `${money(stats.nextUnpaid.amount)} for ${name} is due ${d === 0 ? 'today' : d === 1 ? 'tomorrow' : `in ${d} days`}.`,
+                action: { type: 'select-lease', contractId: contract.contract_id, label: 'Pay now' },
+            })
+        }
+    }
+
+    const owing = leases.filter(({ stats }) => stats.owedNow > 0)
+    if (owing.length > 1) {
+        const total = owing.reduce((s, { stats }) => s + stats.owedNow, 0)
+        items.push({
+            tone: 'info',
+            icon: 'bi-wallet2',
+            text: `In total you owe ${money(total)} right now across ${owing.length} leases.`,
+        })
+    }
+
+    for (const { contract, stats } of leases) {
+        if (!contract.end_date) continue
+        const left = daysUntil(contract.end_date, today)
+        if (left < 0 || left > 60) continue
+        const name = contract.add_business?.property_name || 'your lease'
+        const record =
+            stats.monthsDue > 0 && stats.paidOnTime === stats.monthsDue
+                ? ` You've paid all ${stats.monthsDue} months on time, a strong case for renewing.`
+                : ''
+        items.push({
+            tone: 'warning',
+            icon: 'bi-hourglass-split',
+            text: `Your lease for ${name} ends in ${left} days (${contract.end_date}).${record}`,
+            action: { type: 'renewal-request', contractId: contract.contract_id, label: 'Ask to renew' },
+        })
+    }
+
+    if (owing.length === 0 && leases.length > 0) {
+        const next = leases
+            .map(({ contract, stats }) => ({ contract, p: stats.nextUnpaid }))
+            .filter((x) => x.p)
+            .sort((a, b) => a.p.payment_date.localeCompare(b.p.payment_date))[0]
+        items.push({
+            tone: 'success',
+            icon: 'bi-check-circle-fill',
+            text: next
+                ? `You're up to date on every lease. Next payment: ${money(next.p.amount)} for ${next.contract.add_business?.property_name || 'your lease'} on ${next.p.payment_date}.`
+                : "You're up to date and every month of your leases is paid.",
+        })
+    }
+
+    const streak = leases.filter(({ stats }) => stats.monthsDue >= 3 && stats.paidOnTime === stats.monthsDue)
+    for (const { contract, stats } of streak) {
+        items.push({
+            tone: 'success',
+            icon: 'bi-award-fill',
+            text: `${stats.monthsDue} months in a row paid on time for ${contract.add_business?.property_name || 'your lease'}. Nice record.`,
+        })
+    }
+
+    return items
+}

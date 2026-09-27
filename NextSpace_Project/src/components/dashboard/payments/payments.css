@@ -970,3 +970,252 @@
     flex-wrap: wrap;
   }
 }
+
+/* Payment history feed */
+.ns-history-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ns-history-search {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--ns-border);
+  border-radius: 10px;
+  padding: 7px 12px;
+  background: #fff;
+}
+
+.ns-history-search:focus-within {
+  border-color: var(--ns-blue-accent);
+}
+
+.ns-history-search i {
+  color: var(--ns-text-muted);
+}
+
+.ns-history-search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 13.5px;
+  background: transparent;
+}
+
+.ns-history-select {
+  width: auto;
+  font-size: 13px;
+  border-radius: 10px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.ns-history-group {
+  margin-bottom: 14px;
+}
+
+.ns-history-group header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--ns-border);
+  margin-bottom: 4px;
+}
+
+.ns-history-group h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1f2b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ns-history-group header span {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-history-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ns-history-group li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ns-history-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: none;
+  padding: 10px 8px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-history-row:hover,
+.ns-history-row:focus-visible {
+  background: #f5f7fb;
+}
+
+.ns-history-row > i {
+  font-size: 16px;
+  color: var(--ns-text-muted);
+}
+
+.status-paid .ns-history-row > i {
+  color: #1a8a4a;
+}
+
+.status-late .ns-history-row > i {
+  color: #c9292f;
+}
+
+.status-pending .ns-history-row > i {
+  color: #2f5fe0;
+}
+
+.ns-history-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-history-main strong {
+  font-size: 13.5px;
+  color: #1a1f2b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns-history-main small {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-history-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1a1f2b;
+}
+
+.ns-history-amount small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ns-text-muted);
+}
+
+.status-late .ns-history-amount small {
+  color: #c9292f;
+}
+
+.status-paid .ns-history-amount small {
+  color: #1a8a4a;
+}
+
+.ns-history-more {
+  width: 100%;
+  justify-content: center;
+}
+
+.ns-history-empty {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.ns-detail-ask-rony {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #d7ddfb;
+  background: #f4f7ff;
+  color: var(--ns-blue-accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ns-detail-ask-rony:hover {
+  background: #eaf0ff;
+}
+
+/* Tenant pay card with countdown ring */
+.ns-pay-due-card-v2 {
+  justify-content: center;
+}
+
+.ns-due-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.ns-due-hero .ns-pay-countdown {
+  margin-bottom: 4px;
+}
+
+.ns-due-hero .ns-pay-due-amount {
+  margin: 0;
+}
+
+.ns-due-hero .ns-pay-due-desc {
+  margin: 2px 0 0;
+}
+
+.ns-due-ring-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+}
+
+.ns-due-ring-text strong {
+  font-size: 22px;
+  color: #1a1f2b;
+}
+
+.ns-due-ring-text small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ns-text-muted);
+}
+
+.ns-due-ring-text.is-late strong,
+.ns-due-ring-text.is-late small {
+  color: #c9292f;
+}
+
+.ns-due-check {
+  font-size: 30px;
+  color: #1a8a4a;
+}
+
+/* Lease card keeps its own height instead of stretching to the pay card. */
+.ns-pay-top-grid-v2 {
+  align-items: start;
+  margin-bottom: 20px;
+}

@@ -30,7 +30,11 @@ function barPath(x, y, w, h) {
 }
 
 // projection: { months: [{ key, label, fullLabel, total, parts }], endings }
-export default function IncomeProjectionChart({ projection }) {
+export default function IncomeProjectionChart({
+    projection,
+    label = 'Expected rent for the next six months',
+    endingNote = (e) => `${money(e.monthlyRent)}/month less after that.`,
+}) {
     const [hover, setHover] = useState(null)
     const [width, setWidth] = useState(560)
     const ref = useRef(null)
@@ -67,7 +71,7 @@ export default function IncomeProjectionChart({ projection }) {
                     width={width}
                     height={HEIGHT}
                     role="img"
-                    aria-label="Expected rent for the next six months"
+                    aria-label={label}
                     onMouseLeave={() => setHover(null)}
                 >
                     {ticks.map((t) => (
@@ -148,14 +152,14 @@ export default function IncomeProjectionChart({ projection }) {
                     {endings.map((e) => (
                         <li key={e.contractId}>
                             <i className="bi bi-flag-fill"></i> {e.name}'s lease ends {formatDueDate(e.endDate)}
-                            {e.daysLeft >= 0 && ` (in ${e.daysLeft} days)`} — {money(e.monthlyRent)}/month less after that.
+                            {e.daysLeft >= 0 && ` (in ${e.daysLeft} days)`} — {endingNote(e)}
                         </li>
                     ))}
                 </ul>
             )}
 
             <table className="visually-hidden">
-                <caption>Expected rent for the next six months</caption>
+                <caption>{label}</caption>
                 <thead>
                     <tr>
                         <th>Month</th>

@@ -6,7 +6,17 @@ function money(value) {
     return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export default function PaymentDetailModal({ payment, contract, tenant, canPay, paying, onPay, onClose, viewer = 'tenant' }) {
+export default function PaymentDetailModal({
+    payment,
+    contract,
+    tenant,
+    canPay,
+    paying,
+    onPay,
+    onClose,
+    onAskRony,
+    viewer = 'tenant',
+}) {
     const [downloading, setDownloading] = useState(false)
     const [downloadError, setDownloadError] = useState('')
 
@@ -111,6 +121,22 @@ export default function PaymentDetailModal({ payment, contract, tenant, canPay, 
                                     : 'You can pay this month starting a week before its due date.'
                                 : 'This month was cancelled when the lease ended.'}
                         </p>
+                    )}
+
+                    {onAskRony && (
+                        <button
+                            type="button"
+                            className="ns-detail-ask-rony"
+                            onClick={() => {
+                                const month = formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' })
+                                const property = contract.add_business?.property_name || 'my lease'
+                                onAskRony({
+                                    text: `Tell me about my ${month} rent for ${property} (${money(payment.amount)}, due ${formatDueDate(payment.payment_date)}, status: ${PAYMENT_STATUS_LABEL[payment.status] || payment.status}). What should I do about it?`,
+                                })
+                            }}
+                        >
+                            <i className="bi bi-stars"></i> Ask Rony about this month
+                        </button>
                     )}
                 </div>
             </div>
