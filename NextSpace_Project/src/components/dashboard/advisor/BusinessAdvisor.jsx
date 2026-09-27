@@ -11,6 +11,10 @@ import SuggestedChips from './SuggestedChips'
 const WELCOME_TEXT =
     'Hi, I can help you find a commercial space from the listings on NextSpace.'
 
+// Shown in the side panel over Payments, where questions are about rent.
+const COMPACT_WELCOME_TEXT =
+    'Hi, ask me about your rent, your leases or your payments — or about finding another space.'
+
 const RELAXED_LABELS = {
     required_services: 'dropped the required services',
     municipality: 'searched the whole department instead of one municipality',
@@ -54,7 +58,7 @@ function buildResultsBlock(payload) {
     }
 }
 
-export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSeedConsumed }) {
+export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSeedConsumed, compact = false }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
@@ -373,12 +377,14 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
 
     return (
         <>
-            <div className="advisor-header ns-dash-header">
-                <div>
-                    <h1>AI Advisor</h1>
-                    <p>Chat with Rony about your next space.</p>
+            {!compact && (
+                <div className="advisor-header ns-dash-header">
+                    <div>
+                        <h1>AI Advisor</h1>
+                        <p>Chat with Rony about your next space.</p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="advisor-shell">
                 {filter && !formOpen && (
@@ -405,7 +411,7 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
                             <RonyAvatar size={30} />
                         </div>
                         <div className="advisor-bubble">
-                            <p>{WELCOME_TEXT}</p>
+                            <p>{compact ? COMPACT_WELCOME_TEXT : WELCOME_TEXT}</p>
                         </div>
                     </div>
 

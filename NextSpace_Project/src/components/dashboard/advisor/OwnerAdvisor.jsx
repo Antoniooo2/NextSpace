@@ -22,7 +22,7 @@ function computeChips(intent) {
     return ['What needs my attention?', 'Who is late on rent?', 'Improve my listings']
 }
 
-export default function OwnerAdvisor({ seed, onSeedConsumed }) {
+export default function OwnerAdvisor({ seed, onSeedConsumed, compact = false }) {
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [messages, setMessages] = useState([])
     const [chatLog, setChatLog] = useState([])
@@ -314,12 +314,14 @@ export default function OwnerAdvisor({ seed, onSeedConsumed }) {
 
     return (
         <>
-            <div className="advisor-header ns-dash-header">
-                <div>
-                    <h1>AI Advisor</h1>
-                    <p>Rony reviews your portfolio and tells you what needs attention.</p>
+            {!compact && (
+                <div className="advisor-header ns-dash-header">
+                    <div>
+                        <h1>AI Advisor</h1>
+                        <p>Rony reviews your portfolio and tells you what needs attention.</p>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="advisor-shell">
                 <div className="advisor-stream" ref={scrollRef}>

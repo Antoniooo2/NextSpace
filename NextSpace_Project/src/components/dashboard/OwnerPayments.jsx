@@ -21,7 +21,10 @@ import {
     svDateOf,
     tenantName,
 } from '../../lib/leaseInsights'
-import { downloadOwnerPaymentsCsv, downloadReceiptPdf } from '../../lib/paymentDocuments'
+import { downloadReceiptPdf } from '../../lib/paymentDocuments'
+import { downloadOwnerWorkbook } from '../../lib/paymentReports'
+import ExportMenu from './payments/ExportMenu'
+import MonthlyReportModal from './payments/MonthlyReportModal'
 import PaymentDetailModal from './PaymentDetailModal'
 import PaymentHistory from './payments/PaymentHistory'
 import CollectionsChart from './CollectionsChart'
@@ -67,6 +70,7 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
     const [chartRange, setChartRange] = useState(6)
     const [historyDetailId, setHistoryDetailId] = useState(null)
     const [receiptBusyId, setReceiptBusyId] = useState(null)
+    const [reportOpen, setReportOpen] = useState(false)
 
     const ownerFirstName = user.user_metadata?.first_name || ''
 
@@ -169,6 +173,7 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
                 lease={selectedLease}
                 events={events.filter((e) => e.contract_id === selectedLease.contract.contract_id)}
                 ownerFirstName={ownerFirstName}
+                ownerName={[user.user_metadata?.first_name, user.user_metadata?.last_name].filter(Boolean).join(' ')}
                 onBack={() => setSelectedId(null)}
                 onAskRony={onAskRony}
                 onNoticeSent={loadData}
@@ -245,14 +250,24 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
                 </div>
                 {allRows.length > 0 && (
                     <div className="ns-dash-header-actions">
-                        <button
-                            type="button"
-                            className="ns-outline-btn"
-                            onClick={() => downloadOwnerPaymentsCsv(allRows)}
-                            title="Download every rent payment as a spreadsheet (CSV)"
-                        >
-                            <i className="bi bi-download"></i> Export CSV
-                        </button>
+                        <ExportMenu
+                            options={[
+                                {
+                                    id: 'report',
+                                    icon: 'bi-file-earmark-pdf',
+                                    label: 'Monthly report (PDF)',
+                                    description: 'Totals, chart, each property, late rent, with Rony’s analysis',
+                                    onSelect: async () => setReportOpen(true),
+                                },
+                                {
+                                    id: 'xlsx',
+                                    icon: 'bi-file-earmark-spreadsheet',
+                                    label: 'Excel workbook (.xlsx)',
+                                    description: 'Summary per property, every payment, 6-month projection',
+                                    onSelect: () => downloadOwnerWorkbook({ leases, allRows, projection }),
+                                },
+                            ]}
+                        />
                     </div>
                 )}
             </div>
@@ -486,6 +501,15 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
                     receiptBusyId={receiptBusyId}
                 />
             </section>
+
+            {reportOpen && (
+                <MonthlyReportModal
+                    leases={leases}
+                    allRows={allRows}
+                    ownerName={[user.user_metadata?.first_name, user.user_metadata?.last_name].filter(Boolean).join(' ')}
+                    onClose={() => setReportOpen(false)}
+                />
+            )}
 
             {historyDetail && historyDetail.contract && (
                 <PaymentDetailModal

@@ -19,7 +19,9 @@ import {
     leaseTimeProgress,
     tenantInsights,
 } from '../../lib/leaseInsights'
-import { downloadReceiptPdf, downloadScheduleCsv } from '../../lib/paymentDocuments'
+import { downloadReceiptPdf } from '../../lib/paymentDocuments'
+import { downloadLeaseStatementPdf, downloadLeaseWorkbook } from '../../lib/paymentReports'
+import ExportMenu from './payments/ExportMenu'
 import PaymentDetailModal from './PaymentDetailModal'
 import IncomeProjectionChart from './payments/IncomeProjectionChart'
 import LeaseTimeline from './payments/LeaseTimeline'
@@ -397,14 +399,37 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                         </button>
                     )}
                     {installments.length > 0 && (
-                        <button
-                            type="button"
-                            className="ns-outline-btn"
-                            onClick={() => downloadScheduleCsv({ contract, installments })}
-                            title="Download this lease's rent schedule and payments as a spreadsheet (CSV)"
-                        >
-                            <i className="bi bi-download"></i> Export
-                        </button>
+                        <ExportMenu
+                            options={[
+                                {
+                                    id: 'statement',
+                                    icon: 'bi-file-earmark-pdf',
+                                    label: 'Statement (PDF)',
+                                    description: `Every month of ${property?.property_name || 'this lease'}, totals and receipts`,
+                                    onSelect: () => downloadLeaseStatementPdf({ contract, installments, tenant: tenantInfo }),
+                                },
+                                {
+                                    id: 'statement-year',
+                                    icon: 'bi-calendar3',
+                                    label: `Statement ${today.slice(0, 4)} (PDF)`,
+                                    description: 'Only this calendar year, e.g. for accounting',
+                                    onSelect: () =>
+                                        downloadLeaseStatementPdf({
+                                            contract,
+                                            installments,
+                                            tenant: tenantInfo,
+                                            period: today.slice(0, 4),
+                                        }),
+                                },
+                                {
+                                    id: 'xlsx',
+                                    icon: 'bi-file-earmark-spreadsheet',
+                                    label: 'Excel (.xlsx)',
+                                    description: 'Lease summary and every payment',
+                                    onSelect: () => downloadLeaseWorkbook({ contract, installments, tenant: tenantInfo }),
+                                },
+                            ]}
+                        />
                     )}
                 </div>
             </div>
@@ -739,7 +764,14 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     canPay={oldestPayableOf(detailPayment.contract.contract_id)?.payment_id === detailPayment.payment_id}
                     paying={paying}
                     onPay={() => payInstallment(detailPayment)}
-                    onAskRony={onAskRony}
+                    onAskRony={
+                        onAskRony
+                            ? (seed) => {
+                                  setDetailPaymentId(null)
+                                  onAskRony(seed)
+                              }
+                            : undefined
+                    }
                     onClose={() => setDetailPaymentId(null)}
                 />
             )}
@@ -749,7 +781,14 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     contract={renewalLease.contract}
                     stats={renewalLease.stats}
                     tenantFirstName={meta.first_name}
-                    onAskRony={onAskRony}
+                    onAskRony={
+                        onAskRony
+                            ? (seed) => {
+                                  setRenewalFor(null)
+                                  onAskRony(seed)
+                              }
+                            : undefined
+                    }
                     onClose={() => setRenewalFor(null)}
                     onSent={() => {
                         setRenewalFor(null)

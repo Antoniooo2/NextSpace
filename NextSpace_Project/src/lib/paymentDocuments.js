@@ -1,4 +1,4 @@
-import { formatDueDate, PAYMENT_STATUS_LABEL } from './rentSchedule'
+import { formatDueDate } from './rentSchedule'
 
 const NAVY = [15, 42, 82]
 const MUTED = [110, 120, 138]
@@ -109,63 +109,4 @@ export async function downloadReceiptPdf({ payment, contract, tenant }) {
     )
 
     doc.save(`NextSpace-receipt-${receiptNumber(payment)}.pdf`)
-}
-
-function csvCell(value) {
-    const text = value == null ? '' : String(value)
-    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text
-}
-
-// Downloads the lease's full rent schedule and payment history as a CSV
-// that opens in Excel or Google Sheets.
-export function downloadScheduleCsv({ contract, installments }) {
-    const header = ['Receipt', 'Rent period', 'Due date', 'Amount (USD)', 'Status', 'Paid on', 'Method', 'Transaction ID']
-    const lines = installments.map((p) => [
-        p.status === 'Paid' ? receiptNumber(p) : '',
-        formatDueDate(p.payment_date, { month: 'long', year: 'numeric' }),
-        p.payment_date,
-        Number(p.amount).toFixed(2),
-        PAYMENT_STATUS_LABEL[p.status] || p.status,
-        p.paid_at ? p.paid_at.slice(0, 10) : '',
-        p.payment_method || '',
-        p.wompi_transaction_id || '',
-    ])
-
-    const name = (contract.add_business?.property_name || 'lease').replace(/[^\w-]+/g, '-')
-    downloadCsv([header, ...lines], `NextSpace-payments-${name}-contract-${contract.contract_id}.csv`)
-}
-
-function downloadCsv(rows, filename) {
-    const csv = rows.map((row) => row.map(csvCell).join(',')).join('\r\n')
-    // BOM so Excel reads the file as UTF-8 (property names with accents).
-    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
-}
-
-// Owner view: every rent payment across all properties, one row each.
-export function downloadOwnerPaymentsCsv(payments) {
-    const header = ['Property', 'Tenant', 'Contract', 'Rent period', 'Due date', 'Amount (USD)', 'Status', 'Paid on', 'Method', 'Receipt']
-    const rows = [...payments]
-        .sort((a, b) => a.payment_date.localeCompare(b.payment_date))
-        .map((p) => [
-            p.contract?.add_business?.property_name || '',
-            fullName(p.contract?.users).replace('—', ''),
-            p.contract?.contract_id ?? '',
-            formatDueDate(p.payment_date, { month: 'long', year: 'numeric' }),
-            p.payment_date,
-            Number(p.amount).toFixed(2),
-            PAYMENT_STATUS_LABEL[p.status] || p.status,
-            p.paid_at ? p.paid_at.slice(0, 10) : '',
-            p.payment_method || '',
-            p.status === 'Paid' ? receiptNumber(p) : '',
-        ])
-
-    downloadCsv([header, ...rows], `NextSpace-rent-collections-${new Date().toISOString().slice(0, 10)}.csv`)
 }

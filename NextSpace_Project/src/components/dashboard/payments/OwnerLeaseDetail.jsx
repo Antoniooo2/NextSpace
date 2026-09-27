@@ -6,6 +6,8 @@ import LeaseTimeline from './LeaseTimeline'
 import NoticeComposerModal from './NoticeComposerModal'
 import ProgressRing from './ProgressRing'
 import RiskBadge from './RiskBadge'
+import ExportMenu from './ExportMenu'
+import { downloadLeaseStatementPdf, downloadLeaseWorkbook } from '../../../lib/paymentReports'
 
 const ACTIVITY_PAGE = 8
 
@@ -76,7 +78,7 @@ function formatWhen(at) {
     })
 }
 
-export default function OwnerLeaseDetail({ lease, events, ownerFirstName, onBack, onAskRony, onNoticeSent }) {
+export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerName, onBack, onAskRony, onNoticeSent }) {
     const today = todayInElSalvador()
     const { contract, installments, stats, risk } = lease
     const property = contract.add_business || {}
@@ -101,6 +103,7 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, onBack
     const timeProgress = leaseTimeProgress(contract, today)
     const onTimePct = stats.onTimeRate == null ? null : Math.round(stats.onTimeRate * 100)
     const tenant = tenantName(contract.users)
+    const tenantInfo = { first_name: contract.users?.first_name, last_name: contract.users?.last_name, dui: contract.tenant_dui }
 
     const askRony = () =>
         onAskRony?.({
@@ -158,6 +161,25 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, onBack
                             <i className="bi bi-stars"></i> Ask Rony
                         </button>
                     )}
+                    <ExportMenu
+                        options={[
+                            {
+                                id: 'statement',
+                                icon: 'bi-file-earmark-pdf',
+                                label: 'Statement (PDF)',
+                                description: 'Every month of this lease, totals and receipts',
+                                onSelect: () =>
+                                    downloadLeaseStatementPdf({ contract, installments, tenant: tenantInfo, ownerName }),
+                            },
+                            {
+                                id: 'xlsx',
+                                icon: 'bi-file-earmark-spreadsheet',
+                                label: 'Excel (.xlsx)',
+                                description: 'Lease summary and every payment',
+                                onSelect: () => downloadLeaseWorkbook({ contract, installments, tenant: tenantInfo, ownerName }),
+                            },
+                        ]}
+                    />
                 </div>
             </section>
 
@@ -278,7 +300,7 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, onBack
                 <PaymentDetailModal
                     payment={detailPayment}
                     contract={contract}
-                    tenant={{ first_name: contract.users?.first_name, last_name: contract.users?.last_name, dui: contract.tenant_dui }}
+                    tenant={tenantInfo}
                     viewer="owner"
                     onClose={() => setDetailId(null)}
                 />

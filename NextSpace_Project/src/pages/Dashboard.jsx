@@ -6,6 +6,7 @@ import BusinessHome from '../components/dashboard/BusinessHome'
 import OwnerHome from '../components/dashboard/OwnerHome'
 import ProfileView from '../components/dashboard/ProfileView'
 import AdvisorRouter from '../components/dashboard/advisor/AdvisorRouter'
+import RonyDrawer from '../components/dashboard/advisor/RonyDrawer'
 import PropertyDetailPage from '../components/dashboard/PropertyDetailPage'
 import '../components/dashboard/dashboard.css'
 import BusinessPayments from '../components/dashboard/BusinessPayments'
@@ -35,6 +36,9 @@ export default function Dashboard() {
     // Lease to open on the Payments screen, e.g. when arriving from a
     // "rent reminder" notification about a specific contract.
     const [paymentsContractId, setPaymentsContractId] = useState(null)
+    // Rony as a side panel over the Payments screen (same conversation as the
+    // AI Advisor page), so asking about rent doesn't navigate away.
+    const [ronyPanel, setRonyPanel] = useState({ open: false, seed: null })
 
     const loadUnreadCount = useCallback(async () => {
         const { count } = await supabase
@@ -69,6 +73,7 @@ export default function Dashboard() {
 
     const handleSectionChange = (nextSection, options = {}) => {
         setViewingProperty(null)
+        setRonyPanel({ open: false, seed: null })
         setPaymentsContractId(options.contractId ?? null)
         setSection(nextSection)
     }
@@ -79,6 +84,8 @@ export default function Dashboard() {
         setViewingFrom(from)
         setViewingProperty(property)
     }
+
+    const openRonyPanel = (seed) => setRonyPanel({ open: true, seed: seed || null })
 
     const handleAskRony = (seed) => {
         setViewingProperty(null)
@@ -135,14 +142,14 @@ export default function Dashboard() {
                 return accountType === 'property-owner' ? (
                     <OwnerPayments
                         user={user}
-                        onAskRony={handleAskRony}
+                        onAskRony={openRonyPanel}
                         initialContractId={paymentsContractId}
                     />
                 ) : (
                     <BusinessPayments
                         user={user}
                         onNavigate={handleSectionChange}
-                        onAskRony={handleAskRony}
+                        onAskRony={openRonyPanel}
                         initialContractId={paymentsContractId}
                     />
                 )
@@ -187,6 +194,19 @@ export default function Dashboard() {
             unreadCount={unreadCount}
         >
             {renderContent()}
+            <RonyDrawer
+                open={ronyPanel.open && section === 'payments' && !viewingProperty}
+                accountType={accountType}
+                seed={ronyPanel.seed}
+                onSeedConsumed={() => setRonyPanel((prev) => ({ ...prev, seed: null }))}
+                onClose={() => setRonyPanel({ open: false, seed: null })}
+                onOpenFullChat={() => handleSectionChange('advisor')}
+                onViewProperty={(property) => {
+                    setRonyPanel({ open: false, seed: null })
+                    openProperty('advisor')(property)
+                }}
+                onNavigate={handleSectionChange}
+            />
         </DashboardLayout>
     )
 }
