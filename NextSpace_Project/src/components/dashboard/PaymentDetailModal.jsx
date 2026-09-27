@@ -6,7 +6,7 @@ function money(value) {
     return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-export default function PaymentDetailModal({ payment, contract, tenant, canPay, paying, onPay, onClose }) {
+export default function PaymentDetailModal({ payment, contract, tenant, canPay, paying, onPay, onClose, viewer = 'tenant' }) {
     const [downloading, setDownloading] = useState(false)
     const [downloadError, setDownloadError] = useState('')
 
@@ -93,6 +93,10 @@ export default function PaymentDetailModal({ payment, contract, tenant, canPay, 
                         <button type="button" className="ns-submit-btn" onClick={handleDownload} disabled={downloading}>
                             <i className="bi bi-file-earmark-pdf"></i> {downloading ? 'Creating PDF...' : 'Download receipt (PDF)'}
                         </button>
+                    ) : isPayable(payment.status) && viewer === 'owner' ? (
+                        <p className="ns-pay-muted mb-0">
+                            Waiting for {tenant?.first_name || 'the tenant'} to pay it with Wompi in the app.
+                        </p>
                     ) : isPayable(payment.status) && canPay ? (
                         <button type="button" className="ns-submit-btn" onClick={onPay} disabled={paying}>
                             {paying ? 'Opening Wompi...' : `Pay ${money(payment.amount)}`}
@@ -102,7 +106,9 @@ export default function PaymentDetailModal({ payment, contract, tenant, canPay, 
                     ) : (
                         <p className="ns-pay-muted mb-0">
                             {payment.status === 'Scheduled'
-                                ? 'You can pay this month starting a week before its due date.'
+                                ? viewer === 'owner'
+                                    ? 'Not due yet. The tenant can pay it starting a week before its due date.'
+                                    : 'You can pay this month starting a week before its due date.'
                                 : 'This month was cancelled when the lease ended.'}
                         </p>
                     )}

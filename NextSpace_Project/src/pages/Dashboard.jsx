@@ -133,7 +133,11 @@ export default function Dashboard() {
                 )
             case 'payments':
                 return accountType === 'property-owner' ? (
-                    <OwnerPayments user={user} />
+                    <OwnerPayments
+                        user={user}
+                        onAskRony={handleAskRony}
+                        initialContractId={paymentsContractId}
+                    />
                 ) : (
                     <BusinessPayments
                         user={user}
