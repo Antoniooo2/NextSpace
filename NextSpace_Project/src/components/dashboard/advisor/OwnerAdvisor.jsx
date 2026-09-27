@@ -11,7 +11,7 @@ const HISTORY_LIMIT = 20
 
 function computeChips(intent) {
     if (intent === 'analyze' || intent === 'audit') {
-        return ['Why are they vacant?', 'Improve my listings', 'Who owes me money?']
+        return ['Who is late on rent?', 'How much will I still collect this year?', 'Improve my listings']
     }
     if (intent === 'draft_message') {
         return ['Draft another message', 'What else needs attention?']
@@ -19,7 +19,7 @@ function computeChips(intent) {
     if (intent === 'simulate') {
         return ['Try a different rent change', 'What else needs attention?']
     }
-    return ['What needs my attention?', 'Improve my listings']
+    return ['What needs my attention?', 'Who is late on rent?', 'Improve my listings']
 }
 
 export default function OwnerAdvisor({ seed, onSeedConsumed }) {

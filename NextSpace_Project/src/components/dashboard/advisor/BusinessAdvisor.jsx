@@ -38,7 +38,7 @@ function computeChips(lastTurn) {
     }
 
     if (lastTurn.intent === 'account') {
-        return ['When is my next payment due?', 'What should I check before signing?']
+        return ['How much do I still owe this year?', 'When is my next payment due?', 'Am I late on anything?']
     }
 
     return ['Something cheaper', 'What should I check before signing?']
@@ -54,7 +54,7 @@ function buildResultsBlock(payload) {
     }
 }
 
-export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }) {
+export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSeedConsumed }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
@@ -147,6 +147,7 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
                     type: 'assistant',
                     text: row.content,
                     relaxed: payload.isSearchTurn ? payload.relaxed || [] : [],
+                    paymentsLink: payload.paymentsLink || null,
                 })
                 if (payload.isSearchTurn) {
                     loadedChatLog.push(buildResultsBlock(payload))
@@ -246,10 +247,19 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
             setRelaxed(result.relaxed ?? [])
 
             const isSearch = result.intent === 'search' || result.intent === 'refine'
+            // An answer about their own rent gets a shortcut to Payments, on
+            // the lease it was about when Rony said which one.
+            const paymentsLink =
+                result.intent === 'account' && result.hasActiveLease ? { contractId: result.contractId ?? null } : null
 
             let next = [
                 ...chatLogRef.current,
-                { type: 'assistant', text: result.reply, relaxed: isSearch ? result.relaxed || [] : [] },
+                {
+                    type: 'assistant',
+                    text: result.reply,
+                    relaxed: isSearch ? result.relaxed || [] : [],
+                    paymentsLink,
+                },
             ]
 
             let finalHighlight = result.highlight || []
@@ -280,6 +290,7 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
             }
 
             const persistPayload = {
+                paymentsLink,
                 isSearchTurn: isSearch,
                 relaxed: result.relaxed || [],
                 filter: result.filter ?? null,
@@ -442,6 +453,17 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
                                     </div>
                                     <div className="advisor-bubble">
                                         <p>{item.text}</p>
+                                        {item.paymentsLink && onNavigate && (
+                                            <button
+                                                type="button"
+                                                className="advisor-inline-action"
+                                                onClick={() =>
+                                                    onNavigate('payments', { contractId: item.paymentsLink.contractId })
+                                                }
+                                            >
+                                                <i className="bi bi-credit-card"></i> Open Payments
+                                            </button>
+                                        )}
                                         {item.relaxed?.length > 0 && (
                                             <p className="advisor-relaxed-note">
                                                 <i className="bi bi-funnel"></i>{' '}

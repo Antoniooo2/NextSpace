@@ -156,6 +156,7 @@ export default function Dashboard() {
                     <AdvisorRouter
                         accountType={accountType}
                         onViewProperty={openProperty('advisor')}
+                        onNavigate={handleSectionChange}
                         seed={advisorSeed}
                         onSeedConsumed={() => setAdvisorSeed(null)}
                     />

@@ -673,3 +673,39 @@
 .advisor-msg-user .advisor-attachment-chip {
   color: #fff;
 }
+
+/* Shortcut from a rent answer to the Payments screen */
+.advisor-inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ns-border);
+  background: #fff;
+  color: var(--ns-navy);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.advisor-inline-action:hover {
+  border-color: var(--ns-blue-accent);
+  color: var(--ns-blue-accent);
+}
+
+.advisor-collect-chart {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 10px;
+}
+
+.advisor-collect-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1f2b;
+  margin: 0 0 4px;
+}
