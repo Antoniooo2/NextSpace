@@ -56,7 +56,7 @@ export default function BusinessContracts({ user, onAskRony }) {
             <div className="ns-dash-header">
                 <div>
                     <h1>Contracts</h1>
-                    <p>Lease agreements you've signed with property owners.</p>
+                    <p>Your contract requests and active leases with property owners.</p>
                 </div>
                 {onAskRony && (
                     <div className="ns-dash-header-actions">
@@ -81,7 +81,7 @@ export default function BusinessContracts({ user, onAskRony }) {
                 <div className="ns-empty-state">
                     <i className="bi bi-file-earmark-text"></i>
                     <h3>No contracts yet</h3>
-                    <p>Once a property owner sets you up with a lease, it'll show up here.</p>
+                    <p>Open a space from the listings and request its contract. Your request will show up here while the owner reviews it.</p>
                 </div>
             ) : (
                 <div className="ns-pay-lease-list">

@@ -37,6 +37,10 @@ function computeChips(lastTurn) {
         return ['Something cheaper', 'Any other options?']
     }
 
+    if (lastTurn.intent === 'account') {
+        return ['When is my next payment due?', 'What should I check before signing?']
+    }
+
     return ['Something cheaper', 'What should I check before signing?']
 }
 
@@ -103,14 +107,24 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
                 return
             }
 
-            const { data, error: historyError } = await supabase
+            // Newest first so the limit keeps the most recent turns (ascending
+            // + limit would keep the oldest ones and hide everything after),
+            // then flipped back into reading order. message_id breaks ties
+            // between the user/model rows inserted together in one call.
+            const { data: newestFirst, error: historyError } = await supabase
                 .from('advisor_messages')
                 .select('role, content, payload, created_at')
                 .eq('user_auth_id', user.id)
-                .order('created_at', { ascending: true })
+                .order('created_at', { ascending: false })
+                .order('message_id', { ascending: false })
                 .limit(HISTORY_LIMIT)
 
             if (cancelled) return
+
+            let data = newestFirst ? [...newestFirst].reverse() : newestFirst
+            // The limit can cut a turn in half; never start on a model reply
+            // whose user message was left out.
+            while (data && data.length > 0 && data[0].role !== 'user') data = data.slice(1)
 
             if (historyError || !data || data.length === 0) {
                 setHistoryLoaded(true)
@@ -124,7 +138,7 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
 
             for (const row of data) {
                 if (row.role === 'user') {
-                    loadedChatLog.push({ type: 'user', text: row.content })
+                    loadedChatLog.push({ type: 'user', text: row.content, attachment: row.payload?.attachment || null })
                     continue
                 }
 
@@ -166,10 +180,15 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
         }
     }, [chatLog, loading])
 
-    const persistTurn = async (accessTokenUserId, userText, modelText, payload) => {
+    const persistTurn = async (accessTokenUserId, userText, modelText, payload, attachment) => {
         if (!accessTokenUserId) return
         const { error: insertError } = await supabase.from('advisor_messages').insert([
-            { user_auth_id: accessTokenUserId, role: 'user', content: userText },
+            {
+                user_auth_id: accessTokenUserId,
+                role: 'user',
+                content: userText,
+                payload: attachment ? { attachment } : null,
+            },
             { user_auth_id: accessTokenUserId, role: 'model', content: modelText, payload },
         ])
         if (insertError) {
@@ -280,7 +299,7 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
                 })
             )
 
-            persistTurn(userId, userVisibleText, result.reply, persistPayload)
+            persistTurn(userId, userVisibleText, result.reply, persistPayload, attachment)
         } catch (err) {
             setError(err.message || 'Could not reach Rony. Please try again.')
         } finally {
@@ -302,10 +321,7 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
 
         setFormOpen(false)
         setInput(seed.text || '')
-        if (seed.property) {
-            setResults([seed.property])
-            setPendingAttachment(seed.property)
-        }
+        setPendingAttachment(seed.property || null)
 
         onSeedConsumed?.()
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -320,7 +336,12 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
         setPendingAttachment(null)
         sendTurn({
             userVisibleText: text,
-            resultsOverride: attachment ? [attachment] : undefined,
+            // The attached property goes first, followed by whatever search
+            // results were already on screen, so asking about it doesn't
+            // throw away the earlier search.
+            resultsOverride: attachment
+                ? [attachment, ...results.filter((p) => p.property_id !== attachment.property_id)]
+                : undefined,
             attachment,
         })
     }
@@ -487,10 +508,7 @@ export default function BusinessAdvisor({ onViewProperty, seed, onSeedConsumed }
                             <button
                                 type="button"
                                 className="advisor-attachment-remove"
-                                onClick={() => {
-                                    setPendingAttachment(null)
-                                    setResults([])
-                                }}
+                                onClick={() => setPendingAttachment(null)}
                                 aria-label="Remove attachment"
                             >
                                 <i className="bi bi-x-lg"></i>

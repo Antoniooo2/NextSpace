@@ -14,6 +14,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
     const [showEditModal, setShowEditModal] = useState(false)
     const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
     const [contractsCount, setContractsCount] = useState(0)
+    const [favoritesCount, setFavoritesCount] = useState(0)
 
     const meta = user.user_metadata || {}
     const firstName = meta.first_name || ''
@@ -60,7 +61,24 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
         }
     }, [isOwner, loadingProperties, ownProperties, meta.dui])
 
-    // Profile views, favorites, and searches stay at 0 since those aren't real
+    useEffect(() => {
+        if (isOwner) return
+        let cancelled = false
+
+        supabase
+            .from('saved_properties')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_auth_id', user.id)
+            .then(({ count }) => {
+                if (!cancelled) setFavoritesCount(count || 0)
+            })
+
+        return () => {
+            cancelled = true
+        }
+    }, [isOwner, user.id])
+
+    // Profile views, searches, and messages stay at 0 since those aren't real
     // features yet (no supporting tables). Wire these up once those systems exist.
     const stats = isOwner
         ? [
@@ -70,7 +88,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
           ]
         : [
-              { icon: 'bi-heart', label: 'Favorites', value: 0 },
+              { icon: 'bi-heart', label: 'Favorites', value: favoritesCount },
               { icon: 'bi-file-earmark-text', label: 'Contracts', value: contractsCount },
               { icon: 'bi-search', label: 'Searches', value: 0 },
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
@@ -217,7 +235,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                                 <i className="bi bi-bell fs-5" style={{ width: 22 }}></i>
                                 <span className="flex-grow-1 d-flex flex-column lh-sm text-start">
                                     <span className="fw-semibold">Notifications</span>
-                                    <span className="text-muted small">Manage email and push alerts</span>
+                                    <span className="text-muted small">See your contract and payment updates</span>
                                 </span>
                                 <i className="bi bi-chevron-right text-muted small"></i>
                             </button>

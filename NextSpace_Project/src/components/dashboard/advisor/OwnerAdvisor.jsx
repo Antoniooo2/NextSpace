@@ -49,14 +49,24 @@ export default function OwnerAdvisor({ seed, onSeedConsumed }) {
                 return
             }
 
-            const { data, error: historyError } = await supabase
+            // Newest first so the limit keeps the most recent turns (ascending
+            // + limit would keep the oldest ones and hide everything after),
+            // then flipped back into reading order. message_id breaks ties
+            // between the user/model rows inserted together in one call.
+            const { data: newestFirst, error: historyError } = await supabase
                 .from('advisor_messages')
                 .select('role, content, payload, created_at')
                 .eq('user_auth_id', user.id)
-                .order('created_at', { ascending: true })
+                .order('created_at', { ascending: false })
+                .order('message_id', { ascending: false })
                 .limit(HISTORY_LIMIT)
 
             if (cancelled) return
+
+            let data = newestFirst ? [...newestFirst].reverse() : newestFirst
+            // The limit can cut a turn in half; never start on a model reply
+            // whose user message was left out.
+            while (data && data.length > 0 && data[0].role !== 'user') data = data.slice(1)
 
             if (historyError || !data || data.length === 0) {
                 setHistoryLoaded(true)
@@ -65,9 +75,9 @@ export default function OwnerAdvisor({ seed, onSeedConsumed }) {
             }
 
             const loadedChatLog = []
-            data.forEach((row, index) => {
+            data.forEach((row) => {
                 if (row.role === 'user') {
-                    const isSilentKickoff = index === 0 && row.content === KICKOFF_MESSAGE
+                    const isSilentKickoff = row.content === KICKOFF_MESSAGE
                     if (!isSilentKickoff) {
                         loadedChatLog.push({ type: 'user', text: row.content })
                     }

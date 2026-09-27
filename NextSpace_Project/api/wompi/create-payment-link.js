@@ -7,7 +7,7 @@ const WOMPI_CLIENT_ID = process.env.WOMPI_CLIENT_ID
 const WOMPI_CLIENT_SECRET = process.env.WOMPI_CLIENT_SECRET
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL
 
-const CONTRACT_EMBED = 'contract_id, monthly_rent, tenant_dui, add_business!contract_property_id_fkey(property_name)'
+const CONTRACT_EMBED = 'contract_id, monthly_rent, tenant_dui, status, add_business!contract_property_id_fkey(property_name)'
 
 let cachedToken = null
 let cachedTokenExpiry = 0
@@ -102,6 +102,10 @@ export default async function handler(req, res) {
             res.status(409).json({ error: 'This payment is not pending.' })
             return
         }
+        if (data.contract?.status !== 'Active') {
+            res.status(409).json({ error: 'Rent can only be paid on an active lease.' })
+            return
+        }
         payment = data
     } else {
         const { data: contract, error: contractError } = await userClient
@@ -112,6 +116,12 @@ export default async function handler(req, res) {
 
         if (contractError || !contract) {
             res.status(404).json({ error: 'Contract not found.' })
+            return
+        }
+        // A Pending contract is only a request the owner hasn't accepted yet;
+        // Expired/Cancelled ones are over. Only an Active lease has rent due.
+        if (contract.status !== 'Active') {
+            res.status(409).json({ error: 'Rent can only be paid on an active lease.' })
             return
         }
 

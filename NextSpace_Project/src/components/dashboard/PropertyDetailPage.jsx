@@ -29,7 +29,7 @@ const AVAILABILITY_CLASS = {
 
 const OWNER_EMBED = 'users!add_business_owner_id_fkey(first_name,last_name)'
 
-export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony }) {
+export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony, backLabel = 'Back' }) {
     const [detail, setDetail] = useState(property || null)
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
@@ -93,7 +93,13 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 .eq('id_supabase_auth', user.id)
                 .single()
 
-            if (cancelled || userError || !userRow) return
+            if (cancelled) return
+            if (userError || !userRow?.dui) {
+                setRequestError(
+                    "We couldn't find your account record (DUI), so you can't request a contract yet. Please contact support."
+                )
+                return
+            }
 
             setTenantDui(userRow.dui)
 
@@ -141,6 +147,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
 
     const handleRequestContract = async () => {
         if (!tenantDui || !detail) return
+        if (detail.availability && detail.availability !== 'Available') return
 
         setRequesting(true)
         setRequestError('')
@@ -230,7 +237,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         return (
             <div className="ns-detail-page">
                 <button type="button" className="ns-detail-back" onClick={onBack}>
-                    <i className="bi bi-arrow-left"></i> Back to listings
+                    <i className="bi bi-arrow-left"></i> {backLabel}
                 </button>
                 <div className="alert alert-danger py-2 mt-3" role="alert">
                     {loadError || 'Property not found.'}
@@ -250,7 +257,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     return (
         <div className="ns-detail-page">
             <button type="button" className="ns-detail-back" onClick={onBack}>
-                <i className="bi bi-arrow-left"></i> Back to listings
+                <i className="bi bi-arrow-left"></i> {backLabel}
             </button>
 
             <div className="ns-detail-hero">
@@ -292,7 +299,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                         <h3>About this space</h3>
                         <p className="ns-detail-desc">
                             {detail.description ||
-                                'A commercial space ready for your business. Reach out through NextSpace to schedule a visit, request the digital contract, or ask the owner any questions before booking.'}
+                                'A commercial space ready for your business. Ask Rony whether it fits what you need, or request the digital contract through NextSpace.'}
                         </p>
                     </div>
 
@@ -339,7 +346,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                 </span>
                                 <div>
                                     <div className="ns-detail-owner-name">{ownerName || 'Property owner'}</div>
-                                    <div className="ns-detail-owner-label">Reach out through NextSpace</div>
+                                    <div className="ns-detail-owner-label">Gets your contract request through NextSpace</div>
                                 </div>
                             </div>
                         </div>
@@ -366,7 +373,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                     </div>
                     <div className="ns-detail-summary-row">
                         <span>Size</span>
-                        <strong>{detail.business_size_width} m</strong>
+                        <strong>{detail.business_size_width} × {detail.business_size_length} m</strong>
                     </div>
 
                     {isBusiness && (
@@ -390,10 +397,15 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                 <button type="button" className="ns-submit-btn mt-3" disabled>
                                     <i className="bi bi-file-earmark-check"></i> Request pending
                                 </button>
+                            ) : detail.availability && detail.availability !== 'Available' ? (
+                                <p className="ns-pay-muted mt-3 mb-0">
+                                    This space is {detail.availability.toLowerCase()} right now, so it can't take new
+                                    contract requests.
+                                </p>
                             ) : (
                                 <button
                                     type="button" className="ns-submit-btn mt-3"
-                                    onClick={handleRequestContract} disabled={requesting}
+                                    onClick={handleRequestContract} disabled={requesting || !tenantDui}
                                 >
                                     <i className="bi bi-file-earmark-text"></i> {requesting ? 'Sending...' : 'Request Contract'}
                                 </button>

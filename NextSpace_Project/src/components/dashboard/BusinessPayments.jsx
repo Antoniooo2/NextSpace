@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
-import { createNotification } from '../../lib/notifications'
 import NoticeModal from './NoticeModal'
 
 const STATUS_TAG = { Pending: 'tag-pending', Paid: 'tag-paid', Late: 'tag-late', Cancelled: 'tag-cancelled' }
@@ -11,6 +10,7 @@ const CONTRACT_EMBED =
 
 export default function BusinessPayments({ user, onNavigate, onAskRony }) {
     const [contract, setContract] = useState(null)
+    const [hasPendingRequest, setHasPendingRequest] = useState(false)
     const [payments, setPayments] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
@@ -55,9 +55,12 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
                 return
             }
 
-            const activeContract =
-                (contracts || []).find((c) => c.status === 'Active') || (contracts || [])[0] || null
+            // Only an accepted (Active) lease has rent to pay. A Pending contract
+            // is still just a request the owner hasn't accepted, and Expired or
+            // Cancelled ones are over, so none of those should offer "Pay now".
+            const activeContract = (contracts || []).find((c) => c.status === 'Active') || null
             setContract(activeContract)
+            setHasPendingRequest((contracts || []).some((c) => c.status === 'Pending'))
 
             if (!activeContract) {
                 setPayments([])
@@ -207,8 +210,21 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
         return (
             <div className="ns-empty-state">
                 <i className="bi bi-credit-card"></i>
-                <h3>No lease yet</h3>
-                <p>Once a property owner sets up a lease for you, your rent and payment history will show up here.</p>
+                <h3>{hasPendingRequest ? 'Waiting on the owner' : 'No active lease'}</h3>
+                <p>
+                    {hasPendingRequest
+                        ? "Your contract request hasn't been accepted yet. Once the owner accepts it, your rent and payment history will show up here."
+                        : 'Find a space, request its contract, and once the owner accepts it your rent and payment history will show up here.'}
+                </p>
+                {onNavigate && (
+                    <button
+                        type="button"
+                        className="ns-outline-btn"
+                        onClick={() => onNavigate(hasPendingRequest ? 'contracts' : 'home')}
+                    >
+                        {hasPendingRequest ? 'View my contracts' : 'Browse spaces'}
+                    </button>
+                )}
             </div>
         )
     }
@@ -402,8 +418,8 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
             {notice && (
                 <NoticeModal
                     icon="bi-credit-card"
-                    title="Payments are coming soon"
-                    description="Online rent payment and downloadable receipts aren't connected yet — this is a preview of how it'll work."
+                    title="Receipts are coming soon"
+                    description="You can already pay your rent online with Wompi. Downloadable receipts and exported reports aren't connected yet."
                     onClose={() => setNotice(false)}
                 />
             )}

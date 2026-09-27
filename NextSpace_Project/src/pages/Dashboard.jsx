@@ -23,6 +23,7 @@ export default function Dashboard() {
     )
     const [search, setSearch] = useState('')
     const [viewingProperty, setViewingProperty] = useState(null)
+    const [viewingFrom, setViewingFrom] = useState('home')
     const [unreadCount, setUnreadCount] = useState(0)
     const [advisorSeed, setAdvisorSeed] = useState(null)
 
@@ -62,6 +63,13 @@ export default function Dashboard() {
         setSection(nextSection)
     }
 
+    // Remembers where the property was opened from, so the detail page's back
+    // button says where it actually goes (the listings vs. Rony's chat).
+    const openProperty = (from) => (property) => {
+        setViewingFrom(from)
+        setViewingProperty(property)
+    }
+
     const handleAskRony = (seed) => {
         setViewingProperty(null)
         setAdvisorSeed(seed)
@@ -90,6 +98,7 @@ export default function Dashboard() {
                     user={user}
                     accountType={accountType}
                     onBack={() => setViewingProperty(null)}
+                    backLabel={viewingFrom === 'advisor' ? 'Back to Rony' : 'Back to listings'}
                     onAskRony={handleAskRony}
                 />
             )
@@ -130,16 +139,16 @@ export default function Dashboard() {
                 return (
                     <AdvisorRouter
                         accountType={accountType}
-                        onViewProperty={setViewingProperty}
+                        onViewProperty={openProperty('advisor')}
                         seed={advisorSeed}
                         onSeedConsumed={() => setAdvisorSeed(null)}
                     />
                 )
             default:
                 return accountType === 'property-owner' ? (
-                    <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />
+                    <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={openProperty('home')} />
                 ) : (
-                    <BusinessHome user={user} firstName={firstName} search={search} onViewProperty={setViewingProperty} />
+                    <BusinessHome user={user} firstName={firstName} search={search} onViewProperty={openProperty('home')} />
                 )
         }
     }
