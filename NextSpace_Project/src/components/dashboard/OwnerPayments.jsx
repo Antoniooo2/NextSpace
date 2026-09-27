@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
-
-const STATUS_TAG = { Pending: 'tag-pending', Paid: 'tag-paid', Late: 'tag-late', Cancelled: 'tag-cancelled' }
+import {
+    PAYMENT_STATUS_LABEL,
+    PAYMENT_STATUS_TAG,
+    dueCountdown,
+    effectiveStatus,
+    formatDueDate,
+    isPayable,
+    refreshPaymentStatuses,
+    todayInElSalvador,
+} from '../../lib/rentSchedule'
 
 const CONTRACT_EMBED =
     '*, add_business!contract_property_id_fkey(property_name, monthly_rent), users!contract_tenant_dui_fkey(first_name,last_name)'
@@ -20,7 +28,11 @@ export default function OwnerPayments({ onAskRony }) {
         const [{ data: contractRows, error: contractError }, { data: paymentRows, error: paymentError }] =
             await Promise.all([
                 supabase.from('contract').select(CONTRACT_EMBED).order('start_date', { ascending: false }),
-                supabase.from('payment').select(PAYMENT_EMBED).order('payment_date', { ascending: false }),
+                supabase
+                    .from('payment')
+                    .select(PAYMENT_EMBED)
+                    .neq('status', 'Cancelled')
+                    .order('payment_date', { ascending: false }),
             ])
 
         const firstError = contractError || paymentError
@@ -30,7 +42,8 @@ export default function OwnerPayments({ onAskRony }) {
         }
 
         setContracts(contractRows || [])
-        setPayments(paymentRows || [])
+        const today = todayInElSalvador()
+        setPayments((paymentRows || []).map((p) => ({ ...p, status: effectiveStatus(p, today) })))
     }
 
     useEffect(() => {
@@ -39,6 +52,7 @@ export default function OwnerPayments({ onAskRony }) {
         const init = async () => {
             setLoading(true)
             setLoadError('')
+            await refreshPaymentStatuses()
             await loadData()
             if (!cancelled) setLoading(false)
         }
@@ -52,14 +66,27 @@ export default function OwnerPayments({ onAskRony }) {
 
     const activeLeases = contracts.filter((c) => c.status === 'Active')
 
-    const currentMonthKey = new Date().toISOString().slice(0, 7)
+    const today = todayInElSalvador()
+    const currentMonthKey = today.slice(0, 7)
+    // Collected = money actually received this month (by paid date), not
+    // installments that happen to be due this month.
     const collectedThisMonth = payments
-        .filter((p) => p.status === 'Paid' && p.payment_date?.slice(0, 7) === currentMonthKey)
+        .filter((p) => p.status === 'Paid' && (p.paid_at ? p.paid_at.slice(0, 7) : p.payment_date.slice(0, 7)) === currentMonthKey)
         .reduce((sum, p) => sum + Number(p.amount), 0)
     const pendingCount = payments.filter((p) => p.status === 'Pending').length
     const lateCount = payments.filter((p) => p.status === 'Late').length
+    const history = payments.filter((p) => p.status !== 'Scheduled')
 
-    const latestPaymentFor = (contractId) => payments.find((p) => p.contract?.contract_id === contractId)
+    // What matters for each lease right now: the oldest unpaid month that's
+    // due (or late); otherwise the next upcoming one; otherwise the last paid.
+    const leaseSummary = (contractId) => {
+        const rows = payments
+            .filter((p) => p.contract?.contract_id === contractId)
+            .sort((a, b) => a.payment_date.localeCompare(b.payment_date))
+        const due = rows.filter((p) => isPayable(p.status))
+        const focus = due[0] || rows.find((p) => p.status === 'Scheduled') || rows.filter((p) => p.status === 'Paid').pop() || null
+        return { focus, dueCount: due.length }
+    }
 
     if (loading) {
         return (
@@ -92,7 +119,7 @@ export default function OwnerPayments({ onAskRony }) {
                 </div>
                 <div className="ns-stat-card">
                     <span className="ns-stat-card-value">{pendingCount}</span>
-                    <span className="ns-stat-card-label">Pending payments</span>
+                    <span className="ns-stat-card-label">Due this week</span>
                 </div>
                 <div className="ns-stat-card">
                     <span className="ns-stat-card-value">{lateCount}</span>
@@ -114,7 +141,8 @@ export default function OwnerPayments({ onAskRony }) {
                     {activeLeases.map((lease) => {
                         const property = lease.add_business
                         const tenant = lease.users
-                        const latest = latestPaymentFor(lease.contract_id)
+                        const { focus, dueCount } = leaseSummary(lease.contract_id)
+                        const focusCountdown = focus && focus.status !== 'Paid' ? dueCountdown(focus.payment_date, today) : null
                         return (
                             <div className="ns-pay-lease-row" key={lease.contract_id}>
                                 <div className="ns-pay-lease-row-img">
@@ -129,16 +157,23 @@ export default function OwnerPayments({ onAskRony }) {
                                 <span className="ns-pay-lease-row-rent">
                                     ${Number(lease.monthly_rent).toLocaleString()}<small>/mo</small>
                                 </span>
-                                <span className={`ns-pay-tag ${latest ? STATUS_TAG[latest.status] || 'tag-pending' : 'tag-pending'}`}>
-                                    {latest ? latest.status : 'No payments yet'}
+                                <span className="ns-pay-lease-row-due">
+                                    {!focus
+                                        ? 'No schedule yet'
+                                        : focus.status === 'Paid'
+                                          ? 'Fully paid'
+                                          : `${focusCountdown.text} · ${formatDueDate(focus.payment_date, { month: 'short', day: 'numeric' })}${dueCount > 1 ? ` · ${dueCount} months owed` : ''}`}
                                 </span>
-                                {(!latest || latest.status === 'Pending' || latest.status === 'Late') && onAskRony && (
+                                <span className={`ns-pay-tag ${focus ? PAYMENT_STATUS_TAG[focus.status] || 'tag-pending' : 'tag-scheduled'}`}>
+                                    {focus ? PAYMENT_STATUS_LABEL[focus.status] || focus.status : 'No schedule'}
+                                </span>
+                                {focus && isPayable(focus.status) && onAskRony && (
                                     <button
                                         type="button"
                                         className="ns-outline-btn ns-pay-reminder-btn"
                                         onClick={() =>
                                             onAskRony({
-                                                text: `Draft a payment reminder for ${tenant ? `${tenant.first_name} ${tenant.last_name}` : 'the tenant'} about their ${latest ? latest.status.toLowerCase() : 'upcoming'} payment on "${property?.property_name || 'the property'}".`,
+                                                text: `Draft a payment reminder for ${tenant ? `${tenant.first_name} ${tenant.last_name}` : 'the tenant'} about their ${focus.status === 'Late' ? 'late' : 'upcoming'} rent payment of $${Number(focus.amount).toLocaleString()} due ${formatDueDate(focus.payment_date)} on "${property?.property_name || 'the property'}".`,
                                             })
                                         }
                                     >
@@ -158,14 +193,14 @@ export default function OwnerPayments({ onAskRony }) {
                         <tr>
                             <th>Property</th>
                             <th>Tenant</th>
-                            <th>Date</th>
+                            <th>Due date</th>
                             <th>Amount</th>
                             <th>Method</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {payments.map((row) => (
+                        {history.map((row) => (
                             <tr key={row.payment_id}>
                                 <td>{row.contract?.add_business?.property_name || '—'}</td>
                                 <td className="ns-pay-muted">
@@ -173,11 +208,13 @@ export default function OwnerPayments({ onAskRony }) {
                                         ? `${row.contract.users.first_name} ${row.contract.users.last_name}`
                                         : '—'}
                                 </td>
-                                <td className="ns-pay-muted">{row.payment_date}</td>
+                                <td className="ns-pay-muted">{formatDueDate(row.payment_date)}</td>
                                 <td>${Number(row.amount).toLocaleString()}</td>
-                                <td className="ns-pay-muted">{row.payment_method}</td>
+                                <td className="ns-pay-muted">{row.payment_method || '—'}</td>
                                 <td>
-                                    <span className={`ns-pay-tag ${STATUS_TAG[row.status] || 'tag-pending'}`}>{row.status}</span>
+                                    <span className={`ns-pay-tag ${PAYMENT_STATUS_TAG[row.status] || 'tag-pending'}`}>
+                                        {PAYMENT_STATUS_LABEL[row.status] || row.status}
+                                    </span>
                                 </td>
                             </tr>
                         ))}

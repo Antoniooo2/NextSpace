@@ -111,6 +111,10 @@ business first (and any must-have services), so your next answer is
 grounded in what they actually need instead of a generic description.
 4. If they ask about their own lease, contract status, or payments, use
 my_contracts and my_recent_payments in the context below: intent "account".
+my_recent_payments is the lease's monthly rent schedule: payment_date is the
+DUE date of that month's rent, paid_at is when it was actually paid.
+Statuses: Scheduled = not due yet (payable from a week before), Pending = due
+now, Late = past due and unpaid, Paid = paid.
 Never invent a contract or payment not listed there. If they have no
 contracts, say so plainly instead of guessing.
 5. If they are asking general leasing questions, answer from your own
@@ -533,6 +537,7 @@ const MY_CONTRACT_EMBED = 'contract_id, property_id, status, start_date, end_dat
 // The tenant's own leases and recent payments, always loaded so Rony can answer
 // "how's my lease/payment doing" the same turn it's asked, without a search.
 async function fetchMyAccountData(userClient, authUserId) {
+    await refreshPaymentStatuses(userClient)
     const { data: userRow, error: userError } = await userClient
         .from('users')
         .select('dui')
@@ -564,10 +569,11 @@ async function fetchMyAccountData(userClient, authUserId) {
     const contractIds = contractRows.map((c) => c.contract_id)
     const { data: paymentRows, error: paymentError } = await userClient
         .from('payment')
-        .select('payment_id, contract_id, payment_date, amount, status')
+        .select('payment_id, contract_id, payment_date, paid_at, amount, status')
         .in('contract_id', contractIds)
-        .order('payment_date', { ascending: false })
-        .limit(15)
+        .neq('status', 'Cancelled')
+        .order('payment_date', { ascending: true })
+        .limit(36)
 
     if (paymentError) {
         console.error('Advisor: could not load tenant payments', paymentError)
@@ -717,7 +723,15 @@ async function resolveOwnerDui(userClient, authUserId) {
     return data
 }
 
+// Moves rent installments Scheduled -> Pending -> Late as of today before
+// Rony reads them (the same refresh the Payments screens run on load).
+async function refreshPaymentStatuses(userClient) {
+    const { error } = await userClient.rpc('refresh_payment_statuses')
+    if (error) console.error('Advisor: could not refresh payment statuses', error)
+}
+
 async function fetchOwnerPortfolio(userClient, ownerDui) {
+    await refreshPaymentStatuses(userClient)
     const { data: properties, error: propertiesError } = await userClient
         .from('add_business')
         .select(OWNER_PORTFOLIO_EMBED)
@@ -742,8 +756,9 @@ async function fetchOwnerPortfolio(userClient, ownerDui) {
     if (contractIds.length > 0) {
         const { data: paymentRows, error: paymentError } = await userClient
             .from('payment')
-            .select('payment_id, contract_id, payment_date, amount, status')
+            .select('payment_id, contract_id, payment_date, paid_at, amount, status')
             .in('contract_id', contractIds)
+            .neq('status', 'Cancelled')
 
         if (paymentError) throw paymentError
         payments = paymentRows || []
@@ -839,7 +854,9 @@ function computeStats(properties, contracts, payments, today) {
     const incomeByMonth = {}
     for (const pay of payments) {
         if (pay.status !== 'Paid') continue
-        const month = pay.payment_date.slice(0, 7) // YYYY-MM
+        // Income lands in the month it was actually paid; payment_date is the
+        // installment's due date.
+        const month = (pay.paid_at || pay.payment_date).slice(0, 7) // YYYY-MM
         incomeByMonth[month] = (incomeByMonth[month] || 0) + Number(pay.amount || 0)
     }
 
@@ -950,7 +967,9 @@ function buildDraftCandidates(properties, contracts, payments) {
         .map((c) => {
             const property = properties.find((p) => p.property_id === c.property_id)
             const contractPayments = payments.filter((pay) => pay.contract_id === c.contract_id)
-            const pendingOrLate = contractPayments.find((pay) => pay.status === 'Pending' || pay.status === 'Late')
+            const pendingOrLate =
+                contractPayments.find((pay) => pay.status === 'Late') ||
+                contractPayments.find((pay) => pay.status === 'Pending')
 
             return {
                 contract_id: c.contract_id,
