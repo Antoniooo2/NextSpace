@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { PROPERTIES } from '../../data/properties'
+import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import EditProfileModal from './EditProfileModal'
 import ChangePasswordModal from './ChangePasswordModal'
@@ -10,11 +10,16 @@ const ACCOUNT_TYPE_LABEL = {
     'property-owner': 'Property Owner',
 }
 
-export default function ProfileView({ user, accountType, onNavigate, onUserUpdated }) {
+const PREVIEW_COUNT = 2
+
+export default function ProfileView({ user, accountType, onNavigate, onUserUpdated, onViewProperty }) {
     const [showEditModal, setShowEditModal] = useState(false)
     const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
     const [contractsCount, setContractsCount] = useState(0)
-    const [favoritesCount, setFavoritesCount] = useState(0)
+    const [savedProperties, setSavedProperties] = useState([])
+    const [loadingSaved, setLoadingSaved] = useState(true)
+    const [showAll, setShowAll] = useState(false)
+    const [removingId, setRemovingId] = useState(null)
 
     const meta = user.user_metadata || {}
     const firstName = meta.first_name || ''
@@ -67,16 +72,41 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
 
         supabase
             .from('saved_properties')
-            .select('id', { count: 'exact', head: true })
+            .select(`saved_at, add_business(*, ${PROPERTY_PHOTO_EMBED})`)
             .eq('user_auth_id', user.id)
-            .then(({ count }) => {
-                if (!cancelled) setFavoritesCount(count || 0)
+            .order('saved_at', { ascending: false })
+            .then(({ data, error }) => {
+                if (cancelled) return
+                if (error) console.error('Profile: could not load saved properties', error)
+                // Skip any row whose listing didn't come back instead of
+                // rendering an empty card.
+                setSavedProperties(
+                    (data || [])
+                        .map((row) => row.add_business)
+                        .filter(Boolean)
+                        .map(withCoverPhoto)
+                )
+                setLoadingSaved(false)
             })
 
         return () => {
             cancelled = true
         }
     }, [isOwner, user.id])
+
+    const handleRemoveSaved = async (propertyId) => {
+        if (removingId) return
+        setRemovingId(propertyId)
+
+        const { error } = await supabase
+            .from('saved_properties')
+            .delete()
+            .eq('user_auth_id', user.id)
+            .eq('property_id', propertyId)
+
+        setRemovingId(null)
+        if (!error) setSavedProperties((prev) => prev.filter((p) => p.property_id !== propertyId))
+    }
 
     // Profile views, searches, and messages stay at 0 since those aren't real
     // features yet (no supporting tables). Wire these up once those systems exist.
@@ -88,27 +118,26 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
           ]
         : [
-              { icon: 'bi-heart', label: 'Saved', value: favoritesCount },
+              { icon: 'bi-heart', label: 'Saved', value: savedProperties.length },
               { icon: 'bi-file-earmark-text', label: 'Contracts', value: contractsCount },
               { icon: 'bi-search', label: 'Searches', value: 0 },
               { icon: 'bi-chat-dots', label: 'Messages', value: 0 },
           ]
 
-    const previewItems = isOwner
-        ? ownProperties.slice(0, 2).map((p) => ({
-              key: p.property_id,
-              image: p.photo_url,
-              title: p.property_name,
-              subtitle: p.property_type,
-              price: p.monthly_rent,
-          }))
-        : PROPERTIES.slice(0, 2).map((p) => ({
-              key: p.id,
-              image: p.image,
-              title: p.title,
-              subtitle: p.city,
-              price: p.price,
-          }))
+    const listSource = isOwner ? ownProperties : savedProperties
+    const listLoading = isOwner ? loadingProperties : loadingSaved
+    const visibleSource = !isOwner && showAll ? listSource : listSource.slice(0, PREVIEW_COUNT)
+    const previewItems = visibleSource.map((p) => ({
+        key: p.property_id,
+        property: p,
+        image: p.photo_url,
+        title: p.property_name,
+        subtitle: isOwner
+            ? p.property_type
+            : [p.municipality, p.department].filter(Boolean).join(', ') || p.property_type,
+        price: p.monthly_rent,
+        unavailable: !isOwner && p.availability && p.availability !== 'Available' ? p.availability : null,
+    }))
 
     return (
         <>
@@ -166,21 +195,46 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                     <div className="ns-profile-section">
                         <div className="ns-profile-section-head">
                             <h3>{isOwner ? 'My listings' : 'Saved properties'}</h3>
-                            <button type="button" className="ns-link-btn" onClick={() => onNavigate('home')}>
-                                View all
-                            </button>
+                            {isOwner ? (
+                                <button type="button" className="ns-link-btn" onClick={() => onNavigate('home')}>
+                                    View all
+                                </button>
+                            ) : (
+                                savedProperties.length > PREVIEW_COUNT && (
+                                    <button type="button" className="ns-link-btn" onClick={() => setShowAll((v) => !v)}>
+                                        {showAll ? 'Show less' : `View all (${savedProperties.length})`}
+                                    </button>
+                                )
+                            )}
                         </div>
 
-                        {isOwner && loadingProperties ? (
-                            <p className="ns-profile-empty-hint">Loading your listings...</p>
+                        {listLoading ? (
+                            <p className="ns-profile-empty-hint">
+                                {isOwner ? 'Loading your listings...' : 'Loading your saved properties...'}
+                            </p>
                         ) : previewItems.length === 0 ? (
                             <p className="ns-profile-empty-hint">
-                                {isOwner ? "You haven't published any spaces yet." : "You haven't saved any properties yet."}
+                                {isOwner
+                                    ? "You haven't published any spaces yet."
+                                    : "You haven't saved any properties yet. Tap Save on a space in the Marketplace to keep it here."}
                             </p>
                         ) : (
                             <div className="ns-profile-mini-list">
                                 {previewItems.map((item) => (
-                                    <div className="ns-profile-mini-card" key={item.key}>
+                                    <div
+                                        className={`ns-profile-mini-card ${onViewProperty ? 'clickable' : ''}`}
+                                        key={item.key}
+                                        role={onViewProperty ? 'button' : undefined}
+                                        tabIndex={onViewProperty ? 0 : undefined}
+                                        onClick={onViewProperty ? () => onViewProperty(item.property) : undefined}
+                                        onKeyDown={
+                                            onViewProperty
+                                                ? (e) => {
+                                                      if (e.key === 'Enter') onViewProperty(item.property)
+                                                  }
+                                                : undefined
+                                        }
+                                    >
                                         <div className="ns-profile-mini-img">
                                             {item.image ? (
                                                 <img src={item.image} alt={item.title} />
@@ -190,7 +244,12 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                                         </div>
                                         <div className="ns-profile-mini-info">
                                             <span className="ns-profile-mini-title">{item.title}</span>
-                                            <span className="ns-profile-mini-location">{item.subtitle}</span>
+                                            <span className="ns-profile-mini-location">
+                                                {item.subtitle}
+                                                {item.unavailable && (
+                                                    <span className="ns-profile-mini-unavailable"> · {item.unavailable}</span>
+                                                )}
+                                            </span>
                                             <span className="ns-profile-mini-price">
                                                 {item.price != null ? (
                                                     <>${Number(item.price).toLocaleString()}<small>/month</small></>
@@ -199,9 +258,21 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                                                 )}
                                             </span>
                                         </div>
-                                        <span className="ns-profile-mini-remove" title="Remove">
-                                            <i className="bi bi-trash"></i>
-                                        </span>
+                                        {!isOwner && (
+                                            <button
+                                                type="button"
+                                                className="ns-profile-mini-remove"
+                                                title="Remove from saved"
+                                                aria-label={`Remove ${item.title} from saved`}
+                                                disabled={removingId === item.key}
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleRemoveSaved(item.key)
+                                                }}
+                                            >
+                                                <i className="bi bi-trash"></i>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

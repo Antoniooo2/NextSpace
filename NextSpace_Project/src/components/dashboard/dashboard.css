@@ -948,6 +948,34 @@
   font-size: 10.5px;
 }
 
+.ns-profile-mini-card.clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ns-profile-mini-card.clickable:hover,
+.ns-profile-mini-card.clickable:focus-visible {
+  border-color: var(--ns-blue-accent);
+  background: var(--ns-blue-bg);
+  outline: none;
+}
+
+.ns-profile-mini-unavailable {
+  color: #b54708;
+  font-weight: 600;
+}
+
+button.ns-profile-mini-remove {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+}
+
+button.ns-profile-mini-remove:hover {
+  color: #d92d20;
+}
+
 .ns-profile-mini-remove {
   color: var(--ns-text-muted);
   font-size: 14px;

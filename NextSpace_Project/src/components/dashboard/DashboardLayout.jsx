@@ -9,7 +9,6 @@ function navItemsFor(accountType) {
             icon: 'bi-grid-1x2-fill',
             label: accountType === 'property-owner' ? 'My Properties' : 'Marketplace',
         },
-        ...(accountType === 'property-owner' ? [] : [{ id: 'saved', icon: 'bi-heart', label: 'Saved' }]),
         { id: 'advisor', icon: 'bi-stars', label: 'AI Advisor' },
         { id: 'contracts', icon: 'bi-file-earmark-text', label: 'Contracts' },
         { id: 'payments', icon: 'bi-credit-card', label: 'Payments' },
