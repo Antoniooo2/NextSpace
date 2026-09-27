@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
@@ -21,10 +21,21 @@ function money(value) {
     return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
 }
 
-export default function BusinessPayments({ user, onNavigate, onAskRony }) {
-    const [contract, setContract] = useState(null)
+// Which lease to open first when there are several: the one that owes the
+// oldest late month, then the one with the soonest due month, then the first.
+function mostUrgentContractId(contracts, payments, today) {
+    const open = payments
+        .map((p) => ({ ...p, status: effectiveStatus(p, today) }))
+        .filter((p) => isPayable(p.status))
+        .sort((a, b) => a.payment_date.localeCompare(b.payment_date))
+    return open[0]?.contract_id ?? contracts[0]?.contract_id ?? null
+}
+
+export default function BusinessPayments({ user, onNavigate, onAskRony, initialContractId }) {
+    const [contracts, setContracts] = useState([])
+    const [selectedId, setSelectedId] = useState(null)
     const [hasPendingRequest, setHasPendingRequest] = useState(false)
-    const [payments, setPayments] = useState([])
+    const [allPayments, setAllPayments] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
     const [payError, setPayError] = useState(null)
@@ -33,20 +44,26 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
     const [returnState, setReturnState] = useState(null)
     const [returnPaymentId, setReturnPaymentId] = useState(null)
 
-    const loadPayments = useCallback(async (contractId) => {
+    const loadPayments = useCallback(async (contractIds) => {
+        if (contractIds.length === 0) {
+            setAllPayments([])
+            return []
+        }
+
         const { data: paymentRows, error: paymentError } = await supabase
             .from('payment')
             .select('*')
-            .eq('contract_id', contractId)
+            .in('contract_id', contractIds)
             .neq('status', 'Cancelled')
             .order('payment_date', { ascending: true })
 
         if (paymentError) {
             setLoadError(describeSupabaseError(paymentError))
-            return
+            return []
         }
 
-        setPayments(paymentRows || [])
+        setAllPayments(paymentRows || [])
+        return paymentRows || []
     }, [])
 
     useEffect(() => {
@@ -58,10 +75,10 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
 
             await refreshPaymentStatuses()
 
-            const { data: contracts, error: contractError } = await supabase
+            const { data: contractRows, error: contractError } = await supabase
                 .from('contract')
                 .select(CONTRACT_EMBED)
-                .order('start_date', { ascending: false })
+                .order('start_date', { ascending: true })
 
             if (cancelled) return
 
@@ -74,22 +91,18 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
             // Only an accepted (Active) lease has rent to pay. A Pending contract
             // is still just a request the owner hasn't accepted, and Expired or
             // Cancelled ones are over, so none of those should offer "Pay now".
-            const activeContract = (contracts || []).find((c) => c.status === 'Active') || null
-            setContract(
-                activeContract
-                    ? { ...activeContract, add_business: activeContract.add_business && withCoverPhoto(activeContract.add_business) }
-                    : null
-            )
-            setHasPendingRequest((contracts || []).some((c) => c.status === 'Pending'))
+            const active = (contractRows || [])
+                .filter((c) => c.status === 'Active')
+                .map((c) => ({ ...c, add_business: c.add_business && withCoverPhoto(c.add_business) }))
+            setContracts(active)
+            setHasPendingRequest((contractRows || []).some((c) => c.status === 'Pending'))
 
-            if (!activeContract) {
-                setPayments([])
-                setLoading(false)
-                return
-            }
+            const rows = await loadPayments(active.map((c) => c.contract_id))
+            if (cancelled) return
 
-            await loadPayments(activeContract.contract_id)
-            if (!cancelled) setLoading(false)
+            const requested = active.find((c) => c.contract_id === Number(initialContractId))
+            setSelectedId(requested ? requested.contract_id : mostUrgentContractId(active, rows, todayInElSalvador()))
+            setLoading(false)
         }
 
         load()
@@ -97,7 +110,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
         return () => {
             cancelled = true
         }
-    }, [user.id, loadPayments])
+    }, [user.id, loadPayments, initialContractId])
+
+    const contractIdsRef = useRef([])
+    contractIdsRef.current = contracts.map((c) => c.contract_id)
+    const reloadAllPayments = useCallback(() => loadPayments(contractIdsRef.current), [loadPayments])
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
@@ -128,7 +145,8 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
 
             if (data?.status === 'Paid') {
                 setReturnState('paid')
-                await loadPayments(data.contract_id)
+                setSelectedId(data.contract_id)
+                await reloadAllPayments()
                 return
             }
 
@@ -145,7 +163,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
         return () => {
             cancelled = true
         }
-    }, [loadPayments])
+    }, [reloadAllPayments])
 
     const checkPaymentAgain = async () => {
         if (!returnPaymentId) return
@@ -159,13 +177,16 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
 
         if (data?.status === 'Paid') {
             setReturnState('paid')
-            await loadPayments(data.contract_id)
+            setSelectedId(data.contract_id)
+            await reloadAllPayments()
         } else {
             setReturnState('pending')
         }
     }
 
     const today = todayInElSalvador()
+    const contract = contracts.find((c) => c.contract_id === selectedId) || contracts[0] || null
+    const payments = contract ? allPayments.filter((p) => p.contract_id === contract.contract_id) : []
     const installments = payments.map((p) => ({ ...p, status: effectiveStatus(p, today) }))
     const payable = installments.filter((p) => isPayable(p.status))
     // Always the oldest outstanding month first, so a tenant can't pay October
@@ -263,6 +284,24 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
         )
     }
 
+    // One tab per active lease, each with where it stands right now.
+    const leaseTabs = contracts.map((c) => {
+        const rows = allPayments
+            .filter((p) => p.contract_id === c.contract_id)
+            .map((p) => ({ ...p, status: effectiveStatus(p, today) }))
+        const owed = rows.filter((p) => isPayable(p.status))
+        const tone = owed.some((p) => p.status === 'Late') ? 'danger' : owed.length > 0 ? 'warning' : 'success'
+        const label =
+            tone === 'danger'
+                ? `${owed.length} ${owed.length === 1 ? 'month' : 'months'} late`
+                : tone === 'warning'
+                  ? `${money(owed[0].amount)} due`
+                  : rows.length > 0 && rows.every((p) => p.status === 'Paid')
+                    ? 'Fully paid'
+                    : 'Up to date'
+        return { contract: c, tone, label }
+    })
+
     const property = contract.add_business
     const owner = property?.users
     const countdown = nextToPay ? dueCountdown(nextToPay.payment_date, today) : null
@@ -273,7 +312,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
             <div className="ns-dash-header">
                 <div>
                     <h1>Payments</h1>
-                    <p>Your rent schedule and payment history for {property?.property_name || 'your space'}.</p>
+                    <p>
+                        {contracts.length > 1
+                            ? `You have ${contracts.length} active leases. Pick one to see its rent schedule and pay.`
+                            : `Your rent schedule and payment history for ${property?.property_name || 'your space'}.`}
+                    </p>
                 </div>
                 <div className="ns-dash-header-actions">
                     {onAskRony && (
@@ -315,6 +358,38 @@ export default function BusinessPayments({ user, onNavigate, onAskRony }) {
                     <button type="button" className="ns-outline-btn" onClick={checkPaymentAgain}>
                         Check again
                     </button>
+                </div>
+            )}
+
+            {leaseTabs.length > 1 && (
+                <div className="ns-pay-lease-tabs" role="tablist" aria-label="Your leases">
+                    {leaseTabs.map(({ contract: c, tone, label }) => (
+                        <button
+                            key={c.contract_id}
+                            type="button"
+                            role="tab"
+                            aria-selected={c.contract_id === contract.contract_id}
+                            className={`ns-pay-lease-tab ${c.contract_id === contract.contract_id ? 'active' : ''}`}
+                            onClick={() => {
+                                setSelectedId(c.contract_id)
+                                setPayError(null)
+                            }}
+                        >
+                            <span className="ns-pay-lease-tab-thumb">
+                                {c.add_business?.photo_url ? (
+                                    <img src={c.add_business.photo_url} alt="" />
+                                ) : (
+                                    <i className="bi bi-shop"></i>
+                                )}
+                            </span>
+                            <span className="ns-pay-lease-tab-text">
+                                <span className="ns-pay-lease-tab-name">{c.add_business?.property_name || 'Property'}</span>
+                                <span className={`ns-pay-lease-tab-status tone-${tone}`}>
+                                    <span className="ns-pay-lease-tab-dot" /> {label}
+                                </span>
+                            </span>
+                        </button>
+                    ))}
                 </div>
             )}
 

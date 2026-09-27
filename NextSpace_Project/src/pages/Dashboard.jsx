@@ -32,6 +32,9 @@ export default function Dashboard() {
     const [viewingFrom, setViewingFrom] = useState('home')
     const [unreadCount, setUnreadCount] = useState(0)
     const [advisorSeed, setAdvisorSeed] = useState(null)
+    // Lease to open on the Payments screen, e.g. when arriving from a
+    // "rent reminder" notification about a specific contract.
+    const [paymentsContractId, setPaymentsContractId] = useState(null)
 
     const loadUnreadCount = useCallback(async () => {
         const { count } = await supabase
@@ -64,8 +67,9 @@ export default function Dashboard() {
         navigate('/')
     }
 
-    const handleSectionChange = (nextSection) => {
+    const handleSectionChange = (nextSection, options = {}) => {
         setViewingProperty(null)
+        setPaymentsContractId(options.contractId ?? null)
         setSection(nextSection)
     }
 
@@ -129,9 +133,14 @@ export default function Dashboard() {
                 )
             case 'payments':
                 return accountType === 'property-owner' ? (
-                    <OwnerPayments onAskRony={handleAskRony} />
+                    <OwnerPayments user={user} />
                 ) : (
-                    <BusinessPayments user={user} onNavigate={handleSectionChange} onAskRony={handleAskRony} />
+                    <BusinessPayments
+                        user={user}
+                        onNavigate={handleSectionChange}
+                        onAskRony={handleAskRony}
+                        initialContractId={paymentsContractId}
+                    />
                 )
             case 'notifications':
                 return (

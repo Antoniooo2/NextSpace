@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
+import { createNotification } from '../../lib/notifications'
 import {
     PAYMENT_STATUS_LABEL,
     PAYMENT_STATUS_TAG,
@@ -18,8 +19,15 @@ const CONTRACT_EMBED =
 const PAYMENT_EMBED =
     '*, contract(contract_id, add_business!contract_property_id_fkey(property_name), users!contract_tenant_dui_fkey(first_name,last_name))'
 
-export default function OwnerPayments({ onAskRony }) {
+function money(value) {
+    return `$${Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
+}
+
+export default function OwnerPayments({ user }) {
     const [contracts, setContracts] = useState([])
+    const [ownerDui, setOwnerDui] = useState(null)
+    // contract_id -> 'sending' | 'sent' | 'error', for this visit to the page
+    const [reminderStatus, setReminderStatus] = useState({})
     const [payments, setPayments] = useState([])
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
@@ -53,7 +61,11 @@ export default function OwnerPayments({ onAskRony }) {
             setLoading(true)
             setLoadError('')
             await refreshPaymentStatuses()
-            await loadData()
+            const [{ data: userRow }] = await Promise.all([
+                supabase.from('users').select('dui').eq('id_supabase_auth', user.id).single(),
+                loadData(),
+            ])
+            if (!cancelled) setOwnerDui(userRow?.dui || null)
             if (!cancelled) setLoading(false)
         }
 
@@ -62,7 +74,7 @@ export default function OwnerPayments({ onAskRony }) {
         return () => {
             cancelled = true
         }
-    }, [])
+    }, [user.id])
 
     const activeLeases = contracts.filter((c) => c.status === 'Active')
 
@@ -79,6 +91,34 @@ export default function OwnerPayments({ onAskRony }) {
 
     // What matters for each lease right now: the oldest unpaid month that's
     // due (or late); otherwise the next upcoming one; otherwise the last paid.
+    // Sends the tenant an in-app notification about the oldest month they owe.
+    // It lands in their Notifications and opens their Payments screen on that
+    // lease, where they can pay it.
+    const sendReminder = async (lease, focus, dueCount) => {
+        if (!ownerDui || !lease.tenant_dui || reminderStatus[lease.contract_id] === 'sending') return
+
+        setReminderStatus((prev) => ({ ...prev, [lease.contract_id]: 'sending' }))
+
+        const propertyName = lease.add_business?.property_name || 'your space'
+        const countdown = dueCountdown(focus.payment_date, today)
+        const when =
+            focus.status === 'Late'
+                ? `was due ${formatDueDate(focus.payment_date)} and is ${countdown.text}`
+                : `is due ${formatDueDate(focus.payment_date)} (${countdown.text.toLowerCase()})`
+        const extra = dueCount > 1 ? ` You have ${dueCount} months outstanding.` : ''
+
+        const { error } = await createNotification({
+            recipientDui: lease.tenant_dui,
+            senderDui: ownerDui,
+            process: 'Payments',
+            title: focus.status === 'Late' ? `Rent overdue: ${propertyName}` : `Rent reminder: ${propertyName}`,
+            description: `Your rent of ${money(focus.amount)} for ${propertyName} ${when}.${extra} You can pay it from Payments.`,
+            contractId: lease.contract_id,
+        })
+
+        setReminderStatus((prev) => ({ ...prev, [lease.contract_id]: error ? 'error' : 'sent' }))
+    }
+
     const leaseSummary = (contractId) => {
         const rows = payments
             .filter((p) => p.contract?.contract_id === contractId)
@@ -167,17 +207,29 @@ export default function OwnerPayments({ onAskRony }) {
                                 <span className={`ns-pay-tag ${focus ? PAYMENT_STATUS_TAG[focus.status] || 'tag-pending' : 'tag-scheduled'}`}>
                                     {focus ? PAYMENT_STATUS_LABEL[focus.status] || focus.status : 'No schedule'}
                                 </span>
-                                {focus && isPayable(focus.status) && onAskRony && (
+                                {focus && isPayable(focus.status) && (
                                     <button
                                         type="button"
                                         className="ns-outline-btn ns-pay-reminder-btn"
-                                        onClick={() =>
-                                            onAskRony({
-                                                text: `Draft a payment reminder for ${tenant ? `${tenant.first_name} ${tenant.last_name}` : 'the tenant'} about their ${focus.status === 'Late' ? 'late' : 'upcoming'} rent payment of $${Number(focus.amount).toLocaleString()} due ${formatDueDate(focus.payment_date)} on "${property?.property_name || 'the property'}".`,
-                                            })
+                                        disabled={
+                                            !ownerDui ||
+                                            reminderStatus[lease.contract_id] === 'sending' ||
+                                            reminderStatus[lease.contract_id] === 'sent'
                                         }
+                                        title={`Notify ${tenant ? tenant.first_name : 'the tenant'} that ${money(focus.amount)} is ${focus.status === 'Late' ? 'overdue' : 'due'}`}
+                                        onClick={() => sendReminder(lease, focus, dueCount)}
                                     >
-                                        Send reminder
+                                        {reminderStatus[lease.contract_id] === 'sending' ? (
+                                            'Sending...'
+                                        ) : reminderStatus[lease.contract_id] === 'sent' ? (
+                                            <>
+                                                <i className="bi bi-check2"></i> Reminder sent
+                                            </>
+                                        ) : reminderStatus[lease.contract_id] === 'error' ? (
+                                            'Retry reminder'
+                                        ) : (
+                                            'Send reminder'
+                                        )}
                                     </button>
                                 )}
                             </div>

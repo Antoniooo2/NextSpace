@@ -92,7 +92,9 @@ export default function Notifications({ onNavigate, onUnreadCountChange }) {
 
     const handleOpen = (notification) => {
         markAsRead(notification)
-        onNavigate?.(notification.process === 'Payments' ? 'payments' : 'contracts')
+        onNavigate?.(notification.process === 'Payments' ? 'payments' : 'contracts', {
+            contractId: notification.contract_id ?? null,
+        })
     }
 
     if (loading) {

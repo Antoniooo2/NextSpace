@@ -1610,6 +1610,99 @@ button.ns-profile-mini-remove:hover {
   color: var(--ns-text-muted);
 }
 
+/* Lease switcher for tenants with more than one active lease */
+.ns-pay-lease-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 18px;
+}
+
+.ns-pay-lease-tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 210px;
+  padding: 10px 14px 10px 10px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.ns-pay-lease-tab:hover {
+  border-color: var(--ns-blue-accent);
+}
+
+.ns-pay-lease-tab.active {
+  border-color: var(--ns-navy);
+  box-shadow: 0 0 0 3px rgba(15, 42, 82, 0.12);
+}
+
+.ns-pay-lease-tab-thumb {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ns-pay-lease-tab-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ns-pay-lease-tab-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ns-pay-lease-tab-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1f2b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns-pay-lease-tab-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ns-pay-lease-tab-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ns-pay-lease-tab-status.tone-danger {
+  color: #c9292f;
+}
+
+.ns-pay-lease-tab-status.tone-warning {
+  color: #b25e00;
+}
+
+.ns-pay-lease-tab-status.tone-success {
+  color: #1a8a4a;
+}
+
 /* Compact lease card: a thumbnail instead of a full-width placeholder banner */
 .ns-pay-lease-card-compact {
   padding: 20px;
