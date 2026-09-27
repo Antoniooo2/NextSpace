@@ -155,6 +155,7 @@ export default function Dashboard() {
                     <OwnerPayments
                         user={user}
                         onAskRony={openRonyPanel}
+                        onOpenContract={(contractId) => handleSectionChange('contracts', { contractId })}
                         initialContractId={paymentsContractId}
                     />
                 ) : (

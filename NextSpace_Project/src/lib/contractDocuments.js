@@ -39,7 +39,12 @@ export async function downloadContractPdf(contract) {
 
     y = sectionTitle(ctx, y, 'Key terms')
     y = facts(ctx, y + 8, [
-        ['Monthly rent', money(contract.monthly_rent)],
+        [
+            'Monthly rent',
+            contract.previous_rent != null && contract.rent_changes_from
+                ? `${money(contract.monthly_rent)} from ${formatDueDate(contract.rent_changes_from)} (was ${money(contract.previous_rent)})`
+                : money(contract.monthly_rent),
+        ],
         ['Rent due', `The ${dueDayLabel(contract.start_date)} of each month`],
         ['Start', formatDueDate(contract.start_date, { month: 'long', day: 'numeric', year: 'numeric' })],
         ['End', formatDueDate(contract.end_date, { month: 'long', day: 'numeric', year: 'numeric' })],
@@ -82,6 +87,19 @@ export async function downloadContractPdf(contract) {
         doc.text(`${role} · signed electronically ${at ? stamp(at) : '—'}`, x, y + 48)
     })
     y += 70
+
+    if (contract.renewal_count > 0) {
+        y = ensureSpace(ctx, y, 40)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+        doc.setTextColor(...MUTED)
+        y = paragraph(
+            ctx,
+            y,
+            `Renewed ${contract.renewal_count} ${contract.renewal_count === 1 ? 'time' : 'times'}. Last renewal signed electronically ${stamp(contract.last_renewed_at)} by ${contract.last_renewal_owner_name} (owner) and ${contract.last_renewal_tenant_name} (tenant), extending the lease to ${formatDueDate(contract.end_date, { month: 'long', day: 'numeric', year: 'numeric' })}.`
+        )
+        y += 6
+    }
 
     if (contract.verification_code) {
         doc.setFont('helvetica', 'bold')

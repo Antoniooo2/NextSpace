@@ -201,8 +201,8 @@ export function ownerInsights({ leases, thisMonth, projection, today = todayInEl
                 `${ending.name}'s lease ends in ${ending.daysLeft} days — your expected rent drops by ${money(ending.monthlyRent)}/month after that.` +
                 (reliable ? ' The tenant has paid on time, a good candidate to renew.' : ''),
             action:
-                ending.daysLeft <= 60
-                    ? { type: 'open-lease', contractId: ending.contractId, label: 'Offer renewal' }
+                ending.daysLeft <= 90
+                    ? { type: 'open-contract', contractId: ending.contractId, label: lease?.contract.renewal_requested_at ? 'Answer renewal request' : 'Offer renewal' }
                     : {
                           type: 'ask-rony',
                           label: 'Ask Rony',
@@ -256,8 +256,25 @@ export function tenantInsights({ leases, today = todayInElSalvador() }) {
     for (const { contract, stats } of leases) {
         if (!contract.end_date) continue
         const left = daysUntil(contract.end_date, today)
-        if (left < 0 || left > 60) continue
+        if (left < 0 || left > 90 || contract.termination_requested_at) continue
         const name = contract.add_business?.property_name || 'your lease'
+        if (contract.renewal_offered_at) {
+            items.push({
+                tone: 'warning',
+                icon: 'bi-arrow-repeat',
+                text: `The owner offered to renew ${name} at ${money(contract.renewal_rent)}/month. Review and sign it in Contracts.`,
+                action: { type: 'open-contract', contractId: contract.contract_id, label: 'Review renewal' },
+            })
+            continue
+        }
+        if (contract.renewal_requested_at) {
+            items.push({
+                tone: 'info',
+                icon: 'bi-arrow-repeat',
+                text: `You asked to renew ${name}. The owner will answer with an offer to sign.`,
+            })
+            continue
+        }
         const record =
             stats.monthsDue > 0 && stats.paidOnTime === stats.monthsDue
                 ? ` You've paid all ${stats.monthsDue} months on time, a strong case for renewing.`

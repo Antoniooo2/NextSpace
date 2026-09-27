@@ -115,7 +115,7 @@ export function standardClauses(contract) {
         },
         {
             title: 'Renewal',
-            body: 'The lease may be renewed by mutual agreement before its end date. Otherwise it ends on the end date and the space becomes available again.',
+            body: 'In the last 90 days of the lease either party may propose a renewal through NextSpace. It takes effect when the owner’s renewal offer is signed by the tenant; the new rent applies from the current end date. Otherwise the lease ends on the end date and the space becomes available again.',
         },
         {
             title: 'Electronic signature',
@@ -167,6 +167,61 @@ export const contractActions = {
         rpc('request_termination', { p_contract_id: contractId, p_date: date, p_reason: reason }),
     respondTermination: ({ contractId, accept }) =>
         rpc('respond_termination', { p_contract_id: contractId, p_accept: accept }),
+    requestRenewal: ({ contractId, months, note }) =>
+        rpc('request_renewal', { p_contract_id: contractId, p_months: Number(months), p_note: note || null }),
+    offerRenewal: ({ contractId, months, rent, note, ownerName }) =>
+        rpc('offer_renewal', {
+            p_contract_id: contractId,
+            p_months: Number(months),
+            p_rent: Number(rent),
+            p_note: note || null,
+            p_owner_name: ownerName,
+        }),
+    signRenewal: ({ contractId, name }) => rpc('sign_renewal', { p_contract_id: contractId, p_name: name }),
+    declineRenewal: ({ contractId, reason }) => rpc('decline_renewal', { p_contract_id: contractId, p_reason: reason || null }),
+}
+
+// Renewals open in the last 90 days of an active lease (same rule as the RPCs).
+export const RENEWAL_WINDOW_DAYS = 90
+
+export function renewalOpen(contract, today = todayInElSalvador()) {
+    if (contract.status !== 'Active' || !contract.end_date || contract.termination_requested_at) return false
+    const left = daysUntil(contract.end_date, today)
+    return left >= 0 && left <= RENEWAL_WINDOW_DAYS
+}
+
+// 'offered' (owner's offer waiting for the tenant), 'requested' (tenant asked,
+// waiting for the owner's offer) or null.
+export function renewalState(contract) {
+    if (contract.renewal_offered_at) return 'offered'
+    if (contract.renewal_requested_at) return 'requested'
+    return null
+}
+
+export function renewalExpiresIn(contract) {
+    if (!contract.renewal_expires_at) return null
+    const hours = (new Date(contract.renewal_expires_at).getTime() - Date.now()) / 3600000
+    if (hours <= 0) return 'Expired'
+    if (hours < 24) return `Expires in ${Math.max(1, Math.round(hours))} hours`
+    return `Expires in ${Math.round(hours / 24)} days`
+}
+
+// The applicant's record on NextSpace (aggregates only), keyed by DUI.
+export async function loadApplicantRecords(duis) {
+    const unique = [...new Set(duis.filter(Boolean))]
+    if (unique.length === 0) return {}
+    const { data, error } = await supabase.rpc('applicant_records', { p_duis: unique })
+    if (error) return {}
+    return Object.fromEntries((data || []).map((r) => [r.tenant_dui, r]))
+}
+
+export function recordSummary(record) {
+    if (!record || record.leases === 0 || record.months_due === 0) {
+        return { tone: 'neutral', short: 'New on NextSpace', pct: null }
+    }
+    const pct = Math.round((record.months_on_time / record.months_due) * 100)
+    const tone = record.months_late_now > 0 || pct < 70 ? 'danger' : pct < 90 ? 'warning' : 'success'
+    return { tone, short: `${pct}% on time`, pct }
 }
 
 export const EVENT_META = {
@@ -181,8 +236,14 @@ export const EVENT_META = {
     termination_accepted: { icon: 'bi-check2-circle', label: 'Early end accepted' },
     termination_declined: { icon: 'bi-slash-circle', label: 'Early end declined' },
     expired: { icon: 'bi-flag-fill', label: 'Lease ended' },
-    renewal_offer: { icon: 'bi-arrow-repeat', label: 'Renewal offered' },
-    renewal_request: { icon: 'bi-arrow-repeat', label: 'Renewal requested' },
+    renewal_offer: { icon: 'bi-arrow-repeat', label: 'Renewal offered and signed by the owner' },
+    renewal_request: { icon: 'bi-arrow-repeat', label: 'Renewal requested by the business' },
     reminder: { icon: 'bi-send-fill', label: 'Rent reminder sent' },
     auto_reminder: { icon: 'bi-bell-fill', label: 'Automatic rent reminder' },
+    renewed: { icon: 'bi-arrow-repeat', label: 'Renewal signed — lease extended' },
+    renewal_declined: { icon: 'bi-slash-circle', label: 'Renewal not going ahead' },
+    renewal_expired: { icon: 'bi-hourglass-bottom', label: 'Renewal offer expired' },
+    offer_expired: { icon: 'bi-hourglass-bottom', label: 'Offer expired' },
+    request_reminder: { icon: 'bi-bell', label: 'Owner reminded about the request' },
+    offer_reminder: { icon: 'bi-bell', label: 'Business reminded to sign' },
 }

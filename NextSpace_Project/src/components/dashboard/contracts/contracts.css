@@ -565,3 +565,101 @@
   .ns-contract-list { grid-template-columns: minmax(0, 1fr); }
   .ns-contract-hero-actions { justify-content: flex-start; }
 }
+
+/* Phase 3-5: renewals, applicant record, board extras */
+.ns-contract-kpis > div.is-warn { border-color: #f3d9a6; }
+.ns-contract-kpis > div.is-warn strong { color: #a86400; }
+
+.ns-contract-kpi-sub {
+  font-size: 11.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-contract-kpis:has(> div:nth-child(5)) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.ns-record-chip {
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0 8px;
+}
+
+.ns-record-chip.tone-success { background: #e6f6ee; color: #137a47; }
+.ns-record-chip.tone-warning { background: #fff4e0; color: #a86400; }
+.ns-record-chip.tone-danger { background: #fdecec; color: #b42318; }
+.ns-record-chip.tone-neutral { background: #f0f1f4; color: #5b6475; }
+
+.ns-contract-term-note {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ns-text-muted);
+}
+
+.ns-contract-renewal-line {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #2b3240;
+  margin: 0;
+}
+
+.ns-renew-newend {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  margin: 6px 0 0;
+}
+
+.ns-applicant-top {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.ns-applicant-pct {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 5px solid currentColor;
+}
+
+.ns-applicant-pct strong { font-size: 19px; line-height: 1; }
+.ns-applicant-pct small { font-size: 10.5px; font-weight: 600; }
+.ns-applicant-pct.tone-success { color: #137a47; background: #f1faf5; }
+.ns-applicant-pct.tone-warning { color: #a86400; background: #fffaf0; }
+.ns-applicant-pct.tone-danger { color: #b42318; background: #fff5f5; }
+.ns-applicant-pct.tone-neutral { color: #8a93a3; background: #f7f8fa; }
+
+.ns-applicant ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12.5px;
+  color: #4a5263;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ns-applicant ul strong { color: #1a1f2b; }
+.ns-applicant li.is-bad, .ns-applicant li.is-bad strong { color: #b42318; }
+
+.ns-applicant-foot {
+  font-size: 11.5px;
+  color: var(--ns-text-muted);
+  margin: 10px 0 0;
+}
+
+@media (max-width: 991px) {
+  .ns-contract-kpis:has(> div:nth-child(5)) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.ns-contract-kpis:has(> div:nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 575px) {
+  .ns-contract-kpis:has(> div:nth-child(3):last-child) { grid-template-columns: minmax(0, 1fr); }
+}

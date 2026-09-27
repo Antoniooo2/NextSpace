@@ -27,7 +27,8 @@ import IncomeProjectionChart from './payments/IncomeProjectionChart'
 import LeaseTimeline from './payments/LeaseTimeline'
 import PaymentHistory from './payments/PaymentHistory'
 import ProgressRing from './payments/ProgressRing'
-import RenewalRequestModal from './payments/RenewalRequestModal'
+import { RenewalRequestModal } from './contracts/RenewalModals'
+import { renewalOpen, renewalState } from '../../lib/contracts'
 import RonyInsightCard from './payments/RonyInsightCard'
 import './payments/payments.css'
 
@@ -349,7 +350,8 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
     const nextCountdown = nextScheduled ? dueCountdown(nextScheduled.payment_date, today) : null
     const daysToDue = nextToPay ? daysUntil(nextToPay.payment_date, today) : null
     const daysToEnd = contract.end_date ? daysUntil(contract.end_date, today) : null
-    const canAskRenewal = daysToEnd != null && daysToEnd >= 0 && daysToEnd <= 60
+    const renewal = renewalState(contract)
+    const canAskRenewal = renewalOpen(contract, today) && !renewal
     const yearEnd = `${today.slice(0, 4)}-12-31`
     const leftThisYear = installments
         .filter((p) => p.status !== 'Paid' && p.payment_date <= yearEnd)
@@ -369,6 +371,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
             window.scrollTo({ top: 0, behavior: 'smooth' })
         }
         if (action.type === 'renewal-request') setRenewalFor(action.contractId)
+        if (action.type === 'open-contract') onNavigate?.('contracts', { contractId: action.contractId })
     }
 
     const renewalLease = leases.find((l) => l.contract.contract_id === renewalFor) || null
@@ -553,6 +556,14 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                         {canAskRenewal ? (
                             <button type="button" className="ns-link-btn" onClick={() => setRenewalFor(contract.contract_id)}>
                                 <i className="bi bi-arrow-repeat"></i> Ask to renew
+                            </button>
+                        ) : renewal === 'offered' ? (
+                            <button
+                                type="button"
+                                className="ns-link-btn"
+                                onClick={() => onNavigate('contracts', { contractId: contract.contract_id })}
+                            >
+                                <i className="bi bi-pen"></i> Review renewal offer
                             </button>
                         ) : (
                             <button type="button" className="ns-link-btn" onClick={() => onNavigate('contracts')}>
@@ -780,7 +791,6 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                 <RenewalRequestModal
                     contract={renewalLease.contract}
                     stats={renewalLease.stats}
-                    tenantFirstName={meta.first_name}
                     onAskRony={
                         onAskRony
                             ? (seed) => {
@@ -793,7 +803,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     onSent={() => {
                         setRenewalFor(null)
                         setNotice(
-                            `Renewal request sent to ${renewalLease.contract.add_business?.users?.first_name || 'your owner'}. You'll see their answer in Notifications.`
+                            `Renewal request sent to ${renewalLease.contract.add_business?.users?.first_name || 'your owner'}. They answer with an offer you sign in Contracts.`
                         )
                     }}
                 />

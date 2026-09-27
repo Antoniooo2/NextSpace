@@ -3,9 +3,22 @@ import { supabase } from '../../../lib/supabaseClient'
 import { describeSupabaseError } from '../../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../../lib/propertyPhotos'
 import { formatDueDate, refreshPaymentStatuses, todayInElSalvador } from '../../../lib/rentSchedule'
-import { contractStage, daysLeft, money, offerExpiresIn, personName, statusMeta } from '../../../lib/contracts'
+import {
+    contractStage,
+    daysLeft,
+    loadApplicantRecords,
+    money,
+    offerExpiresIn,
+    personName,
+    recordSummary,
+    renewalExpiresIn,
+    renewalOpen,
+    renewalState,
+    statusMeta,
+} from '../../../lib/contracts'
 import ContractDetail from './ContractDetail'
 import OfferContractModal from './OfferContractModal'
+import RonyInsightCard from '../payments/RonyInsightCard'
 import '../payments/payments.css'
 import './contracts.css'
 
@@ -16,25 +29,126 @@ const SECTIONS = {
     owner: [
         { id: 'requests', title: 'Requests to answer', icon: 'bi-inbox', empty: 'No new requests.' },
         { id: 'offers', title: 'Waiting for the tenant to sign', icon: 'bi-pen', empty: 'No offers waiting.' },
+        { id: 'ending', title: 'Ending soon · renewals', icon: 'bi-arrow-repeat', empty: '' },
         { id: 'active', title: 'Active leases', icon: 'bi-check-circle', empty: 'No active leases yet.' },
     ],
     tenant: [
         { id: 'offers', title: 'Offers to sign', icon: 'bi-pen', empty: 'No offers waiting for you.' },
         { id: 'requests', title: 'My requests', icon: 'bi-inbox', empty: 'No open requests.' },
+        { id: 'ending', title: 'Ending soon · renewals', icon: 'bi-arrow-repeat', empty: '' },
         { id: 'active', title: 'Active leases', icon: 'bi-check-circle', empty: 'No active leases yet.' },
     ],
 }
 
-function ContractCard({ contract, viewer, onOpen }) {
+// Board column for a contract: active leases in their last 90 days (or with a
+// renewal in progress) get their own "ending soon" group.
+function boardStage(contract, today) {
+    const stage = contractStage(contract)
+    if (stage === 'active' && (renewalOpen(contract, today) || renewalState(contract))) return 'ending'
+    return stage
+}
+
+function needsAction(contract, viewer) {
+    const other = contract.termination_requested_at && contract.termination_requested_by !== viewer
+    const renewal = contract.status === 'Active' ? renewalState(contract) : null
+    if (viewer === 'owner') return contract.status === 'Pending' || renewal === 'requested' || Boolean(other)
+    return (contract.status === 'Offered' && !offerExpiresIn(contract)?.expired) || renewal === 'offered' || Boolean(other)
+}
+
+// Rony's summary of the board: computed here, no AI call. Each line can open
+// the contract it is about or hand the question to Rony.
+function boardInsights({ contracts, records, viewer, today }) {
+    const items = []
+    const isOwner = viewer === 'owner'
+
+    if (isOwner) {
+        const byProperty = {}
+        for (const c of contracts.filter((k) => k.status === 'Pending')) {
+            const key = c.property_id
+            byProperty[key] = byProperty[key] || { name: c.add_business?.property_name, list: [] }
+            byProperty[key].list.push(c)
+        }
+        for (const { name, list } of Object.values(byProperty)) {
+            const ranked = [...list].sort(
+                (a, b) => (recordSummary(records[b.tenant_dui]).pct ?? -1) - (recordSummary(records[a.tenant_dui]).pct ?? -1)
+            )
+            const best = ranked[0]
+            const bestSummary = recordSummary(records[best.tenant_dui])
+            items.push({
+                tone: 'info',
+                icon: 'bi-inbox',
+                text:
+                    list.length === 1
+                        ? `${personName(best.users)} is waiting for your answer on ${name} (${bestSummary.short.toLowerCase()}).`
+                        : `${list.length} businesses want ${name}. ${
+                              bestSummary.pct != null
+                                  ? `${personName(best.users)} has the best record: ${bestSummary.short}.`
+                                  : 'None of them has a payment record on NextSpace yet.'
+                          }`,
+                contractId: best.contract_id,
+                label: list.length === 1 ? 'Review request' : `Review ${personName(best.users).split(' ')[0]}’s request`,
+            })
+        }
+    }
+
+    for (const c of contracts) {
+        const name = c.add_business?.property_name
+        const renewal = c.status === 'Active' ? renewalState(c) : null
+        if (c.status === 'Offered') {
+            const exp = offerExpiresIn(c)
+            if (!isOwner && !exp?.expired) {
+                items.push({ tone: 'warning', icon: 'bi-pen', text: `The owner of ${name} sent you a lease offer. ${exp?.text}.`, contractId: c.contract_id, label: 'Review and sign' })
+            } else if (isOwner && exp && !exp.expired && exp.text.includes('hours')) {
+                items.push({ tone: 'warning', icon: 'bi-hourglass-split', text: `Your offer to ${personName(c.users)} for ${name} ${exp.text.toLowerCase()}.`, contractId: c.contract_id, label: 'Open' })
+            }
+        }
+        if (c.status === 'Active' && c.termination_requested_at && c.termination_requested_by !== viewer) {
+            items.push({
+                tone: 'danger',
+                icon: 'bi-box-arrow-right',
+                text: `The ${c.termination_requested_by} of ${name} asked to end the lease on ${formatDueDate(c.termination_date)}.`,
+                contractId: c.contract_id,
+                label: 'Answer',
+            })
+        }
+                if (renewal === 'requested' && isOwner) {
+            items.push({ tone: 'success', icon: 'bi-arrow-repeat', text: `${personName(c.users)} wants to renew ${name} for ${c.renewal_request_months} more months.`, contractId: c.contract_id, label: 'Answer' })
+        }
+        if (renewal === 'offered' && !isOwner) {
+            items.push({ tone: 'warning', icon: 'bi-arrow-repeat', text: `Renewal offer for ${name}: ${money(c.renewal_rent)}/month. ${renewalExpiresIn(c)}.`, contractId: c.contract_id, label: 'Review renewal' })
+        }
+        if (!renewal && renewalOpen(c, today)) {
+            const left = daysLeft(c, today)
+            const summary = recordSummary(records[c.tenant_dui])
+            items.push({
+                tone: 'warning',
+                icon: 'bi-hourglass-split',
+                text: isOwner
+                    ? `${name} ends in ${left} days.${summary.pct != null && summary.pct >= 90 ? ` ${personName(c.users)} is ${summary.short}, a good candidate to renew.` : ''}`
+                    : `Your lease for ${name} ends in ${left} days.`,
+                contractId: c.contract_id,
+                label: isOwner ? 'Offer renewal' : 'Ask to renew',
+            })
+        }
+    }
+
+    if (items.length === 0) {
+        items.push({ tone: 'success', icon: 'bi-check-circle-fill', text: 'Nothing needs your attention in Contracts right now.' })
+    }
+    return items.slice(0, 5).map(({ contractId, label, ...item }) =>
+        contractId ? { ...item, action: { contractId, label } } : item
+    )
+}
+
+function ContractCard({ contract, viewer, record, onOpen }) {
     const property = contract.add_business || {}
     const meta = statusMeta(contract)
     const expiry = offerExpiresIn(contract)
     const left = daysLeft(contract, todayInElSalvador())
     const other = viewer === 'owner' ? contract.users : property.users
-    const needsMe =
-        (viewer === 'owner' && contract.status === 'Pending') ||
-        (viewer === 'tenant' && contract.status === 'Offered' && !expiry?.expired) ||
-        (contract.status === 'Active' && contract.termination_requested_at && contract.termination_requested_by !== viewer)
+    const needsMe = needsAction(contract, viewer)
+    const renewal = contract.status === 'Active' ? renewalState(contract) : null
+    const summary = viewer === 'owner' && (contract.status === 'Pending' || contract.status === 'Offered') ? recordSummary(record) : null
 
     let line = null
     if (contract.status === 'Pending') line = `Requested ${formatDueDate((contract.requested_at || '').slice(0, 10))}`
@@ -42,7 +156,11 @@ function ContractCard({ contract, viewer, onOpen }) {
     else if (contract.status === 'Active') {
         line = contract.termination_requested_at
             ? `Early end requested for ${formatDueDate(contract.termination_date)}`
-            : left != null && left <= 60
+            : renewal === 'offered'
+              ? `Renewal offered · ${renewalExpiresIn(contract)}`
+              : renewal === 'requested'
+                ? `Renewal requested · ${contract.renewal_request_months} months`
+                : left != null && left <= 90
               ? `Ends in ${left} days`
               : `Until ${formatDueDate(contract.end_date)}`
     } else line = contract.closed_at ? `Closed ${formatDueDate(contract.closed_at.slice(0, 10))}` : null
@@ -65,6 +183,7 @@ function ContractCard({ contract, viewer, onOpen }) {
                 <div className="ns-contract-card-meta">
                     <span>{money(contract.monthly_rent)}/mo</span>
                     {line && <span>{line}</span>}
+                    {summary && <span className={`ns-record-chip tone-${summary.tone}`}>{summary.short}</span>}
                 </div>
             </div>
             {needsMe && <span className="ns-contract-card-flag">Your turn</span>}
@@ -86,6 +205,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
     const [showClosed, setShowClosed] = useState(false)
     const [inviteOpen, setInviteOpen] = useState(false)
     const [notice, setNotice] = useState('')
+    const [records, setRecords] = useState({})
     const isOwner = viewer === 'owner'
 
     const loadData = useCallback(
@@ -108,6 +228,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                 .map((c) => ({ ...c, add_business: c.add_business ? withCoverPhoto(c.add_business) : null }))
             setContracts(mine)
             setProperties(propertyRows || [])
+            if (isOwner) setRecords(await loadApplicantRecords(mine.map((c) => c.tenant_dui)))
 
             const ids = mine.map((c) => c.contract_id)
             if (ids.length > 0) {
@@ -153,26 +274,35 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
 
     const reload = () => me && loadData(me.dui)
 
+    const today = todayInElSalvador()
+
     const grouped = useMemo(() => {
-        const groups = { requests: [], offers: [], active: [], closed: [] }
-        for (const c of contracts) groups[contractStage(c)].push(c)
-        groups.active.sort((a, b) => String(a.end_date).localeCompare(String(b.end_date)))
+        const groups = { requests: [], offers: [], ending: [], active: [], closed: [] }
+        for (const c of contracts) groups[boardStage(c, today)].push(c)
+        const byEnd = (a, b) => String(a.end_date).localeCompare(String(b.end_date))
+        groups.ending.sort(byEnd)
+        groups.active.sort(byEnd)
+        groups.requests.sort(
+            (a, b) => (recordSummary(records[b.tenant_dui]).pct ?? -1) - (recordSummary(records[a.tenant_dui]).pct ?? -1)
+        )
         return groups
-    }, [contracts])
+    }, [contracts, records, today])
 
     const kpis = useMemo(() => {
-        const active = grouped.active
+        const active = [...grouped.active, ...grouped.ending]
         const monthly = active.reduce((sum, c) => sum + Number(c.monthly_rent || 0), 0)
         const endingSoon = active.filter((c) => {
-            const d = daysLeft(c)
+            const d = daysLeft(c, today)
             return d != null && d <= 60
         }).length
-        const waiting = isOwner
-            ? grouped.requests.length + active.filter((c) => c.termination_requested_at && c.termination_requested_by !== 'owner').length
-            : grouped.offers.filter((c) => !offerExpiresIn(c)?.expired).length +
-              active.filter((c) => c.termination_requested_at && c.termination_requested_by !== 'tenant').length
-        return { activeCount: active.length, monthly, endingSoon, waiting }
-    }, [grouped, isOwner])
+        const waiting = contracts.filter((c) => needsAction(c, viewer)).length
+        const occupied = properties.filter((p) => p.availability === 'Occupied').length
+        const signed = contracts.filter((c) => c.tenant_signed_at && c.duration_months)
+        const avgMonths = signed.length ? Math.round(signed.reduce((s, c) => s + c.duration_months, 0) / signed.length) : null
+        return { activeCount: active.length, monthly, endingSoon, waiting, occupied, avgMonths }
+    }, [grouped, contracts, properties, viewer, today])
+
+    const insights = useMemo(() => boardInsights({ contracts, records, viewer, today }), [contracts, records, viewer, today])
 
     const myName = personName(me)
     const selected = contracts.find((c) => c.contract_id === selectedId)
@@ -202,6 +332,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                 viewer={viewer}
                 myName={myName}
                 ownerName={myName}
+                record={records[selected.tenant_dui]}
                 onBack={() => setSelectedId(null)}
                 onChanged={reload}
                 onAskRony={onAskRony}
@@ -246,19 +377,53 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                     <small>Waiting for you</small>
                     <strong>{kpis.waiting}</strong>
                 </div>
+                {isOwner && (
+                    <div>
+                        <small>Occupancy</small>
+                        <strong>
+                            {properties.length ? `${Math.round((kpis.occupied / properties.length) * 100)}%` : '—'}
+                        </strong>
+                        <span className="ns-contract-kpi-sub">
+                            {kpis.occupied} of {properties.length} spaces leased
+                        </span>
+                    </div>
+                )}
                 <div>
                     <small>Active leases</small>
                     <strong>{kpis.activeCount}</strong>
+                    <span className="ns-contract-kpi-sub">
+                        {money(kpis.monthly)}/month {isOwner ? 'under contract' : 'in rent'}
+                    </span>
                 </div>
-                <div>
-                    <small>{isOwner ? 'Monthly rent under contract' : 'Monthly rent you pay'}</small>
-                    <strong>{money(kpis.monthly)}</strong>
-                </div>
-                <div>
+                <div className={kpis.endingSoon > 0 ? 'is-warn' : ''}>
                     <small>Ending in 60 days</small>
                     <strong>{kpis.endingSoon}</strong>
                 </div>
+                {isOwner && (
+                    <div>
+                        <small>Average lease length</small>
+                        <strong>{kpis.avgMonths ? `${kpis.avgMonths} mo` : '—'}</strong>
+                    </div>
+                )}
             </div>
+
+            {contracts.length > 0 && (
+                <RonyInsightCard
+                    title="Rony’s take on your contracts"
+                    insights={insights}
+                    onAction={(action) => setSelectedId(action.contractId)}
+                    onAskRony={
+                        onAskRony
+                            ? () =>
+                                  onAskRony({
+                                      text: isOwner
+                                          ? 'Look at my contracts: which requests should I accept and which leases should I renew?'
+                                          : 'Look at my leases and offers: what should I do next?',
+                                  })
+                            : undefined
+                    }
+                />
+            )}
 
             {contracts.length === 0 ? (
                 <div className="ns-panel ns-contract-empty">
@@ -274,7 +439,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                 <>
                     {SECTIONS[viewer].map((section) => {
                         const list = grouped[section.id]
-                        if (list.length === 0 && section.id !== 'active') return null
+                        if (list.length === 0 && (section.id !== 'active' || grouped.ending.length > 0)) return null
                         return (
                             <section key={section.id} className="ns-contract-section">
                                 <h2>
@@ -286,7 +451,13 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                                 ) : (
                                     <div className="ns-contract-list">
                                         {list.map((c) => (
-                                            <ContractCard key={c.contract_id} contract={c} viewer={viewer} onOpen={setSelectedId} />
+                                            <ContractCard
+                                                key={c.contract_id}
+                                                contract={c}
+                                                viewer={viewer}
+                                                record={records[c.tenant_dui]}
+                                                onOpen={setSelectedId}
+                                            />
                                         ))}
                                     </div>
                                 )}
@@ -303,7 +474,13 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                             {showClosed && (
                                 <div className="ns-contract-list">
                                     {grouped.closed.map((c) => (
-                                        <ContractCard key={c.contract_id} contract={c} viewer={viewer} onOpen={setSelectedId} />
+                                        <ContractCard
+                                                key={c.contract_id}
+                                                contract={c}
+                                                viewer={viewer}
+                                                record={records[c.tenant_dui]}
+                                                onOpen={setSelectedId}
+                                            />
                                     ))}
                                 </div>
                             )}

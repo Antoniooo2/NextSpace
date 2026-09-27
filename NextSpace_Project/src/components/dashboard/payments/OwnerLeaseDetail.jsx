@@ -8,7 +8,7 @@ import ProgressRing from './ProgressRing'
 import RiskBadge from './RiskBadge'
 import ExportMenu from './ExportMenu'
 import { downloadLeaseStatementPdf, downloadLeaseWorkbook } from '../../../lib/paymentReports'
-import { EVENT_META } from '../../../lib/contracts'
+import { EVENT_META, renewalOpen, renewalState } from '../../../lib/contracts'
 
 const ACTIVITY_PAGE = 8
 
@@ -75,7 +75,7 @@ function formatWhen(at) {
     })
 }
 
-export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerName, onBack, onAskRony, onNoticeSent }) {
+export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerName, onBack, onAskRony, onNoticeSent, onOpenContract }) {
     const today = todayInElSalvador()
     const { contract, installments, stats, risk } = lease
     const property = contract.add_business || {}
@@ -94,7 +94,8 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
     }, [contract.contract_id])
 
     const daysToEnd = contract.end_date ? daysUntil(contract.end_date, today) : null
-    const canOfferRenewal = daysToEnd != null && daysToEnd >= 0 && daysToEnd <= 60
+    const canOfferRenewal = renewalOpen(contract, today) && Boolean(onOpenContract)
+    const renewal = renewalState(contract)
     const activity = activityFor(lease, events, today)
     const detailPayment = installments.find((p) => p.payment_id === detailId) || null
     const timeProgress = leaseTimeProgress(contract, today)
@@ -149,8 +150,13 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
                         </button>
                     )}
                     {canOfferRenewal && (
-                        <button type="button" className="ns-outline-btn" onClick={() => setComposer('renewal_offer')}>
-                            <i className="bi bi-arrow-repeat"></i> Offer renewal
+                        <button
+                            type="button"
+                            className={renewal === 'requested' ? 'ns-filled-btn' : 'ns-outline-btn'}
+                            onClick={() => onOpenContract(contract.contract_id)}
+                        >
+                            <i className="bi bi-arrow-repeat"></i>{' '}
+                            {renewal === 'requested' ? 'Answer renewal request' : renewal === 'offered' ? 'Renewal offered' : 'Offer renewal'}
                         </button>
                     )}
                     {onAskRony && (

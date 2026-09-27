@@ -60,7 +60,7 @@ function Trend({ current, previous, suffix = 'vs last month', points = false, in
     )
 }
 
-export default function OwnerPayments({ user, onAskRony, initialContractId }) {
+export default function OwnerPayments({ user, onAskRony, onOpenContract, initialContractId }) {
     const [contracts, setContracts] = useState([])
     const [payments, setPayments] = useState([])
     const [events, setEvents] = useState([])
@@ -177,6 +177,7 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
                 onBack={() => setSelectedId(null)}
                 onAskRony={onAskRony}
                 onNoticeSent={loadData}
+                onOpenContract={onOpenContract}
             />
         )
     }
@@ -238,6 +239,7 @@ export default function OwnerPayments({ user, onAskRony, initialContractId }) {
 
     const handleInsightAction = (action) => {
         if (action.type === 'open-lease') setSelectedId(action.contractId)
+        if (action.type === 'open-contract') onOpenContract?.(action.contractId)
         if (action.type === 'ask-rony') onAskRony?.({ text: action.text })
     }
 

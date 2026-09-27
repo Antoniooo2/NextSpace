@@ -9,6 +9,10 @@ import {
     money,
     offerExpiresIn,
     personName,
+    recordSummary,
+    renewalExpiresIn,
+    renewalOpen,
+    renewalState,
     standardClauses,
     statusMeta,
 } from '../../../lib/contracts'
@@ -17,6 +21,8 @@ import { downloadContractPdf } from '../../../lib/contractDocuments'
 import OfferContractModal from './OfferContractModal'
 import ReasonModal from './ReasonModal'
 import SignContractModal from './SignContractModal'
+import ApplicantRecord from './ApplicantRecord'
+import { RenewalOfferModal, RenewalRequestModal, RenewalSignModal } from './RenewalModals'
 
 function stamp(ts) {
     if (!ts) return null
@@ -33,7 +39,7 @@ function stamp(ts) {
 // One lease, shown as the actual contract: status and next step at the top,
 // then parties, key terms, clauses, signatures and history. The buttons shown
 // depend on the status and on who is looking.
-export default function ContractDetail({ contract, events, viewer, myName, ownerName, onBack, onChanged, onAskRony, onOpenPayments }) {
+export default function ContractDetail({ contract, events, viewer, myName, ownerName, record, onBack, onChanged, onAskRony, onOpenPayments }) {
     const today = todayInElSalvador()
     const [modal, setModal] = useState(null)
     const [notice, setNotice] = useState('')
@@ -49,6 +55,9 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
     const signed = Boolean(contract.tenant_signed_at && contract.owner_signed_at)
     const terminationPending = contract.status === 'Active' && contract.termination_requested_at
     const iAskedTermination = terminationPending && contract.termination_requested_by === viewer
+    const canRenew = renewalOpen(contract, today)
+    const renewal = contract.status === 'Active' ? renewalState(contract) : null
+    const summary = recordSummary(record)
 
     useEffect(() => {
         window.scrollTo({ top: 0 })
@@ -86,7 +95,31 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
         actions.push({ id: 'sign', label: 'Review and sign', icon: 'bi-pen', primary: true })
         actions.push({ id: 'withdraw', label: 'Turn down', icon: 'bi-x-lg' })
     }
-    if (contract.status === 'Active' && !terminationPending) {
+    if (canRenew && isOwner) {
+        if (renewal === 'offered') {
+            actions.push({ id: 'renew-offer', label: 'Update renewal offer', icon: 'bi-pencil' })
+            actions.push({ id: 'renew-decline', label: 'Withdraw renewal', icon: 'bi-x-lg' })
+        } else {
+            actions.push({
+                id: 'renew-offer',
+                label: renewal === 'requested' ? 'Answer with a renewal offer' : 'Offer renewal',
+                icon: 'bi-arrow-repeat',
+                primary: true,
+            })
+            if (renewal === 'requested') actions.push({ id: 'renew-decline', label: 'Decline renewal', icon: 'bi-x-lg' })
+        }
+    }
+    if (canRenew && !isOwner) {
+        if (renewal === 'offered') {
+            actions.push({ id: 'renew-sign', label: 'Review and sign renewal', icon: 'bi-pen', primary: true })
+            actions.push({ id: 'renew-decline', label: 'Turn down renewal', icon: 'bi-x-lg' })
+        } else if (renewal === 'requested') {
+            actions.push({ id: 'renew-decline', label: 'Cancel renewal request', icon: 'bi-x-lg' })
+        } else {
+            actions.push({ id: 'renew-request', label: 'Ask to renew', icon: 'bi-arrow-repeat', primary: true })
+        }
+    }
+    if (contract.status === 'Active' && !terminationPending && !renewal) {
         actions.push({ id: 'terminate', label: 'Ask to end early', icon: 'bi-box-arrow-right' })
     }
     if (terminationPending && !iAskedTermination) {
@@ -125,6 +158,27 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
             text: iAskedTermination
                 ? `You asked to end the lease on ${formatDueDate(contract.termination_date)}. Waiting for the other side to answer.`
                 : `The ${contract.termination_requested_by} asked to end the lease on ${formatDueDate(contract.termination_date)}: “${contract.termination_reason}”`,
+        }
+    } else if (renewal === 'offered') {
+        banner = {
+            tone: 'warning',
+            text: isOwner
+                ? `Renewal offer sent: ${contract.renewal_months} more months at ${money(contract.renewal_rent)}/month. Waiting for ${personName(tenant)} to sign. ${renewalExpiresIn(contract) || ''}.`
+                : `The owner offers to renew for ${contract.renewal_months} more months at ${money(contract.renewal_rent)}/month. ${renewalExpiresIn(contract) || ''}.`,
+        }
+    } else if (renewal === 'requested') {
+        banner = {
+            tone: isOwner ? 'info' : 'neutral',
+            text: isOwner
+                ? `${personName(tenant)} asked to renew for ${contract.renewal_request_months} more months${contract.renewal_request_note ? `: “${contract.renewal_request_note}”` : '.'} Answer with a renewal offer.`
+                : `You asked to renew for ${contract.renewal_request_months} more months. The owner will answer with an offer to sign.`,
+        }
+    } else if (canRenew) {
+        banner = {
+            tone: 'info',
+            text: isOwner
+                ? `This lease ends in ${left} days. ${summary.pct != null ? `${personName(tenant)} is ${summary.short} on NextSpace. ` : ''}Offer a renewal or plan to re-list the space.`
+                : `Your lease ends in ${left} days. If you want to stay, ask the owner to renew.`,
         }
     } else if (contract.status === 'Declined' || contract.status === 'Withdrawn') {
         banner = {
@@ -243,7 +297,14 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                             <dl className="ns-contract-terms ns-contract-terms-3">
                                 <div>
                                     <dt>Monthly rent</dt>
-                                    <dd>{money(contract.monthly_rent)}</dd>
+                                    <dd>
+                                        {money(contract.monthly_rent)}
+                                        {contract.previous_rent != null && contract.rent_changes_from && (
+                                            <small className="ns-contract-term-note">
+                                                from {formatDueDate(contract.rent_changes_from)} (was {money(contract.previous_rent)})
+                                            </small>
+                                        )}
+                                    </dd>
                                 </div>
                                 <div>
                                     <dt>Rent due</dt>
@@ -312,9 +373,23 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                             </div>
                         </section>
                     )}
+
+                    {contract.renewal_count > 0 && (
+                        <section>
+                            <h4>Renewals</h4>
+                            <p className="ns-contract-renewal-line">
+                                Renewed {contract.renewal_count} {contract.renewal_count === 1 ? 'time' : 'times'}. Last renewal signed{' '}
+                                {stamp(contract.last_renewed_at)} by {contract.last_renewal_owner_name} (owner) and{' '}
+                                {contract.last_renewal_tenant_name} (tenant). The lease now ends on{' '}
+                                {formatDueDate(contract.end_date)}.
+                            </p>
+                        </section>
+                    )}
                 </article>
 
                 <aside className="ns-contract-side">
+                    {isOwner && contract.tenant_dui && <ApplicantRecord record={record} name={personName(tenant)} />}
+
                     {onAskRony && (
                         <section className="ns-panel ns-contract-rony">
                             <h3>
@@ -324,7 +399,9 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                                 ? [
                                       `Is ${money(contract.monthly_rent)}/month a fair rent for "${property.property_name}" compared with similar listings on NextSpace?`,
                                       `Suggest special clauses for this lease of "${property.property_name}".`,
-                                      `How is ${personName(tenant)} doing with rent, and should I renew this lease?`,
+                                      contract.status === 'Pending' || contract.status === 'Offered'
+                                          ? `${personName(tenant)} wants to lease "${property.property_name}". Their NextSpace record: ${summary.short}${record ? ` (${record.months_on_time}/${record.months_due} months on time, ${record.leases} leases)` : ''}. Should I accept, and on what terms?`
+                                          : `How is ${personName(tenant)} doing with rent, and should I renew this lease? Their record: ${summary.short}.`,
                                   ]
                                 : [
                                       `Explain my lease for "${property.property_name}" in simple words: rent ${money(contract.monthly_rent)}/month, ${contract.duration_months || ''} months, deposit ${money(contract.deposit)}.`,
@@ -383,6 +460,54 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     tenantName={myName}
                     onClose={() => setModal(null)}
                     onSigned={(code) => done(`Lease signed. Verification code ${code}. Your rent schedule is ready in Payments.`)}
+                />
+            )}
+            {modal === 'renew-offer' && (
+                <RenewalOfferModal
+                    contract={contract}
+                    ownerName={ownerName}
+                    record={record}
+                    onAskRony={onAskRony}
+                    onClose={() => setModal(null)}
+                    onDone={() => done(`Renewal offer sent to ${personName(tenant)}. They have 7 days to sign.`)}
+                />
+            )}
+            {modal === 'renew-request' && (
+                <RenewalRequestModal
+                    contract={contract}
+                    onAskRony={onAskRony}
+                    onClose={() => setModal(null)}
+                    onSent={() => done('Renewal request sent. The owner will answer with an offer to sign.')}
+                />
+            )}
+            {modal === 'renew-sign' && (
+                <RenewalSignModal
+                    contract={contract}
+                    tenantName={myName}
+                    onClose={() => setModal(null)}
+                    onSigned={(code) => done(`Renewal signed. New verification code ${code}. The new months are in Payments.`)}
+                />
+            )}
+            {modal === 'renew-decline' && (
+                <ReasonModal
+                    title={
+                        renewal === 'offered'
+                            ? isOwner
+                                ? 'Withdraw the renewal offer'
+                                : 'Turn down the renewal'
+                            : isOwner
+                              ? 'Decline the renewal request'
+                              : 'Cancel your renewal request'
+                    }
+                    subtitle={`The lease still ends on ${formatDueDate(contract.end_date)}. The other side is notified.`}
+                    placeholder="E.g. I plan to use the space for something else"
+                    confirmLabel="Confirm"
+                    danger
+                    onClose={() => setModal(null)}
+                    onConfirm={async ({ reason }) => {
+                        await contractActions.declineRenewal({ contractId: contract.contract_id, reason })
+                        done('Done. The other side was notified.')
+                    }}
                 />
             )}
             {modal === 'decline' && (
