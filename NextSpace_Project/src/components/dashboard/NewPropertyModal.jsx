@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { EL_SALVADOR_DEPARTMENTS, EL_SALVADOR_DEPARTMENT_NAMES } from '../../lib/elSalvadorLocations'
-import { PROPERTY_TYPES, AVAILABILITY_OPTIONS, TYPE_ICON } from '../../lib/propertyTypes'
+import { PROPERTY_TYPES, TYPE_ICON } from '../../lib/propertyTypes'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 const PHOTO_URL_MARKER = '/property-photos/'
+const MAX_PHOTOS = 6
 
 export default function NewPropertyModal({ property, ownerDui, onClose, onSaved }) {
     const isEditMode = Boolean(property)
@@ -22,15 +23,25 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
     const [length, setLength] = useState(
         property?.business_size_length != null ? String(property.business_size_length) : ''
     )
-    const [availability, setAvailability] = useState(property?.availability || AVAILABILITY_OPTIONS[0])
+    // Occupied is set by the lease flow; owners only choose listed or paused.
+    const isLeased = property?.availability === 'Occupied'
+    const [listed, setListed] = useState(property?.availability !== 'Reserved')
     const [phoneNumber, setPhoneNumber] = useState(property?.phone_number || '')
     const [description, setDescription] = useState(property?.description || '')
     const [department, setDepartment] = useState(property?.department || '')
     const [municipality, setMunicipality] = useState(property?.municipality || '')
     const [address, setAddress] = useState(property?.address || '')
-    const [photoFile, setPhotoFile] = useState(null)
-    const [photoPreview, setPhotoPreview] = useState(property?.photo_url || null)
-    const [removeExistingPhoto, setRemoveExistingPhoto] = useState(false)
+    // Up to 6 photos; the first one is the cover. Existing photos keep their
+    // row id, new ones carry the file to upload.
+    const [photoItems, setPhotoItems] = useState(() =>
+        (property?.photos || (property?.photo_url ? [{ photo_id: null, photo_url: property.photo_url }] : [])).map((ph, i) => ({
+            key: `old-${ph.photo_id ?? i}`,
+            photoId: ph.photo_id,
+            url: ph.photo_url,
+            file: null,
+        }))
+    )
+    const [removedPhotos, setRemovedPhotos] = useState([])
     const [photoError, setPhotoError] = useState('')
     const [servicesList, setServicesList] = useState([])
     const [selectedServiceIds, setSelectedServiceIds] = useState(property?.service_ids || [])
@@ -66,73 +77,84 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
     }
 
     const handlePhotoChange = (e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
+        const files = Array.from(e.target.files || [])
+        e.target.value = ''
+        if (files.length === 0) return
 
         setPhotoError('')
-
-        if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-            setPhotoError('Please choose a JPG, PNG, WEBP, or GIF image.')
-            e.target.value = ''
-            return
+        const room = MAX_PHOTOS - photoItems.length
+        const accepted = []
+        for (const file of files) {
+            if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+                setPhotoError('Please choose JPG, PNG, WEBP, or GIF images.')
+                continue
+            }
+            if (file.size > MAX_PHOTO_BYTES) {
+                setPhotoError('Each image must be 5MB or smaller.')
+                continue
+            }
+            accepted.push(file)
         }
-        if (file.size > MAX_PHOTO_BYTES) {
-            setPhotoError('Image must be 5MB or smaller.')
-            e.target.value = ''
-            return
-        }
+        if (accepted.length > room) setPhotoError(`A space can have up to ${MAX_PHOTOS} photos.`)
 
-        setPhotoFile(file)
-        setRemoveExistingPhoto(false)
-        setPhotoPreview(URL.createObjectURL(file))
+        setPhotoItems((prev) => [
+            ...prev,
+            ...accepted.slice(0, Math.max(0, room)).map((file, i) => ({
+                key: `new-${Date.now()}-${i}`,
+                photoId: null,
+                url: URL.createObjectURL(file),
+                file,
+            })),
+        ])
     }
 
-    const handleRemovePhoto = () => {
-        setPhotoFile(null)
-        setPhotoPreview(null)
+    const removePhoto = (key) => {
+        const item = photoItems.find((p) => p.key === key)
+        if (item?.photoId) setRemovedPhotos((prev) => [...prev, item])
+        setPhotoItems((prev) => prev.filter((p) => p.key !== key))
         setPhotoError('')
-        setRemoveExistingPhoto(true)
     }
 
-    const replacePhoto = async (propertyId) => {
-        const oldPhotos = property?.business_photos || []
+    const makeCover = (key) => {
+        setPhotoItems((prev) => {
+            const item = prev.find((p) => p.key === key)
+            return item ? [item, ...prev.filter((p) => p.key !== key)] : prev
+        })
+    }
 
-        for (const old of oldPhotos) {
-            const idx = old.photo_url?.indexOf(PHOTO_URL_MARKER)
-            if (idx != null && idx !== -1) {
-                const oldPath = old.photo_url.slice(idx + PHOTO_URL_MARKER.length)
-                await supabase.storage.from('property-photos').remove([oldPath])
+    const storagePath = (url) => {
+        const idx = url?.indexOf(PHOTO_URL_MARKER)
+        return idx != null && idx !== -1 ? url.slice(idx + PHOTO_URL_MARKER.length) : null
+    }
+
+    // Removed photos go first (so the 6-photo limit holds), then new uploads,
+    // then every photo gets its position (0 = cover).
+    const syncPhotos = async (propertyId) => {
+        for (const old of removedPhotos) {
+            const path = storagePath(old.url)
+            if (path) await supabase.storage.from('property-photos').remove([path])
+            const { error } = await supabase.from('business_photos').delete().eq('photo_id', old.photoId)
+            if (error) return describeSupabaseError(error)
+        }
+
+        for (const [index, item] of photoItems.entries()) {
+            if (item.file) {
+                const ext = item.file.name.split('.').pop()
+                const path = `${propertyId}/${Date.now()}-${index}.${ext}`
+                const { error: uploadError } = await supabase.storage.from('property-photos').upload(path, item.file)
+                if (uploadError) return describeSupabaseError(uploadError)
+                const {
+                    data: { publicUrl },
+                } = supabase.storage.from('property-photos').getPublicUrl(path)
+                const { error: rowError } = await supabase
+                    .from('business_photos')
+                    .insert({ property_id: propertyId, photo_url: publicUrl, sort_order: index })
+                if (rowError) return describeSupabaseError(rowError)
+            } else if (item.photoId) {
+                const { error } = await supabase.from('business_photos').update({ sort_order: index }).eq('photo_id', item.photoId)
+                if (error) return describeSupabaseError(error)
             }
         }
-        if (oldPhotos.length > 0) {
-            const { data: deletedPhotos, error: deletePhotosError } = await supabase
-                .from('business_photos')
-                .delete()
-                .eq('property_id', propertyId)
-                .select()
-            if (deletePhotosError) return describeSupabaseError(deletePhotosError)
-            if (!deletedPhotos || deletedPhotos.length === 0) {
-                return 'Could not remove the previous photo. This is usually caused by a permissions (row-level security) rule blocking it.'
-            }
-        }
-
-        if (!photoFile) return null
-
-        const ext = photoFile.name.split('.').pop()
-        const path = `${propertyId}/${Date.now()}.${ext}`
-
-        const { error: uploadError } = await supabase.storage.from('property-photos').upload(path, photoFile)
-        if (uploadError) return describeSupabaseError(uploadError)
-
-        const {
-            data: { publicUrl },
-        } = supabase.storage.from('property-photos').getPublicUrl(path)
-
-        const { error: photoRowError } = await supabase
-            .from('business_photos')
-            .insert({ property_id: propertyId, photo_url: publicUrl })
-        if (photoRowError) return describeSupabaseError(photoRowError)
-
         return null
     }
 
@@ -160,7 +182,6 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
         const errors = []
         if (!propertyName.trim()) errors.push('Property name is required.')
         if (!PROPERTY_TYPES.includes(propertyType)) errors.push('Select a valid property type.')
-        if (!AVAILABILITY_OPTIONS.includes(availability)) errors.push('Select a valid availability status.')
         if (!phoneNumber.trim()) errors.push('Phone number is required.')
 
         const widthNum = Number(width)
@@ -191,7 +212,7 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
             monthly_rent: rentNum,
             business_size_width: widthNum,
             business_size_length: lengthNum,
-            availability,
+            ...(isLeased ? {} : { availability: listed ? 'Available' : 'Reserved' }),
             phone_number: phoneNumber.trim(),
             description: description.trim() || null,
             department: department || null,
@@ -223,9 +244,12 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
         const savedProperty = data[0]
         const issues = []
 
-        if (photoFile || removeExistingPhoto) {
-            const photoIssue = await replacePhoto(savedProperty.property_id)
-            if (photoIssue) issues.push(`photo (${photoIssue})`)
+        const photosChanged =
+            removedPhotos.length > 0 ||
+            photoItems.some((p, i) => p.file || (property?.photos?.[i]?.photo_id ?? null) !== p.photoId)
+        if (photosChanged) {
+            const photoIssue = await syncPhotos(savedProperty.property_id)
+            if (photoIssue) issues.push(`photos (${photoIssue})`)
         }
 
         const servicesIssue = await syncServices(savedProperty.business_id)
@@ -265,28 +289,36 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
 
                     <form onSubmit={handleSubmit}>
                         <div className="ns-form-section">
-                            <span className="ns-account-type-label"><i className="bi bi-camera"></i> Property Photo</span>
-                            <label htmlFor="propPhoto" className="ns-photo-dropzone">
-                                {photoPreview ? (
-                                    <img src={photoPreview} alt="Property preview" />
-                                ) : (
-                                    <span className="ns-photo-dropzone-empty">
+                            <span className="ns-account-type-label">
+                                <i className="bi bi-camera"></i> Photos{' '}
+                                <span className="ns-pay-muted">
+                                    ({photoItems.length}/{MAX_PHOTOS} · the first one is the cover)
+                                </span>
+                            </span>
+                            <div className="ns-photo-grid">
+                                {photoItems.map((item, i) => (
+                                    <div key={item.key} className={`ns-photo-tile ${i === 0 ? 'is-cover' : ''}`}>
+                                        <img src={item.url} alt={`Photo ${i + 1}`} />
+                                        {i === 0 ? (
+                                            <span className="ns-photo-cover-tag">Cover</span>
+                                        ) : (
+                                            <button type="button" className="ns-photo-tile-btn is-left" onClick={() => makeCover(item.key)} title="Make cover">
+                                                <i className="bi bi-star"></i>
+                                            </button>
+                                        )}
+                                        <button type="button" className="ns-photo-tile-btn" onClick={() => removePhoto(item.key)} aria-label="Remove photo">
+                                            <i className="bi bi-x-lg"></i>
+                                        </button>
+                                    </div>
+                                ))}
+                                {photoItems.length < MAX_PHOTOS && (
+                                    <label htmlFor="propPhoto" className="ns-photo-tile ns-photo-add">
                                         <i className="bi bi-cloud-arrow-up"></i>
-                                        <span>Upload photo</span>
-                                    </span>
+                                        <span>{photoItems.length === 0 ? 'Upload photos' : 'Add'}</span>
+                                    </label>
                                 )}
-                            </label>
-                            <input
-                                id="propPhoto" type="file" accept="image/*" className="d-none"
-                                onChange={handlePhotoChange}
-                            />
-                            {photoPreview && (
-                                <div>
-                                    <button type="button" className="ns-link-btn" onClick={handleRemovePhoto}>
-                                        Remove photo
-                                    </button>
-                                </div>
-                            )}
+                            </div>
+                            <input id="propPhoto" type="file" accept="image/*" multiple className="d-none" onChange={handlePhotoChange} />
                             {photoError && <p className="ns-photo-error">{photoError}</p>}
                         </div>
 
@@ -337,15 +369,17 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
                                 </div>
                                 <div className="col-6">
                                     <div className="ns-mb-field mb-0">
-                                        <label className="ns-label" htmlFor="propAvailability">Availability</label>
-                                        <select
-                                            id="propAvailability" className="form-select"
-                                            value={availability} onChange={(e) => setAvailability(e.target.value)}
-                                        >
-                                            {AVAILABILITY_OPTIONS.map((opt) => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
+                                        <span className="ns-label">On the Marketplace</span>
+                                        {isLeased ? (
+                                            <p className="ns-listing-note">
+                                                <i className="bi bi-key"></i> Leased — it returns to the Marketplace when the lease ends.
+                                            </p>
+                                        ) : (
+                                            <label className="ns-listing-toggle">
+                                                <input type="checkbox" checked={listed} onChange={(e) => setListed(e.target.checked)} />
+                                                <span>{listed ? 'Listed — businesses can request it' : 'Paused — hidden from the Marketplace'}</span>
+                                            </label>
+                                        )}
                                     </div>
                                 </div>
                             </div>

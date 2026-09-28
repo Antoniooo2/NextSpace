@@ -1,9 +1,14 @@
-// Shared by every screen that lists add_business rows and needs their cover photo
-// (business_photos is a 1:many table, but this app only shows a single photo per listing).
-export const PROPERTY_PHOTO_EMBED = 'business_photos(photo_url, uploaded_at)'
+// Shared by every screen that lists add_business rows and needs their photos.
+// business_photos is 1:many (up to 6 per space); sort_order 0 is the cover.
+export const PROPERTY_PHOTO_EMBED = 'business_photos(photo_id, photo_url, uploaded_at, sort_order)'
+
+export function sortPhotos(photos = []) {
+    return [...photos].sort(
+        (a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || (a.uploaded_at || '').localeCompare(b.uploaded_at || '')
+    )
+}
 
 export function withCoverPhoto(row) {
-    const photos = row.business_photos || []
-    const cover = [...photos].sort((a, b) => (a.uploaded_at || '').localeCompare(b.uploaded_at || ''))[0]
-    return { ...row, photo_url: cover?.photo_url || null }
+    const photos = sortPhotos(row.business_photos || [])
+    return { ...row, photos, photo_url: photos[0]?.photo_url || null }
 }

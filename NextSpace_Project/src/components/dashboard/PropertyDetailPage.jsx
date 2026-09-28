@@ -5,6 +5,12 @@ import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import { PROPERTY_SERVICE_NAMES_EMBED, withServiceNames } from '../../lib/propertyServices'
 import { createNotification } from '../../lib/notifications'
+import { LISTING_STATUS } from '../../lib/propertyTypes'
+import { SERVICE_ICON, areaOf } from '../../lib/listings'
+import { formatDueDate } from '../../lib/rentSchedule'
+import { money, personName } from '../../lib/contracts'
+import PropertyCard from './PropertyCard'
+import './listings.css'
 
 function toAdvisorPropertyCard(detail) {
     return {
@@ -29,7 +35,7 @@ const AVAILABILITY_CLASS = {
 
 const OWNER_EMBED = 'users!add_business_owner_id_fkey(first_name,last_name)'
 
-export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony, backLabel = 'Back' }) {
+export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony, onViewProperty, onNavigate, backLabel = 'Back' }) {
     const [detail, setDetail] = useState(property || null)
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
@@ -44,6 +50,10 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     const [savingFavorite, setSavingFavorite] = useState(false)
 
     const isBusiness = accountType === 'business'
+    const isOwnerView = accountType === 'property-owner'
+    const [photoIndex, setPhotoIndex] = useState(0)
+    const [similar, setSimilar] = useState([])
+    const [ownerContracts, setOwnerContracts] = useState([])
 
     useEffect(() => {
         let cancelled = false
@@ -145,6 +155,55 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             cancelled = true
         }
     }, [isBusiness, user?.id, detail?.property_id])
+
+    useEffect(() => {
+        setPhotoIndex(0)
+        window.scrollTo({ top: 0 })
+    }, [detail?.property_id])
+
+    // Other listed spaces of the same type or in the same municipality.
+    useEffect(() => {
+        let cancelled = false
+        if (!isBusiness || !detail?.property_id) return undefined
+        const load = async () => {
+            const filters = [`property_type.eq.${JSON.stringify(detail.property_type)}`]
+            if (detail.municipality) filters.push(`municipality.eq.${JSON.stringify(detail.municipality)}`)
+            const { data } = await supabase
+                .from('add_business')
+                .select(`*, ${PROPERTY_PHOTO_EMBED}, ${PROPERTY_SERVICE_NAMES_EMBED}`)
+                .eq('availability', 'Available')
+                .neq('property_id', detail.property_id)
+                .or(filters.join(','))
+                .order('registration_date', { ascending: false })
+                .limit(12)
+            if (cancelled) return
+            const rows = (data || []).map((r) => withServiceNames(withCoverPhoto(r)))
+            // Same type and same municipality first.
+            const score = (r) => (r.property_type === detail.property_type ? 2 : 0) + (r.municipality === detail.municipality ? 1 : 0)
+            setSimilar(rows.sort((a, b) => score(b) - score(a)).slice(0, 3))
+        }
+        load()
+        return () => {
+            cancelled = true
+        }
+    }, [isBusiness, detail?.property_id, detail?.property_type, detail?.municipality])
+
+    // Owner looking at their own space: who leases it or who asked for it.
+    useEffect(() => {
+        let cancelled = false
+        if (!isOwnerView || !detail?.property_id) return undefined
+        supabase
+            .from('contract')
+            .select('contract_id, status, end_date, requested_at, users!contract_tenant_dui_fkey(first_name,last_name)')
+            .eq('property_id', detail.property_id)
+            .in('status', ['Active', 'Offered', 'Pending'])
+            .then(({ data }) => {
+                if (!cancelled) setOwnerContracts(data || [])
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [isOwnerView, detail?.property_id])
 
     const handleRequestContract = async () => {
         if (!tenantDui || !detail) return
@@ -251,6 +310,12 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     const availabilityClass = AVAILABILITY_CLASS[detail.availability] || 'available'
     const locationText = [detail.municipality, detail.department].filter(Boolean).join(', ')
     const ownerName = [detail.users?.first_name, detail.users?.last_name].filter(Boolean).join(' ')
+    const photos = detail.photos || (detail.photo_url ? [{ photo_url: detail.photo_url }] : [])
+    const area = areaOf(detail)
+    const ownerStatus = LISTING_STATUS[detail.availability] || LISTING_STATUS.Available
+    const activeLease = ownerContracts.find((c) => c.status === 'Active')
+    const offer = ownerContracts.find((c) => c.status === 'Offered')
+    const requests = ownerContracts.filter((c) => c.status === 'Pending')
     const listedSince = detail.registration_date
         ? new Date(detail.registration_date).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
         : null
@@ -261,41 +326,64 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 <i className="bi bi-arrow-left"></i> {backLabel}
             </button>
 
-            <div className="ns-detail-hero">
-                {detail.photo_url ? (
-                    <img src={detail.photo_url} alt={detail.property_name} />
-                ) : (
-                    <div className="ns-detail-hero-placeholder">
-                        <i className={`bi ${typeIcon}`}></i>
+            <div className="ns-gallery">
+                <div className="ns-detail-hero">
+                    {photos.length > 0 ? (
+                        <img src={photos[photoIndex]?.photo_url} alt={`${detail.property_name}, photo ${photoIndex + 1}`} />
+                    ) : (
+                        <div className="ns-detail-hero-placeholder">
+                            <i className={`bi ${typeIcon}`}></i>
+                        </div>
+                    )}
+                    {detail.availability && (
+                        <span className={`ns-prop-availability ${availabilityClass}`}>{detail.availability}</span>
+                    )}
+                    {photos.length > 1 && (
+                        <>
+                            <button
+                                type="button"
+                                className="ns-gallery-nav is-prev"
+                                aria-label="Previous photo"
+                                onClick={() => setPhotoIndex((i) => (i - 1 + photos.length) % photos.length)}
+                            >
+                                <i className="bi bi-chevron-left"></i>
+                            </button>
+                            <button
+                                type="button"
+                                className="ns-gallery-nav is-next"
+                                aria-label="Next photo"
+                                onClick={() => setPhotoIndex((i) => (i + 1) % photos.length)}
+                            >
+                                <i className="bi bi-chevron-right"></i>
+                            </button>
+                            <span className="ns-gallery-count">
+                                {photoIndex + 1} / {photos.length}
+                            </span>
+                        </>
+                    )}
+                    <div className="ns-detail-hero-overlay">
+                        <h1>{detail.property_name}</h1>
+                    </div>
+                </div>
+                {photos.length > 1 && (
+                    <div className="ns-gallery-thumbs">
+                        {photos.map((ph, i) => (
+                            <button
+                                type="button"
+                                key={ph.photo_id || ph.photo_url}
+                                className={i === photoIndex ? 'active' : ''}
+                                onClick={() => setPhotoIndex(i)}
+                                aria-label={`Photo ${i + 1}`}
+                            >
+                                <img src={ph.photo_url} alt="" />
+                            </button>
+                        ))}
                     </div>
                 )}
-                {detail.availability && (
-                    <span className={`ns-prop-availability ${availabilityClass}`}>{detail.availability}</span>
-                )}
-                <div className="ns-detail-hero-overlay">
-                    <h1>{detail.property_name}</h1>
-                </div>
             </div>
 
             <div className="ns-detail-grid">
                 <div className="ns-detail-main">
-                    <div className="ns-detail-subrow">
-                        <p className="ns-detail-location">
-                            <i className={`bi ${typeIcon}`}></i> {detail.property_type}
-                        </p>
-                        <div className="ns-detail-tags">
-                            <span>
-                                <i className="bi bi-arrows-angle-expand"></i> {detail.business_size_width} × {detail.business_size_length} m
-                            </span>
-                            <span>
-                                <i className="bi bi-info-circle"></i> {detail.availability}
-                            </span>
-                            <span>
-                                <i className="bi bi-briefcase"></i> Business Space
-                            </span>
-                        </div>
-                    </div>
-
                     <div className="ns-detail-card">
                         <h3>About this space</h3>
                         <p className="ns-detail-desc">
@@ -328,14 +416,30 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                 <span>{listedSince ? `Listed ${listedSince}` : 'Recently listed'}</span>
                             </div>
                             <div className="ns-detail-info-item">
-                                <i className="bi bi-stars"></i>
-                                <span>
-                                    {detail.service_names?.length > 0
-                                        ? `${detail.service_names.length} amenities included`
-                                        : 'No amenities listed'}
-                                </span>
+                                <i className="bi bi-bounding-box"></i>
+                                <span>{area ? `${area} m² in total` : 'Size on request'}</span>
                             </div>
                         </div>
+                        {detail.address && (
+                            <p className="ns-detail-address">
+                                <i className="bi bi-signpost"></i> {detail.address}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="ns-detail-card">
+                        <h3>Amenities</h3>
+                        {detail.service_names?.length > 0 ? (
+                            <ul className="ns-amenity-list">
+                                {detail.service_names.map((name) => (
+                                    <li key={name}>
+                                        <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i> {name}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="ns-pay-muted mb-0">The owner hasn't listed amenities for this space.</p>
+                        )}
                     </div>
 
                     {isBusiness && (
@@ -355,6 +459,68 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 </div>
 
                 <div className="ns-detail-side-col">
+                {isOwnerView && (
+                    <aside className="ns-detail-side ns-owner-panel">
+                        <h3 className="ns-detail-side-title">Your listing</h3>
+                        <span className={`ns-own-badge tone-${ownerStatus.tone} is-inline`}>
+                            <i className={`bi ${ownerStatus.icon}`}></i> {ownerStatus.label}
+                        </span>
+                        {activeLease ? (
+                            <p className="ns-owner-panel-line">
+                                Leased to <strong>{personName(activeLease.users)}</strong> until{' '}
+                                {formatDueDate(activeLease.end_date)}.
+                            </p>
+                        ) : offer ? (
+                            <p className="ns-owner-panel-line">
+                                Offer sent to <strong>{personName(offer.users)}</strong>, waiting for their signature.
+                            </p>
+                        ) : requests.length > 0 ? (
+                            <p className="ns-owner-panel-line">
+                                <strong>
+                                    {requests.length} {requests.length === 1 ? 'business wants' : 'businesses want'}
+                                </strong>{' '}
+                                to lease this space.
+                            </p>
+                        ) : (
+                            <p className="ns-owner-panel-line">
+                                {detail.availability === 'Reserved'
+                                    ? 'Paused: businesses can’t see or request it.'
+                                    : 'Listed and waiting for requests.'}
+                            </p>
+                        )}
+                        <div className="ns-owner-panel-actions">
+                            {(activeLease || offer || requests.length > 0) && onNavigate && (
+                                <button
+                                    type="button"
+                                    className="ns-filled-btn"
+                                    onClick={() =>
+                                        onNavigate('contracts', {
+                                            contractId: (activeLease || offer || (requests.length === 1 ? requests[0] : null))?.contract_id ?? null,
+                                        })
+                                    }
+                                >
+                                    <i className="bi bi-file-earmark-text"></i>{' '}
+                                    {activeLease ? 'Open contract' : offer ? 'Open offer' : 'Answer requests'}
+                                </button>
+                            )}
+                            {activeLease && onNavigate && (
+                                <button
+                                    type="button"
+                                    className="ns-outline-btn"
+                                    onClick={() => onNavigate('payments', { contractId: activeLease.contract_id })}
+                                >
+                                    <i className="bi bi-credit-card"></i> Rent in Payments
+                                </button>
+                            )}
+                        </div>
+                        <p className="ns-owner-panel-note">
+                            <i className="bi bi-eye"></i> The rest of this page is what businesses see
+                            {detail.monthly_rent != null ? ` at ${money(detail.monthly_rent)}/month` : ''}. Edit it from My
+                            Properties.
+                        </p>
+                    </aside>
+                )}
+                {isBusiness && (
                 <aside className="ns-detail-side">
                     <h3 className="ns-detail-side-title">Rental Summary</h3>
 
@@ -437,6 +603,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                         </div>
                     )}
                 </aside>
+                )}
 
                 {isBusiness && (
                     <div className="ns-detail-ai-panel">
@@ -452,6 +619,17 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 )}
                 </div>
             </div>
+
+            {isBusiness && similar.length > 0 && (
+                <section className="ns-similar">
+                    <h2>Similar spaces</h2>
+                    <div className="ns-mk-grid">
+                        {similar.map((p) => (
+                            <PropertyCard key={p.property_id} property={p} onOpen={onViewProperty} />
+                        ))}
+                    </div>
+                </section>
+            )}
         </div>
     )
 }

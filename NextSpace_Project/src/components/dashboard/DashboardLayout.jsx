@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import logo from '../../assets/logo_ns_right.png'
 import ConfirmDialog from './ConfirmDialog'
+import NotificationBell from './NotificationBell'
 
 function navItemsFor(accountType) {
     return [
@@ -32,6 +33,8 @@ export default function DashboardLayout({
     search,
     onSearchChange,
     unreadCount = 0,
+    liveTick = 0,
+    onNotificationsRead,
     children,
 }) {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -119,10 +122,15 @@ export default function DashboardLayout({
                         />
                     </div>
                     <div className="ns-dash-topbar-actions">
-                        <button type="button" className="ns-dash-icon-btn" aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`} onClick={() => goTo('notifications')}>
-                            <i className="bi bi-bell"></i>
-                            {unreadCount > 0 && <span className="ns-dash-icon-btn-dot" aria-hidden="true" />}
-                        </button>
+                        <NotificationBell
+                            unreadCount={unreadCount}
+                            liveTick={liveTick}
+                            onRead={onNotificationsRead}
+                            onNavigate={(id, options) => {
+                                onSectionChange(id, options)
+                                setMobileNavOpen(false)
+                            }}
+                        />
                     </div>
                 </header>
 

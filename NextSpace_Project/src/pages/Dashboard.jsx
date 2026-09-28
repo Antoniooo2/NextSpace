@@ -66,6 +66,24 @@ export default function Dashboard() {
         if (user) loadUnreadCount()
     }, [user, section, loadUnreadCount])
 
+    // Live notifications: Realtime only delivers rows this user may read
+    // (RLS), so any insert/update here is theirs. Refresh the count and let
+    // the open screens reload quietly.
+    const [liveTick, setLiveTick] = useState(0)
+    useEffect(() => {
+        if (!user) return undefined
+        const channel = supabase
+            .channel(`notifications-${user.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
+                loadUnreadCount()
+                setLiveTick((t) => t + 1)
+            })
+            .subscribe()
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [user, loadUnreadCount])
+
     const handleLogout = async () => {
         await supabase.auth.signOut()
         navigate('/')
@@ -119,6 +137,8 @@ export default function Dashboard() {
                     onBack={() => setViewingProperty(null)}
                     backLabel={BACK_LABEL[viewingFrom] || 'Back'}
                     onAskRony={handleAskRony}
+                    onViewProperty={setViewingProperty}
+                    onNavigate={handleSectionChange}
                 />
             )
         }
@@ -169,6 +189,7 @@ export default function Dashboard() {
             case 'notifications':
                 return (
                     <Notifications
+                        liveTick={liveTick}
                         onNavigate={handleSectionChange}
                         onUnreadCountChange={(next) =>
                             setUnreadCount((prev) => (typeof next === 'function' ? next(prev) : next))
@@ -187,9 +208,20 @@ export default function Dashboard() {
                 )
             default:
                 return accountType === 'property-owner' ? (
-                    <OwnerHome user={user} firstName={firstName} search={search} onViewProperty={openProperty('home')} />
+                    <OwnerHome
+                        user={user}
+                        firstName={firstName}
+                        search={search}
+                        onViewProperty={openProperty('home')}
+                        onNavigate={handleSectionChange}
+                    />
                 ) : (
-                    <BusinessHome user={user} firstName={firstName} search={search} onViewProperty={openProperty('home')} />
+                    <BusinessHome
+                        user={user}
+                        search={search}
+                        onViewProperty={openProperty('home')}
+                        onAskRony={handleAskRony}
+                    />
                 )
         }
     }
@@ -205,6 +237,8 @@ export default function Dashboard() {
             search={search}
             onSearchChange={setSearch}
             unreadCount={unreadCount}
+            liveTick={liveTick}
+            onNotificationsRead={(n) => setUnreadCount((prev) => Math.max(0, prev - n))}
         >
             {renderContent()}
             <RonyDrawer
