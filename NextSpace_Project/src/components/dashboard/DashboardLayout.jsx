@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import mark from '../../assets/favicon_ns.png'
 import logo from '../../assets/NextSpace_logo.png'
 import ConfirmDialog from './ConfirmDialog'
 import NotificationBell from './NotificationBell'
@@ -74,6 +75,25 @@ export default function DashboardLayout({
 }) {
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+    // Desktop only: the menu can shrink to an icon rail to give the page
+    // more room. Remembered on this browser.
+    const [collapsed, setCollapsed] = useState(() => {
+        try {
+            return localStorage.getItem('ns-sidebar-collapsed') === '1'
+        } catch {
+            return false
+        }
+    })
+    const toggleCollapsed = () => {
+        setCollapsed((v) => {
+            try {
+                localStorage.setItem('ns-sidebar-collapsed', v ? '0' : '1')
+            } catch {
+                // Storage can be blocked; the toggle still works for this visit.
+            }
+            return !v
+        })
+    }
     const navGroups = navGroupsFor(accountType)
     const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'User'
     const initials = (firstName?.[0] || 'U') + (lastName?.[0] || '')
@@ -90,11 +110,12 @@ export default function DashboardLayout({
     }
 
     return (
-        <div className="ns-dash">
+        <div className={`ns-dash ${collapsed ? 'is-collapsed' : ''}`}>
             <aside className={`ns-dash-sidebar ${mobileNavOpen ? 'open' : ''}`}>
                 <div className="ns-dash-brand">
                     <button type="button" className="ns-dash-brand-btn" onClick={() => goTo('home')} aria-label="NextSpace home">
                         <img src={logo} alt="NextSpace" className="ns-dash-logo" />
+                        <img src={mark} alt="NextSpace" className="ns-dash-mark" />
                     </button>
                     <button
                         type="button"
@@ -119,7 +140,7 @@ export default function DashboardLayout({
                                         className={`ns-dash-nav-item ${section === item.id ? 'active' : ''}`}
                                         onClick={() => goTo(item.id)}
                                         aria-current={section === item.id ? 'page' : undefined}
-                                        title={needsAttention ? hints[item.id] : undefined}
+                                        title={needsAttention ? `${item.label} · ${hints[item.id]}` : collapsed ? item.label : undefined}
                                     >
                                         <span className="ns-dash-nav-icon">
                                             <i className={`bi ${item.icon}`}></i>
@@ -137,7 +158,7 @@ export default function DashboardLayout({
                 </nav>
 
                 <div className="ns-dash-user">
-                    <button type="button" className="ns-dash-user-info" onClick={() => goTo('profile')}>
+                    <button type="button" className="ns-dash-user-info" onClick={() => goTo('profile')} title={collapsed ? fullName : undefined}>
                         <span className="ns-dash-avatar">{initials.toUpperCase()}</span>
                         <span className="ns-dash-user-text">
                             <span className="ns-dash-user-name" title={fullName}>
@@ -162,6 +183,15 @@ export default function DashboardLayout({
 
             <div className="ns-dash-main">
                 <header className="ns-dash-topbar">
+                    <button
+                        type="button"
+                        className="ns-dash-collapse"
+                        onClick={toggleCollapsed}
+                        aria-label={collapsed ? 'Show the menu' : 'Hide the menu'}
+                        title={collapsed ? 'Show the menu' : 'Hide the menu for more space'}
+                    >
+                        <i className={`bi ${collapsed ? 'bi-layout-sidebar' : 'bi-layout-sidebar-inset'}`}></i>
+                    </button>
                     <button
                         type="button"
                         className="ns-dash-mobile-toggle"

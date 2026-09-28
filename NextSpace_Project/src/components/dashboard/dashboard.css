@@ -65,7 +65,7 @@
 }
 
 .ns-dash-logo {
-  width: 172px;
+  width: 142px;
   height: auto;
   filter: brightness(0) invert(1);
 }
@@ -276,6 +276,106 @@
   display: none;
 }
 
+/* Collapsed menu: an icon rail (desktop only) */
+
+.ns-dash-mark {
+  display: none;
+  width: 34px;
+  height: 34px;
+  filter: brightness(0) invert(1);
+}
+
+.ns-dash-sidebar {
+  transition: width 0.2s ease;
+}
+
+.ns-dash-collapse {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--ns-border);
+  background: #fff;
+  color: #4a5265;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ns-dash-collapse:hover {
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  border-color: var(--ns-blue-accent);
+}
+
+@media (min-width: 901px) {
+  .ns-dash.is-collapsed .ns-dash-sidebar {
+    width: 76px;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-brand {
+    justify-content: center;
+    padding: 22px 0 16px;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-logo,
+  .ns-dash.is-collapsed .ns-dash-nav-text,
+  .ns-dash.is-collapsed .ns-dash-user-text,
+  .ns-dash.is-collapsed .ns-dash-logout {
+    display: none;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-mark {
+    display: block;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-nav {
+    padding: 10px 12px 18px;
+    gap: 12px;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-nav-label {
+    font-size: 0;
+    padding: 0;
+    height: 1px;
+    margin: 0 10px 6px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .ns-dash.is-collapsed .ns-dash-nav-item {
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-nav-item::before {
+    left: -12px;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    padding: 2px 5px;
+    font-size: 9.5px;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-user {
+    margin: 0 10px 14px;
+    padding: 8px;
+    justify-content: center;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-user-info {
+    flex: none;
+  }
+
+  .ns-dash.is-collapsed .ns-dash-content {
+    max-width: 1440px;
+  }
+}
+
 /* Main and topbar */
 
 .ns-dash-main {
@@ -320,6 +420,7 @@
 .ns-dash-search {
   flex: 1;
   max-width: 480px;
+  margin-right: auto;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -1082,7 +1183,11 @@
   }
 
   .ns-dash-logo {
-    width: 150px;
+    width: 134px;
+  }
+
+  .ns-dash-collapse {
+    display: none;
   }
 
   .ns-dash-backdrop {
