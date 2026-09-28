@@ -383,89 +383,182 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
 
     // ===================== Business view =====================
     if (!isOwnerView) {
+        const cta =
+            openRequest === 'Active' ? (
+                <button type="button" className="ns-filled-btn" onClick={() => onNavigate?.('contracts')}>
+                    <i className="bi bi-key"></i> You lease this space
+                </button>
+            ) : openRequest === 'Offered' ? (
+                <button type="button" className="ns-filled-btn is-warm" onClick={() => onNavigate?.('contracts')}>
+                    <i className="bi bi-pen"></i> Review the owner's offer
+                </button>
+            ) : openRequest === 'Pending' ? (
+                <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('contracts')}>
+                    <i className="bi bi-hourglass-split"></i> Request sent · waiting
+                </button>
+            ) : detail.availability === 'Available' && detail.monthly_rent != null ? (
+                <button type="button" className="ns-filled-btn" onClick={handleRequestContract} disabled={requesting || !tenantDui}>
+                    <i className="bi bi-file-earmark-text"></i> {requesting ? 'Sending...' : 'Request lease'}
+                </button>
+            ) : null
+        const yearly = detail.monthly_rent != null ? Number(detail.monthly_rent) * 12 : null
+        const steps = [
+            { icon: 'bi-send', label: 'Request', done: Boolean(openRequest) },
+            { icon: 'bi-envelope-paper', label: 'Owner sends an offer', done: openRequest === 'Offered' || openRequest === 'Active' },
+            { icon: 'bi-pen', label: 'You sign', done: openRequest === 'Active' },
+            { icon: 'bi-credit-card', label: 'Pay rent in NextSpace', done: openRequest === 'Active' },
+        ]
+
         return (
             <div className="ns-detail-page">
                 {header}
-                <div className="ns-pd-grid">
-                    <div className="ns-pd-main">
-                        <ListingContent detail={detail} />
-                        <section className="ns-pd-section">
-                            <h3>Owner</h3>
-                            <div className="ns-detail-owner">
-                                <span className="ns-detail-owner-avatar">{(ownerName[0] || 'O').toUpperCase()}</span>
-                                <div>
-                                    <div className="ns-detail-owner-name">{ownerName}</div>
-                                    <div className="ns-detail-owner-label">
-                                        {listedAgo(detail.registration_date) || 'On NextSpace'} · answers requests in Contracts
+
+                <div className="ns-pd-owner-bar">
+                    <div className="ns-pd-tabs" role="tablist" aria-label="About this space">
+                        {[
+                            { id: 'overview', label: 'Overview', icon: 'bi-house' },
+                            { id: 'price', label: 'Price', icon: 'bi-tag', badge: insight && insight.tone === 'good' ? `−${Math.abs(insight.pct)}%` : null },
+                        ].map((t) => (
+                            <button type="button" key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
+                                <i className={`bi ${t.icon}`}></i> {t.label}
+                                {t.badge && <em className="is-good">{t.badge}</em>}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="ns-pd-owner-actions">
+                        {cta}
+                        <button type="button" className={`ns-outline-btn ${saved ? 'is-saved' : ''}`} onClick={toggleSave} aria-pressed={saved}>
+                            <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i> {saved ? 'Saved' : 'Save'}
+                        </button>
+                        {onAskRony && (
+                            <button type="button" className="ns-outline-btn" onClick={() => askRony()}>
+                                <i className="bi bi-stars"></i> Ask Rony
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {requestError && (
+                    <div className="alert alert-danger py-2" role="alert">
+                        {requestError}
+                    </div>
+                )}
+                {requestSuccess && (
+                    <div className="alert alert-success py-2" role="status">
+                        Request sent. The owner answers with an offer in Contracts, and you'll get a notification.
+                    </div>
+                )}
+                {!cta && !openRequest && (
+                    <div className="alert alert-secondary py-2" role="status">
+                        {detail.monthly_rent == null
+                            ? "This space has no rent set yet, so it can't be requested."
+                            : "This space isn't taking requests right now."}
+                    </div>
+                )}
+
+                {tab === 'overview' && (
+                    <div className="ns-pd-grid">
+                        <div className="ns-pd-main">
+                            <ListingContent detail={detail} />
+                        </div>
+                        <aside className="ns-pd-side">
+                            <div className="ns-pd-card">
+                                <h3 className="ns-pd-card-title">At a glance</h3>
+                                <ul className="ns-pd-glance">
+                                    <li>
+                                        <i className={`bi ${typeIcon(detail.property_type)}`}></i>
+                                        <span>Type</span>
+                                        <strong>{detail.property_type}</strong>
+                                    </li>
+                                    <li>
+                                        <i className="bi bi-bounding-box"></i>
+                                        <span>Size</span>
+                                        <strong>
+                                            {area ? `${area} m²` : '—'} <small>({detail.business_size_width} × {detail.business_size_length} m)</small>
+                                        </strong>
+                                    </li>
+                                    <li>
+                                        <i className="bi bi-cash-stack"></i>
+                                        <span>Rent</span>
+                                        <strong>{detail.monthly_rent != null ? `${money(detail.monthly_rent)}/month` : 'On request'}</strong>
+                                    </li>
+                                    <li>
+                                        <i className="bi bi-calendar3"></i>
+                                        <span>On NextSpace</span>
+                                        <strong>{listedAgo(detail.registration_date) || '—'}</strong>
+                                    </li>
+                                </ul>
+                                <div className="ns-pd-owner-row">
+                                    <span className="ns-detail-owner-avatar">{(ownerName[0] || 'O').toUpperCase()}</span>
+                                    <div>
+                                        <strong>{ownerName}</strong>
+                                        <small>Owner · answers requests in Contracts</small>
                                     </div>
                                 </div>
                             </div>
+
+                            <div className="ns-pd-card ns-pd-steps-card">
+                                <h3 className="ns-pd-card-title">How leasing works</h3>
+                                <ol className="ns-pd-steps">
+                                    {steps.map((st) => (
+                                        <li key={st.label} className={st.done ? 'is-done' : ''}>
+                                            <span>
+                                                <i className={`bi ${st.done ? 'bi-check-lg' : st.icon}`}></i>
+                                            </span>
+                                            {st.label}
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        </aside>
+                    </div>
+                )}
+
+                {tab === 'price' && (
+                    <div className="ns-pd-panels">
+                        <section className="ns-pd-section">
+                            <h3>Price vs similar spaces</h3>
+                            {insight ? (
+                                <PriceMarketBar insight={insight} />
+                            ) : (
+                                <p className="ns-pay-muted mb-0">Not enough similar spaces on NextSpace to compare yet.</p>
+                            )}
+                        </section>
+                        <section className="ns-pd-section">
+                            <h3>What it costs</h3>
+                            <div className="ns-pd-mini">
+                                <div>
+                                    <strong>{detail.monthly_rent != null ? money(detail.monthly_rent) : '—'}</strong>
+                                    <small>per month</small>
+                                </div>
+                                <div>
+                                    <strong>{yearly != null ? money(yearly) : '—'}</strong>
+                                    <small>per year</small>
+                                </div>
+                                <div>
+                                    <strong>{insight ? formatPpm(insight.ppm) : area && detail.monthly_rent != null ? formatPpm(Number(detail.monthly_rent) / area) : '—'}</strong>
+                                    <small>per m²</small>
+                                </div>
+                            </div>
+                            <p className="ns-pd-hint">
+                                The lease length, start date and deposit come in the owner's offer; you review them before signing.
+                            </p>
+                            {onAskRony && detail.monthly_rent != null && (
+                                <button
+                                    type="button"
+                                    className="ns-rony-write mt-2"
+                                    onClick={() =>
+                                        askRony(
+                                            `Is ${money(detail.monthly_rent)}/month a good price for "${detail.property_name}" (${detail.property_type}, ${area || '?'} m² in ${locationOf(detail) || 'El Salvador'})?${insight ? ` It's ${formatPpm(insight.ppm)} while similar spaces go for about ${formatPpm(insight.median)}.` : ''} What should I negotiate?`
+                                        )
+                                    }
+                                >
+                                    <i className="bi bi-stars"></i> Ask Rony if it's a good price
+                                </button>
+                            )}
                         </section>
                     </div>
-
-                    <aside className="ns-pd-side">
-                        <div className="ns-pd-card">
-                            <div className="ns-pd-price">
-                                {detail.monthly_rent != null ? (
-                                    <>
-                                        {money(detail.monthly_rent)}
-                                        <small>/month</small>
-                                    </>
-                                ) : (
-                                    'Price on request'
-                                )}
-                            </div>
-                            <PriceMarketBar insight={insight} />
-
-                            {requestError && (
-                                <div className="alert alert-danger py-2 mt-2 mb-0" role="alert">
-                                    {requestError}
-                                </div>
-                            )}
-                            {requestSuccess && (
-                                <div className="alert alert-success py-2 mt-2 mb-0" role="status">
-                                    Request sent. The owner answers in Contracts.
-                                </div>
-                            )}
-
-                            {openRequest === 'Active' ? (
-                                <button type="button" className="ns-submit-btn mt-3" onClick={() => onNavigate?.('contracts')}>
-                                    <i className="bi bi-key"></i> You lease this space
-                                </button>
-                            ) : openRequest === 'Offered' ? (
-                                <button type="button" className="ns-submit-btn mt-3" onClick={() => onNavigate?.('contracts')}>
-                                    <i className="bi bi-pen"></i> Review the owner's offer
-                                </button>
-                            ) : openRequest === 'Pending' ? (
-                                <button type="button" className="ns-submit-btn mt-3" disabled>
-                                    <i className="bi bi-hourglass-split"></i> Request sent · waiting for the owner
-                                </button>
-                            ) : detail.availability !== 'Available' ? (
-                                <p className="ns-pay-muted mt-3 mb-0">This space isn't taking requests right now.</p>
-                            ) : detail.monthly_rent == null ? (
-                                <p className="ns-pay-muted mt-3 mb-0">This space has no rent set yet, so it can't be requested.</p>
-                            ) : (
-                                <button type="button" className="ns-submit-btn mt-3" onClick={handleRequestContract} disabled={requesting || !tenantDui}>
-                                    <i className="bi bi-file-earmark-text"></i> {requesting ? 'Sending...' : 'Request lease'}
-                                </button>
-                            )}
-
-                            <div className="ns-pd-card-actions">
-                                <button type="button" className={saved ? 'is-on' : ''} onClick={toggleSave} aria-pressed={saved}>
-                                    <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i> {saved ? 'Saved' : 'Save'}
-                                </button>
-                                {onAskRony && (
-                                    <button type="button" onClick={() => askRony()}>
-                                        <i className="bi bi-stars"></i> Is it a fit? Ask Rony
-                                    </button>
-                                )}
-                            </div>
-                            <p className="ns-pd-note">
-                                <i className="bi bi-shield-check"></i> You sign the lease digitally and pay rent in NextSpace.
-                            </p>
-                        </div>
-                    </aside>
-                </div>
+                )}
 
                 {similar.length > 0 && (
                     <section className="ns-similar">

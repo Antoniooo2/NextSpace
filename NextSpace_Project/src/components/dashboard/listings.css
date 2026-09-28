@@ -1008,3 +1008,22 @@ button.ns-own-status:hover { filter: brightness(0.97); }
 
 .ns-own-foot-actions button:hover { color: var(--ns-blue-accent); }
 .ns-own-foot-actions button.is-primary { color: var(--ns-blue-accent); font-weight: 700; }
+
+/* Marketplace: three roomier cards per row (two on tablets, one on phones). */
+.ns-mk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 26px; }
+.ns-mk-card-media { aspect-ratio: 16 / 11; }
+.ns-mk-card-body { padding: 18px 20px 20px; gap: 6px; }
+.ns-mk-card-price { font-size: 21px; }
+.ns-mk-card-body h3 { font-size: 16.5px; }
+.ns-mk-card-loc, .ns-mk-card-facts { font-size: 13px; }
+.ns-mk-card-services { padding-top: 12px; margin-top: auto; }
+.ns-mk-card-services span { width: 30px; height: 30px; font-size: 14px; }
+.ns-mk-compare { padding: 11px 20px; }
+
+@media (max-width: 1180px) {
+  .ns-mk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .ns-mk-grid { grid-template-columns: minmax(0, 1fr); }
+}

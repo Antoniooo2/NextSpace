@@ -349,3 +349,73 @@
   .ns-pd-mini { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .ns-pg-viewer { padding: 20px 10px; }
 }
+
+/* ---------- Business view: action bar, glance card, steps ---------- */
+.ns-pd-owner-actions .ns-filled-btn.is-warm { background: #f0a630; border-color: #f0a630; color: #fff; }
+.ns-pd-owner-actions .ns-outline-btn.is-saved { color: #e11d48; border-color: #fecdd3; background: #fff1f2; }
+.ns-pd-tabs em.is-good { background: #16a34a; }
+
+.ns-pd-card + .ns-pd-card { margin-top: 16px; }
+.ns-pd-card-title { font-size: 15px; font-weight: 700; color: #1a1f2b; margin: 0 0 12px; }
+
+.ns-pd-glance { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.ns-pd-glance li {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #f0f2f6;
+}
+
+.ns-pd-glance li i { color: var(--ns-blue-accent); font-size: 15px; }
+.ns-pd-glance li span { color: var(--ns-text-muted); }
+.ns-pd-glance li strong { color: #1a1f2b; text-align: right; }
+.ns-pd-glance li small { font-weight: 500; color: var(--ns-text-muted); }
+
+.ns-pd-owner-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.ns-pd-owner-row div { display: flex; flex-direction: column; min-width: 0; }
+.ns-pd-owner-row strong { font-size: 14px; color: #1a1f2b; }
+.ns-pd-owner-row small { font-size: 12px; color: var(--ns-text-muted); }
+
+.ns-pd-steps { list-style: none; margin: 0; padding: 0; position: relative; }
+
+.ns-pd-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #4a5263;
+  padding: 7px 0;
+  position: relative;
+}
+
+.ns-pd-steps li + li::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: -8px;
+  height: 16px;
+  width: 2px;
+  background: var(--ns-border);
+}
+
+.ns-pd-steps li span {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  font-size: 13px;
+  position: relative;
+  z-index: 1;
+}
+
+.ns-pd-steps li.is-done { color: #1a1f2b; font-weight: 600; }
+.ns-pd-steps li.is-done span { background: #16a34a; color: #fff; }
