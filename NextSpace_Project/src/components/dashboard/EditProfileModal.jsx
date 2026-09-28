@@ -5,52 +5,47 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
     const meta = user.user_metadata || {}
     const [firstName, setFirstName] = useState(meta.first_name || '')
     const [lastName, setLastName] = useState(meta.last_name || '')
-    const [phone, setPhone] = useState(meta.phone || '')
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setSaving(true)
-        setErrorMsg('')
-
-        const { error: authError } = await supabase.auth.updateUser({
-            data: { first_name: firstName, last_name: lastName, phone },
-        })
-
-        if (authError) {
-            setSaving(false)
-            setErrorMsg(authError.message)
+        const first = firstName.trim()
+        const last = lastName.trim()
+        if (!first || !last) {
+            setErrorMsg('Please enter your first and last name.')
             return
         }
 
-                        if (meta.dui) {
-            const { data: dbData, error: dbError } = await supabase
-                .from('users')
-                .update({ first_name: firstName, last_name: lastName, phone_number: phone })
-                .eq('dui', meta.dui)
-                .select()
+        setSaving(true)
+        setErrorMsg('')
 
-            if (dbError) {
-                setSaving(false)
-                setErrorMsg(
-                    'Your profile was updated, but syncing to the database failed: ' + dbError.message
-                )
-                return
-            }
+        // The users row first (it's what owners, tenants and Rony read), then
+        // the account metadata, so a failure never leaves the two different.
+        const { data: authData } = await supabase.auth.getUser()
+        const { data: dbData, error: dbError } = await supabase
+            .from('users')
+            .update({ first_name: first, last_name: last })
+            .eq('id_supabase_auth', authData?.user?.id || user.id)
+            .select('dui')
 
-            if (!dbData || dbData.length === 0) {
-                setSaving(false)
-                setErrorMsg(
-                    `No matching row was found in the users table for dui "${meta.dui}". ` +
-                        'This is usually caused by a Row Level Security policy blocking the update, ' +
-                        'or the dui not matching exactly.'
-                )
-                return
-            }
+        if (dbError || !dbData || dbData.length === 0) {
+            console.error('Profile: users row not updated', dbError)
+            setSaving(false)
+            setErrorMsg('We could not save your changes. Check your connection and try again.')
+            return
         }
 
+        const { error: authError } = await supabase.auth.updateUser({
+            data: { first_name: first, last_name: last },
+        })
+
         setSaving(false)
+        if (authError) {
+            setErrorMsg('We could not save your changes. Check your connection and try again.')
+            return
+        }
+
         onUpdated()
         onClose()
     }
@@ -65,7 +60,9 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                 <div className="ns-modal-body">
                     <h2 className="ns-modal-form-title">Edit profile</h2>
                     <p className="ns-modal-form-subtitle">
-                        Update your basic account information. Your email and DUI can't be changed here.
+                        {meta.account_type === 'property-owner'
+                            ? 'Businesses see your name on your listings and leases.'
+                            : 'Owners see your name when you apply for a space or sign a lease.'}
                     </p>
 
                     {errorMsg && (
@@ -74,7 +71,17 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit} noValidate>
+                        <div className="ns-edit-fixed">
+                            <span>
+                                <i className="bi bi-envelope"></i> {user.email}
+                            </span>
+                            <span>
+                                <i className="bi bi-person-vcard"></i> DUI {meta.dui || '—'}
+                            </span>
+                            <small>Email and DUI can't be changed.</small>
+                        </div>
+
                         <div className="row g-2">
                             <div className="col-6">
                                 <div className="ns-mb-field">
@@ -99,17 +106,6 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                                         />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="ns-mb-field">
-                            <label className="ns-label" htmlFor="editPhone">Phone number</label>
-                            <div className="ns-input-group input-group">
-                                <span className="input-group-text"><i className="bi bi-phone"></i></span>
-                                <input
-                                    id="editPhone" type="text" className="form-control"
-                                    value={phone} onChange={(e) => setPhone(e.target.value)}
-                                />
                             </div>
                         </div>
 

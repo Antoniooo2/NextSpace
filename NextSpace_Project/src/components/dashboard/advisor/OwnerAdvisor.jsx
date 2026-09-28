@@ -1,17 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
 import { createNotification } from '../../../lib/notifications'
-import RonyAvatar from '../../RonyAvatar'
-import OwnerChart from './OwnerChart'
-import SuggestedChips from './SuggestedChips'
+import { AdvisorComposer, AdvisorHome, AdvisorTopBar, RonyTyping } from './AdvisorChrome'
 import AuditTable from './AuditTable'
+import { blocksFrom, clearHistory, linkHandler, persistableBlocks, revealReply } from './chatBlocks'
+import OwnerChart from './OwnerChart'
+import RonyReply from './RonyReply'
+import { OWNER_TOPICS, useAdvisorLiveCards } from './useAdvisorContext'
 
+// Older chats opened with this automatic question; it stays hidden when
+// those chats are loaded. New chats start on the welcome screen instead.
 const KICKOFF_MESSAGE = 'Give me a quick overview of my portfolio and tell me what needs attention first.'
+const COMPACT_WELCOME_TEXT = 'Hi, ask me about **rent collection**, your leases or your tenants.'
+const COMPACT_STARTERS = ['Who is late on rent?', 'How much will I still collect this year?', 'Which lease ends soonest?']
 const HISTORY_LIMIT = 20
 
 function computeChips(intent) {
     if (intent === 'analyze' || intent === 'audit') {
-        return ['Why are they vacant?', 'Improve my listings', 'Who owes me money?']
+        return ['Who is late on rent?', 'How much will I still collect this year?', 'Improve my listings']
     }
     if (intent === 'draft_message') {
         return ['Draft another message', 'What else needs attention?']
@@ -19,20 +25,20 @@ function computeChips(intent) {
     if (intent === 'simulate') {
         return ['Try a different rent change', 'What else needs attention?']
     }
-    return ['What needs my attention?', 'Improve my listings']
+    return ['What needs my attention?', 'Who is late on rent?', 'Improve my listings']
 }
 
-export default function OwnerAdvisor() {
+export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsumed, compact = false }) {
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [messages, setMessages] = useState([])
     const [chatLog, setChatLog] = useState([])
-    const [chips, setChips] = useState([])
     const [input, setInput] = useState('')
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [copiedIndex, setCopiedIndex] = useState(null)
     const [actionStatus, setActionStatus] = useState({})
     const scrollRef = useRef(null)
+    const liveCards = useAdvisorLiveCards('property-owner', !compact)
 
     useEffect(() => {
         let cancelled = false
@@ -45,29 +51,37 @@ export default function OwnerAdvisor() {
             if (cancelled) return
             if (!user) {
                 setHistoryLoaded(true)
-                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
                 return
             }
 
-            const { data, error: historyError } = await supabase
+            // Newest first so the limit keeps the most recent turns (ascending
+            // + limit would keep the oldest ones and hide everything after),
+            // then flipped back into reading order. message_id breaks ties
+            // between the user/model rows inserted together in one call.
+            const { data: newestFirst, error: historyError } = await supabase
                 .from('advisor_messages')
                 .select('role, content, payload, created_at')
                 .eq('user_auth_id', user.id)
-                .order('created_at', { ascending: true })
+                .order('created_at', { ascending: false })
+                .order('message_id', { ascending: false })
                 .limit(HISTORY_LIMIT)
 
             if (cancelled) return
 
+            let data = newestFirst ? [...newestFirst].reverse() : newestFirst
+            // The limit can cut a turn in half; never start on a model reply
+            // whose user message was left out.
+            while (data && data.length > 0 && data[0].role !== 'user') data = data.slice(1)
+
             if (historyError || !data || data.length === 0) {
                 setHistoryLoaded(true)
-                sendTurn({ userVisibleText: KICKOFF_MESSAGE, silent: true })
                 return
             }
 
             const loadedChatLog = []
-            data.forEach((row, index) => {
+            data.forEach((row) => {
                 if (row.role === 'user') {
-                    const isSilentKickoff = index === 0 && row.content === KICKOFF_MESSAGE
+                    const isSilentKickoff = row.content === KICKOFF_MESSAGE
                     if (!isSilentKickoff) {
                         loadedChatLog.push({ type: 'user', text: row.content })
                     }
@@ -78,6 +92,8 @@ export default function OwnerAdvisor() {
                 loadedChatLog.push({
                     type: 'assistant',
                     text: row.content,
+                    at: row.created_at,
+                    ...blocksFrom(payload),
                     draft: payload.draft || null,
                     chart: payload.chart || null,
                     stats: payload.stats || null,
@@ -100,7 +116,6 @@ export default function OwnerAdvisor() {
         return () => {
             cancelled = true
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
@@ -120,15 +135,14 @@ export default function OwnerAdvisor() {
         }
     }
 
-    const sendTurn = async ({ userVisibleText, silent }) => {
+    const sendTurn = async ({ userVisibleText }) => {
+        if (loading) return
         setError('')
         setLoading(true)
 
         const nextMessages = [...messages, { role: 'user', content: userVisibleText }]
         setMessages(nextMessages)
-        if (!silent) {
-            setChatLog((prev) => [...prev, { type: 'user', text: userVisibleText }])
-        }
+        setChatLog((prev) => [...prev, { type: 'user', text: userVisibleText }])
 
         const { data: sessionData } = await supabase.auth.getSession()
         const accessToken = sessionData?.session?.access_token
@@ -158,12 +172,16 @@ export default function OwnerAdvisor() {
                 throw new Error(result.error || 'Something went wrong. Please try again.')
             }
 
+            const blocks = blocksFrom(result, computeChips(result.intent))
             setMessages((prev) => [...prev, { role: 'assistant', content: result.reply }])
             setChatLog((prev) => [
                 ...prev,
                 {
                     type: 'assistant',
                     text: result.reply,
+                    at: new Date().toISOString(),
+                    fresh: true,
+                    ...blocks,
                     draft: result.draft || null,
                     chart: result.chart || null,
                     stats: result.stats || null,
@@ -175,8 +193,6 @@ export default function OwnerAdvisor() {
                     audit: result.audit || null,
                 },
             ])
-            setChips(computeChips(result.intent))
-
             persistTurn(userId, userVisibleText, result.reply, {
                 draft: result.draft || null,
                 chart: result.chart || null,
@@ -187,6 +203,7 @@ export default function OwnerAdvisor() {
                 highlightContractId: result.highlightContractId || null,
                 recipientDui: result.recipientDui || null,
                 audit: result.audit || null,
+                ...persistableBlocks(blocks),
             })
         } catch (err) {
             setError(err.message || 'Could not reach Rony. Please try again.')
@@ -195,19 +212,39 @@ export default function OwnerAdvisor() {
         }
     }
 
-    const handleComposerSubmit = (e) => {
-        e.preventDefault()
+    const handleComposerSubmit = () => {
         const text = input.trim()
         if (!text || loading) return
         setInput('')
         sendTurn({ userVisibleText: text })
     }
 
-    const handleChipPick = (text) => {
+    const ask = (text) => {
         if (loading) return
-        setChips([])
         sendTurn({ userVisibleText: text })
     }
+
+    const handleNewChat = async () => {
+        const { error: deleteError } = await clearHistory()
+        if (deleteError) {
+            setError('Could not clear the conversation. Please try again.')
+            return
+        }
+        setChatLog([])
+        setMessages([])
+        setActionStatus({})
+        setError('')
+    }
+
+    // Arriving here from a page-level "Ask Rony" action (a contract, a payment
+    // reminder): pre-fill the composer with a default question instead of
+    // sending it right away, so the user can read, edit, or just hit send.
+    useEffect(() => {
+        if (!historyLoaded || !seed) return
+        setInput(seed.text || '')
+        onSeedConsumed?.()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [historyLoaded, seed])
 
     const copyDraft = async (text, index) => {
         try {
@@ -292,138 +329,128 @@ export default function OwnerAdvisor() {
         )
     }
 
-    return (
-        <>
-            <div className="advisor-header ns-dash-header">
-                <div>
-                    <h1>AI Advisor</h1>
-                    <p>Rony reviews your portfolio and tells you what needs attention.</p>
-                </div>
-            </div>
+    const onLink = linkHandler(onNavigate)
+    const lastAssistant = chatLog.reduce((last, item, i) => (item.type === 'assistant' ? i : last), -1)
+    const isEmpty = chatLog.length === 0 && !loading
 
-            <div className="advisor-shell">
-                <div className="advisor-stream" ref={scrollRef}>
-                    {chatLog.length === 0 && loading && (
-                        <div className="advisor-msg advisor-msg-assistant">
-                            <div className="advisor-avatar">
-                                <RonyAvatar size={30} />
-                            </div>
-                            <div className="advisor-bubble advisor-typing">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
+    const renderDraft = (item, i) => (
+        <div className="advisor-draft">
+            <span className="advisor-draft-label">
+                <i className="bi bi-pencil-square"></i> {item.intent === 'rewrite_listing' ? 'New description' : 'Draft message'}
+            </span>
+            <p>{item.draft}</p>
+            <div className="advisor-draft-actions">
+                <button type="button" className="advisor-draft-copy" onClick={() => copyDraft(item.draft, i)}>
+                    <i className="bi bi-clipboard"></i> {copiedIndex === i ? 'Copied' : 'Copy'}
+                </button>
+                {item.intent === 'rewrite_listing' && item.highlightPropertyId && actionStatus[i]?.kind !== 'success' && (
+                    <button
+                        type="button"
+                        className="advisor-draft-copy is-primary"
+                        onClick={() => handleSaveListing(item, i)}
+                        disabled={actionStatus[i]?.kind === 'pending'}
+                    >
+                        <i className="bi bi-check2"></i> Save to listing
+                    </button>
+                )}
+                {item.intent === 'draft_message' &&
+                    item.recipientDui &&
+                    item.highlightContractId &&
+                    actionStatus[i]?.kind !== 'success' && (
+                        <button
+                            type="button"
+                            className="advisor-draft-copy is-primary"
+                            onClick={() => handleSendMessage(item, i)}
+                            disabled={actionStatus[i]?.kind === 'pending'}
+                        >
+                            <i className="bi bi-send"></i> Send
+                        </button>
                     )}
+            </div>
+            {actionStatus[i]?.kind === 'success' && (
+                <p className="advisor-action-success">
+                    <i className="bi bi-check-circle"></i> {actionStatus[i].text}
+                </p>
+            )}
+            {actionStatus[i]?.kind === 'error' && (
+                <div className="alert alert-danger py-1 px-2 mb-0 mt-2" style={{ fontSize: '11.5px' }}>
+                    {actionStatus[i].text}
+                </div>
+            )}
+        </div>
+    )
 
-                    {chatLog.map((item, i) => {
-                        if (item.type === 'user') {
-                            return (
-                                <div key={i} className="advisor-msg advisor-msg-user">
-                                    <div className="advisor-user-avatar">You</div>
-                                    <div className="advisor-bubble">
-                                        <p>{item.text}</p>
-                                    </div>
-                                </div>
-                            )
-                        }
+    return (
+        <div className={`advisor-shell ${compact ? 'is-compact' : ''}`}>
+            {!compact && (
+                <AdvisorTopBar
+                    subtitle="Knows your properties, tenants and rent"
+                    canReset={chatLog.length > 0}
+                    onNewChat={handleNewChat}
+                />
+            )}
 
+            <div className={`advisor-stream ${isEmpty && !compact ? 'is-home' : ''}`} ref={scrollRef}>
+                {isEmpty && !compact && (
+                    <AdvisorHome
+                        firstName={firstName}
+                        intro="I watch your properties, tenants and rent, and help you act on what matters."
+                        liveCards={liveCards}
+                        topics={OWNER_TOPICS}
+                        onAsk={ask}
+                    />
+                )}
+
+                {isEmpty && compact && (
+                    <RonyReply item={{ text: COMPACT_WELCOME_TEXT, followUps: COMPACT_STARTERS }} onFollowUp={ask} />
+                )}
+
+                {chatLog.map((item, i) => {
+                    if (item.type === 'user') {
                         return (
-                            <div key={i} className="advisor-msg advisor-msg-assistant">
-                                <div className="advisor-avatar">
-                                    <RonyAvatar size={30} />
-                                </div>
+                            <div key={i} className="advisor-msg advisor-msg-user">
                                 <div className="advisor-bubble">
                                     <p>{item.text}</p>
-                                    {item.intent === 'audit' && item.audit && (
-                                        <AuditTable audit={item.audit} onRewrite={handleRewrite} disabled={loading} />
-                                    )}
-                                    {item.draft && (
-                                        <div className="advisor-draft">
-                                            <p>{item.draft}</p>
-                                            <div className="advisor-draft-actions">
-                                                <button type="button" className="advisor-draft-copy" onClick={() => copyDraft(item.draft, i)}>
-                                                    <i className="bi bi-clipboard"></i> {copiedIndex === i ? 'Copied' : 'Copy'}
-                                                </button>
-                                                {item.intent === 'rewrite_listing' &&
-                                                    item.highlightPropertyId &&
-                                                    actionStatus[i]?.kind !== 'success' && (
-                                                        <button
-                                                            type="button"
-                                                            className="advisor-draft-copy"
-                                                            onClick={() => handleSaveListing(item, i)}
-                                                            disabled={actionStatus[i]?.kind === 'pending'}
-                                                        >
-                                                            <i className="bi bi-check2"></i> Save to listing
-                                                        </button>
-                                                    )}
-                                                {item.intent === 'draft_message' &&
-                                                    item.recipientDui &&
-                                                    item.highlightContractId &&
-                                                    actionStatus[i]?.kind !== 'success' && (
-                                                        <button
-                                                            type="button"
-                                                            className="advisor-draft-copy"
-                                                            onClick={() => handleSendMessage(item, i)}
-                                                            disabled={actionStatus[i]?.kind === 'pending'}
-                                                        >
-                                                            <i className="bi bi-send"></i> Send
-                                                        </button>
-                                                    )}
-                                            </div>
-                                            {actionStatus[i]?.kind === 'success' && (
-                                                <p className="advisor-action-success">
-                                                    <i className="bi bi-check-circle"></i> {actionStatus[i].text}
-                                                </p>
-                                            )}
-                                            {actionStatus[i]?.kind === 'error' && (
-                                                <div className="alert alert-danger py-1 px-2 mb-0 mt-2" style={{ fontSize: '11.5px' }}>
-                                                    {actionStatus[i].text}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    <OwnerChart chart={item.chart} stats={item.stats} simulation={item.simulation} />
                                 </div>
                             </div>
                         )
-                    })}
+                    }
 
-                    {loading && chatLog.length > 0 && (
-                        <div className="advisor-msg advisor-msg-assistant">
-                            <div className="advisor-avatar">
-                                <RonyAvatar size={30} />
-                            </div>
-                            <div className="advisor-bubble advisor-typing">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    return (
+                        <RonyReply
+                            key={i}
+                            item={item}
+                            onLink={onLink}
+                            onFollowUp={ask}
+                            showFollowUps={i === lastAssistant && !loading}
+                            disabled={loading}
+                            onSettled={(el) => revealReply(scrollRef.current, el)}
+                        >
+                            {item.intent === 'audit' && item.audit && (
+                                <AuditTable audit={item.audit} onRewrite={handleRewrite} disabled={loading} />
+                            )}
+                            {item.draft && renderDraft(item, i)}
+                            <OwnerChart chart={item.chart} stats={item.stats} simulation={item.simulation} />
+                        </RonyReply>
+                    )
+                })}
 
-                {error && (
-                    <div className="alert alert-danger py-2" role="alert">
-                        {error}
-                    </div>
-                )}
-
-                <SuggestedChips chips={chips} onPick={handleChipPick} disabled={loading} />
-
-                <form className="advisor-composer" onSubmit={handleComposerSubmit}>
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        placeholder="Ask about your portfolio, or what to change..."
-                        disabled={loading}
-                    />
-                    <button type="submit" className="advisor-composer-send" disabled={loading || !input.trim()}>
-                        <i className="bi bi-send"></i>
-                    </button>
-                </form>
+                {loading && <RonyTyping />}
             </div>
-        </>
+
+            {error && (
+                <div className="alert alert-danger py-2 mb-0" role="alert">
+                    {error}
+                </div>
+            )}
+
+            <AdvisorComposer
+                value={input}
+                onChange={setInput}
+                onSubmit={handleComposerSubmit}
+                disabled={loading}
+                placeholder="Ask about your portfolio, tenants or listings..."
+            />
+        </div>
     )
 }

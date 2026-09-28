@@ -29,4 +29,11 @@ export default defineConfig([
       'react/no-unescaped-entities': 'off',
     },
   },
+  {
+    // Vercel serverless functions run on Node, not in the browser.
+    files: ['api/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])
