@@ -9,43 +9,49 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
 
+    // Salvadoran numbers: 8 digits, shown as ####-####.
+    const formatPhone = (value) => {
+        const digits = value.replace(/\D/g, '').slice(0, 8)
+        return digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
+        const first = firstName.trim()
+        const last = lastName.trim()
+        if (!first || !last) {
+            setErrorMsg('Please enter your first and last name.')
+            return
+        }
+        if (phone && !/^\d{4}-\d{4}$/.test(phone)) {
+            setErrorMsg('Enter an 8-digit phone number, like 7123-4567.')
+            return
+        }
+
         setSaving(true)
         setErrorMsg('')
 
         const { error: authError } = await supabase.auth.updateUser({
-            data: { first_name: firstName, last_name: lastName, phone },
+            data: { first_name: first, last_name: last, phone },
         })
 
         if (authError) {
             setSaving(false)
-            setErrorMsg(authError.message)
+            setErrorMsg('We could not save your changes. Check your connection and try again.')
             return
         }
 
-                        if (meta.dui) {
+        if (meta.dui) {
             const { data: dbData, error: dbError } = await supabase
                 .from('users')
-                .update({ first_name: firstName, last_name: lastName, phone_number: phone })
+                .update({ first_name: first, last_name: last, phone_number: phone })
                 .eq('dui', meta.dui)
                 .select()
 
-            if (dbError) {
+            if (dbError || !dbData || dbData.length === 0) {
+                console.error('Profile: users row not updated', dbError)
                 setSaving(false)
-                setErrorMsg(
-                    'Your profile was updated, but syncing to the database failed: ' + dbError.message
-                )
-                return
-            }
-
-            if (!dbData || dbData.length === 0) {
-                setSaving(false)
-                setErrorMsg(
-                    `No matching row was found in the users table for dui "${meta.dui}". ` +
-                        'This is usually caused by a Row Level Security policy blocking the update, ' +
-                        'or the dui not matching exactly.'
-                )
+                setErrorMsg('Your changes were only partly saved. Please try again in a moment.')
                 return
             }
         }
@@ -65,7 +71,9 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                 <div className="ns-modal-body">
                     <h2 className="ns-modal-form-title">Edit profile</h2>
                     <p className="ns-modal-form-subtitle">
-                        Update your basic account information. Your email and DUI can't be changed here.
+                        {meta.account_type === 'property-owner'
+                            ? 'Businesses see your name on your listings and leases.'
+                            : 'Owners see your name and phone when you apply for a space or sign a lease.'}
                     </p>
 
                     {errorMsg && (
@@ -74,7 +82,17 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit} noValidate>
+                        <div className="ns-edit-fixed">
+                            <span>
+                                <i className="bi bi-envelope"></i> {user.email}
+                            </span>
+                            <span>
+                                <i className="bi bi-person-vcard"></i> DUI {meta.dui || '—'}
+                            </span>
+                            <small>Email and DUI can't be changed.</small>
+                        </div>
+
                         <div className="row g-2">
                             <div className="col-6">
                                 <div className="ns-mb-field">
@@ -107,8 +125,9 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                             <div className="ns-input-group input-group">
                                 <span className="input-group-text"><i className="bi bi-phone"></i></span>
                                 <input
-                                    id="editPhone" type="text" className="form-control"
-                                    value={phone} onChange={(e) => setPhone(e.target.value)}
+                                    id="editPhone" type="tel" inputMode="numeric" className="form-control"
+                                    placeholder="7123-4567"
+                                    value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))}
                                 />
                             </div>
                         </div>

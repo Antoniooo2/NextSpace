@@ -156,6 +156,7 @@ export default function Dashboard() {
                         accountType={accountType}
                         onNavigate={handleSectionChange}
                         onUserUpdated={loadUser}
+                        onLogout={handleLogout}
                         onViewProperty={accountType === 'property-owner' ? undefined : openProperty('profile')}
                     />
                 )
