@@ -1414,9 +1414,39 @@
   .ns-section-nav { top: 64px; }
 }
 
-/* Business: the pay card leads, the lease info sits beside it. */
-.ns-pay-top-grid-v3 {
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+/* Business: the pay card leads, the lease info sits beside it (wide
+   screens only; below 900px the two cards stack). */
+@media (min-width: 901px) {
+  .ns-pay-top-grid-v3 {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .ns-pay-top-grid-v3 { gap: 14px; }
+}
+
+/* Phone: give the pay card and the lease card room to breathe. */
+@media (max-width: 575px) {
+  .ns-pay-top-grid-v3 .ns-due-hero { gap: 14px; }
+  .ns-pay-top-grid-v3 .ns-pay-due-amount { font-size: 26px; }
+
+  .ns-pay-top-grid-v3 .ns-pay-lease-head {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 10px;
+    align-items: start;
+  }
+  .ns-pay-top-grid-v3 .ns-pay-lease-thumb { width: 52px; height: 52px; }
+  .ns-pay-top-grid-v3 .ns-pay-rent {
+    grid-column: 1 / -1;
+    padding-top: 10px;
+    border-top: 1px dashed var(--ns-border);
+  }
+  .ns-pay-top-grid-v3 .ns-pay-lease-meta { line-height: 1.5; }
+  .ns-pay-top-grid-v3 .ns-pay-progress-labels { flex-direction: column; gap: 2px; }
+  .ns-pay-top-grid-v3 .ns-pay-lease-footer { gap: 10px; }
 }
 
 /* Breadcrumb on detail pages */
