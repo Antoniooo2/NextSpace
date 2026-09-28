@@ -3,6 +3,7 @@
 // an RPC that checks who is calling and whether the step is allowed.
 import { supabase } from './supabaseClient'
 import { daysUntil, formatDueDate, todayInElSalvador } from './rentSchedule'
+import { money } from './money'
 
 export const CONTRACT_STATUS_META = {
     Pending: { label: 'Requested', tone: 'info', icon: 'bi-inbox' },
@@ -14,9 +15,6 @@ export const CONTRACT_STATUS_META = {
     Cancelled: { label: 'Cancelled', tone: 'neutral', icon: 'bi-slash-circle' },
 }
 
-export const OPEN_STATUSES = ['Pending', 'Offered']
-export const CLOSED_STATUSES = ['Declined', 'Withdrawn', 'Expired', 'Cancelled']
-
 export function statusMeta(contract) {
     if (contract.status === 'Expired' && contract.end_reason === 'terminated') {
         return { label: 'Ended early', tone: 'neutral', icon: 'bi-flag' }
@@ -24,9 +22,7 @@ export function statusMeta(contract) {
     return CONTRACT_STATUS_META[contract.status] || { label: contract.status, tone: 'neutral', icon: 'bi-file-earmark' }
 }
 
-export function money(value) {
-    return `$${Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
-}
+export { money }
 
 export function personName(person) {
     return [person?.first_name, person?.last_name].filter(Boolean).join(' ') || '—'

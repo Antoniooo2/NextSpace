@@ -54,7 +54,27 @@ export default function Dashboard() {
             navigate('/')
             return
         }
-        setUser(data.user)
+        // The users row decides the account type and name: it can't be edited
+        // from the browser, unlike the account metadata.
+        const { data: row } = await supabase
+            .from('users')
+            .select('dui, first_name, last_name, account_type')
+            .eq('id_supabase_auth', data.user.id)
+            .maybeSingle()
+        setUser(
+            row
+                ? {
+                      ...data.user,
+                      user_metadata: {
+                          ...data.user.user_metadata,
+                          dui: row.dui ?? data.user.user_metadata?.dui,
+                          first_name: row.first_name ?? data.user.user_metadata?.first_name,
+                          last_name: row.last_name ?? data.user.user_metadata?.last_name,
+                          account_type: row.account_type ?? data.user.user_metadata?.account_type,
+                      },
+                  }
+                : data.user
+        )
         setLoading(false)
     }, [navigate])
 

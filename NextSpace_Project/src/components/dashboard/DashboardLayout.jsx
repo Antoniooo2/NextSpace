@@ -112,15 +112,25 @@ export default function DashboardLayout({
 
             <div className="ns-dash-main">
                 <header className="ns-dash-topbar">
-                    <div className="ns-dash-search">
-                        <i className="bi bi-search"></i>
-                        <input
-                            type="text"
-                            placeholder="Search properties, locations, or clients..."
-                            value={search}
-                            onChange={(e) => onSearchChange(e.target.value)}
-                        />
-                    </div>
+                    {/* The search filters the Marketplace / My Properties, so it
+                        only shows there. */}
+                    {section === 'home' ? (
+                        <div className="ns-dash-search">
+                            <i className="bi bi-search"></i>
+                            <input
+                                type="text"
+                                placeholder={
+                                    accountType === 'property-owner'
+                                        ? 'Search your properties...'
+                                        : 'Search spaces by name, type or location...'
+                                }
+                                value={search}
+                                onChange={(e) => onSearchChange(e.target.value)}
+                            />
+                        </div>
+                    ) : (
+                        <div className="ns-dash-search-spacer" />
+                    )}
                     <div className="ns-dash-topbar-actions">
                         <NotificationBell
                             unreadCount={unreadCount}

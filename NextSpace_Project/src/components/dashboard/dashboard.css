@@ -475,17 +475,6 @@
   display: block;
 }
 
-.ns-prop-media-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ns-blue-accent);
-  font-size: 28px;
-  background: var(--ns-periwinkle);
-}
-
 .ns-prop-price {
   position: absolute;
   top: 10px;
@@ -524,10 +513,6 @@
 
 .ns-prop-availability.occupied {
   background: #d64545;
-}
-
-.ns-prop-availability.reserved {
-  background: #c98a1f;
 }
 
 .ns-prop-body {
@@ -595,12 +580,6 @@
 .ns-prop-btn:hover {
   background: var(--ns-navy);
   color: #fff;
-}
-
-.ns-prop-btn-icon {
-  flex: 0 0 auto;
-  width: 36px;
-  padding: 8px 0;
 }
 
 /* Load more */
@@ -673,17 +652,6 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.ns-stat-card-value {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--ns-navy);
-}
-
-.ns-stat-card-label {
-  font-size: 12.5px;
-  color: var(--ns-text-muted);
 }
 
 .ns-link-btn {
@@ -780,11 +748,6 @@
   margin: 0 auto 16px;
 }
 
-.ns-confirm-icon-neutral {
-  background: var(--ns-blue-bg);
-  color: var(--ns-blue-accent);
-}
-
 .ns-confirm-title {
   font-size: 16px;
   font-weight: 700;
@@ -873,17 +836,6 @@
   display: block;
 }
 
-.ns-detail-hero-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 44px;
-  color: var(--ns-blue-accent);
-  background: linear-gradient(135deg, #edf4ff 0%, #dfeafe 100%);
-}
-
 .ns-detail-hero .ns-prop-availability {
   top: 16px;
   left: 16px;
@@ -891,33 +843,11 @@
   padding: 6px 12px;
 }
 
-.ns-detail-hero-overlay {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 40px 24px 18px;
-  background: linear-gradient(to top, rgba(6, 12, 30, 0.82), rgba(6, 12, 30, 0));
-}
-
-.ns-detail-hero-overlay h1 {
-  color: #fff;
-  font-size: 23px;
-  font-weight: 700;
-  margin: 0;
-}
-
 .ns-detail-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 32px;
   align-items: start;
-}
-
-.ns-detail-side-col {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
 }
 
 .ns-detail-subrow {
@@ -973,29 +903,6 @@
   margin: 0;
 }
 
-.ns-detail-info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 14px;
-}
-
-.ns-detail-info-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--ns-blue-bg);
-  border-radius: 10px;
-  padding: 12px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ns-navy);
-}
-
-.ns-detail-info-item i {
-  color: var(--ns-blue-accent);
-  font-size: 16px;
-}
-
 .ns-detail-owner {
   display: flex;
   align-items: center;
@@ -1016,134 +923,11 @@
   flex-shrink: 0;
 }
 
-.ns-detail-owner-name {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #1a1f2b;
-}
-
-.ns-detail-owner-label {
-  font-size: 12px;
-  color: var(--ns-text-muted);
-}
-
-.ns-detail-owner-label a {
-  color: var(--ns-blue-accent);
-  text-decoration: none;
-}
-
 .ns-detail-side {
   background: #fff;
   border: 1px solid var(--ns-border);
   border-radius: 14px;
   padding: 20px;
-}
-
-.ns-detail-side-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ns-navy);
-  margin: 0 0 14px;
-}
-
-.ns-detail-summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 13px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--ns-border);
-}
-
-.ns-detail-summary-row span {
-  color: var(--ns-text-muted);
-}
-
-.ns-detail-summary-row strong {
-  color: #1a1f2b;
-}
-
-.ns-detail-protect-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: var(--ns-blue-bg);
-  color: #4a5265;
-  font-size: 12px;
-  line-height: 1.5;
-  padding: 12px;
-  border-radius: 10px;
-  margin: 14px 0 0;
-}
-
-.ns-detail-actions-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--ns-border);
-}
-
-.ns-detail-action-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: none;
-  color: #4a5265;
-  font-size: 12.5px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 4px 6px;
-}
-
-.ns-detail-action-link:hover {
-  color: var(--ns-navy);
-}
-
-.ns-detail-action-link.active {
-  color: #e5484d;
-}
-
-.ns-detail-ai-panel {
-  background: linear-gradient(160deg, var(--ns-navy) 0%, var(--ns-blue-accent) 140%);
-  border-radius: 14px;
-  padding: 20px;
-  color: #fff;
-}
-
-.ns-detail-ai-panel h4 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  margin: 0 0 8px;
-}
-
-.ns-detail-ai-panel p {
-  font-size: 12.5px;
-  color: rgba(255, 255, 255, 0.85);
-  line-height: 1.6;
-  margin: 0 0 14px;
-}
-
-.ns-detail-ai-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #fff;
-  color: var(--ns-navy);
-  border: none;
-  border-radius: 10px;
-  padding: 11px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
 }
 
 @media (max-width: 800px) {
@@ -1219,55 +1003,6 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-}
-
-.ns-pay-lease-media {
-  position: relative;
-  aspect-ratio: 16 / 8;
-  background: var(--ns-blue-bg);
-}
-
-.ns-pay-lease-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.ns-pay-status-badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background: var(--ns-navy);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  border-radius: 7px;
-}
-
-.ns-pay-lease-body {
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  flex: 1;
-}
-
-.ns-pay-lease-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.ns-pay-lease-top h2 {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--ns-navy);
-  margin: 0 0 4px;
 }
 
 .ns-pay-lease-meta {
@@ -1405,25 +1140,6 @@
 }
 
 /* Payment detail modal + clickable schedule/history */
-button.ns-pay-schedule-chip {
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-
-button.ns-pay-schedule-chip:hover {
-  border-color: var(--ns-blue-accent);
-  transform: translateY(-1px);
-}
-
-.ns-pay-row-clickable {
-  cursor: pointer;
-}
-
-.ns-pay-row-clickable:hover td {
-  background: #f7f9fc;
-}
 
 .ns-pay-detail-head {
   display: flex;
@@ -1471,9 +1187,6 @@ button.ns-pay-schedule-chip:hover {
 }
 
 /* Owner payments: collections chart, tenants table, history filters */
-.ns-stat-card-alert .ns-stat-card-value {
-  color: #c9292f;
-}
 
 .ns-collect-card {
   background: #fff;
@@ -1481,26 +1194,6 @@ button.ns-pay-schedule-chip:hover {
   border-radius: 14px;
   padding: 18px 20px;
   margin-bottom: 28px;
-}
-
-.ns-collect-card-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.ns-collect-card-head h3 {
-  font-size: 15px;
-  font-weight: 700;
-  margin: 0;
-  color: #1a1f2b;
-}
-
-.ns-collect-card-head span {
-  font-size: 12.5px;
-  color: var(--ns-text-muted);
 }
 
 .ns-collect-legend {
@@ -1595,41 +1288,11 @@ button.ns-pay-schedule-chip:hover {
   font-size: 11.5px;
 }
 
-.ns-owner-tenant-cell,
-.ns-owner-status-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.ns-owner-status-cell {
-  align-items: flex-start;
-  font-size: 12px;
-}
-
-.ns-owner-tenant-cell span {
-  font-size: 12.5px;
-  color: var(--ns-text-muted);
-}
-
-.ns-owner-owed-late {
-  color: #c9292f;
-}
-
 .ns-owner-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.ns-owner-history-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
 }
 
 /* Compact lease card: a thumbnail instead of a full-width placeholder banner */
@@ -1758,24 +1421,6 @@ button.ns-pay-schedule-chip:hover {
   margin: 0 0 14px;
 }
 
-.ns-pay-schedule-amount {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1a1f2b;
-}
-
-.ns-pay-schedule-chip.status-scheduled {
-  opacity: 0.7;
-}
-
-.ns-pay-schedule-chip.status-paid {
-  background: #f6fbf8;
-}
-
-.ns-pay-schedule-chip.is-next {
-  box-shadow: 0 0 0 3px rgba(15, 42, 82, 0.12);
-}
-
 .ns-pay-tag.tag-scheduled {
   background: #eef0f3;
   color: #5b6474;
@@ -1789,16 +1434,6 @@ button.ns-pay-schedule-chip:hover {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.ns-pay-due-warning {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #b8860b;
-  margin: 0;
 }
 
 .ns-pay-due-desc {
@@ -1818,72 +1453,6 @@ button.ns-pay-schedule-chip:hover {
   width: 100%;
   justify-content: center;
   margin-bottom: 8px;
-}
-
-.ns-pay-section-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ns-navy);
-  margin: 0 0 14px;
-}
-
-.ns-pay-schedule-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 14px;
-  margin-bottom: 28px;
-}
-
-.ns-pay-schedule-chip {
-  background: #fff;
-  border: 1px solid var(--ns-border);
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.ns-pay-schedule-chip.status-pending {
-  border-color: var(--ns-navy);
-  border-width: 1.5px;
-}
-
-.ns-pay-schedule-chip.status-upcoming {
-  opacity: 0.6;
-}
-
-.ns-pay-schedule-chip.status-late {
-  border-color: #e5484d;
-  border-width: 1.5px;
-}
-
-.ns-pay-schedule-chip.status-cancelled {
-  opacity: 0.6;
-}
-
-.ns-pay-schedule-date {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.ns-pay-schedule-date span {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--ns-text-muted);
-  letter-spacing: 0.04em;
-}
-
-.ns-pay-schedule-date strong {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1a1f2b;
-}
-
-.ns-pay-schedule-ref {
-  font-size: 11px;
-  color: var(--ns-text-muted);
 }
 
 .ns-pay-tag {
@@ -1921,14 +1490,6 @@ button.ns-pay-schedule-chip:hover {
 .ns-pay-tag.tag-expired {
   background: #eef0f3;
   color: #5b6474;
-}
-
-.ns-pay-table-wrap {
-  background: #fff;
-  border: 1px solid var(--ns-border);
-  border-radius: 14px;
-  overflow: hidden;
-  margin-bottom: 28px;
 }
 
 .ns-pay-table {
@@ -1980,93 +1541,6 @@ button.ns-pay-schedule-chip:hover {
   border-color: var(--ns-blue-accent);
 }
 
-.ns-pay-lease-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 28px;
-}
-
-.ns-pay-lease-row {
-  background: #fff;
-  border: 1px solid var(--ns-border);
-  border-radius: 12px;
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.ns-pay-lease-row-img {
-  width: 46px;
-  height: 46px;
-  border-radius: 9px;
-  overflow: hidden;
-  background: var(--ns-blue-bg);
-  color: var(--ns-blue-accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.ns-pay-lease-row-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.ns-pay-lease-row-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 160px;
-  flex: 1;
-}
-
-.ns-pay-lease-row-title {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #1a1f2b;
-}
-
-.ns-pay-lease-row-tenant {
-  font-size: 12px;
-  color: var(--ns-text-muted);
-}
-
-.ns-pay-lease-row-rent {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ns-navy);
-  white-space: nowrap;
-}
-
-.ns-pay-lease-row-rent small {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--ns-text-muted);
-}
-
-.ns-pay-lease-row-due {
-  font-size: 12px;
-  color: var(--ns-text-muted);
-  white-space: nowrap;
-}
-
-.ns-pay-reminder-btn {
-  padding: 7px 14px;
-  font-size: 12px;
-}
-
-.ns-pay-lease-row select.ns-contract-status-select {
-  width: auto;
-  flex: 0 0 auto;
-}
-
 .ns-pay-simulation-note {
   font-size: 11.5px;
   color: var(--ns-text-muted);
@@ -2107,22 +1581,6 @@ button.ns-pay-schedule-chip:hover {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.ns-photo-dropzone-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  color: var(--ns-blue-accent);
-  font-size: 12.5px;
-  font-weight: 600;
-  text-align: center;
-  padding: 0 8px;
-}
-
-.ns-photo-dropzone-empty i {
-  font-size: 22px;
 }
 
 .ns-photo-error {
@@ -2186,13 +1644,6 @@ button.ns-pay-schedule-chip:hover {
   gap: 3px;
 }
 
-.ns-notif-title-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .ns-notif-title {
   font-size: 13.5px;
   font-weight: 700;
@@ -2235,13 +1686,6 @@ button.ns-pay-schedule-chip:hover {
   position: relative;
 }
 
-.ns-dash-icon-btn-dot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #e5484d;
-  border: 1.5px solid #fff;
+.ns-dash-search-spacer {
+  flex: 1;
 }

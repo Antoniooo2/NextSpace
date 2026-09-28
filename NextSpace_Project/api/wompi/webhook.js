@@ -70,7 +70,7 @@ export default async function handler(req, res) {
         .from('payment')
         .update({
             status: 'Paid',
-            payment_method: 'Credit Card',
+            payment_method: 'Wompi',
             paid_at: new Date().toISOString(),
             wompi_transaction_id: payload.IdTransaccion || null,
             wompi_link_id: payload?.EnlacePago?.Id ?? null,

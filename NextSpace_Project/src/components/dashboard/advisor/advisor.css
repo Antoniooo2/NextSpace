@@ -107,12 +107,6 @@
   color: var(--ns-text-muted);
 }
 
-.advisor-bubble-form {
-  width: 440px;
-  max-width: 100%;
-  padding: 16px;
-}
-
 .advisor-typing {
   display: flex;
   align-items: center;

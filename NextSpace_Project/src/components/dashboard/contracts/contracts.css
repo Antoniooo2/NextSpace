@@ -570,11 +570,6 @@
 .ns-contract-kpis > div.is-warn { border-color: #f3d9a6; }
 .ns-contract-kpis > div.is-warn strong { color: #a86400; }
 
-.ns-contract-kpi-sub {
-  font-size: 11.5px;
-  color: var(--ns-text-muted);
-}
-
 .ns-contract-kpis:has(> div:nth-child(5)) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
 .ns-record-chip {

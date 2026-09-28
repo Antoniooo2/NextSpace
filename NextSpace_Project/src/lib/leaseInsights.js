@@ -2,10 +2,9 @@
 // (one payment row per month; payment_date = due date). Shared by the owner
 // and tenant Payments screens so both sides always see the same figures.
 import { daysUntil, effectiveStatus, isPayable, todayInElSalvador } from './rentSchedule'
+import { money } from './money'
 
-export function money(value) {
-    return `$${Number(value || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
-}
+export { money }
 
 // Calendar date (YYYY-MM-DD) in El Salvador of a timestamptz string.
 export function svDateOf(timestamp) {

@@ -1,10 +1,7 @@
 import { useState } from 'react'
 import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_TAG, dueCountdown, formatDueDate, isPayable } from '../../lib/rentSchedule'
 import { downloadReceiptPdf, receiptNumber } from '../../lib/paymentDocuments'
-
-function money(value) {
-    return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
+import { moneyExact as money } from '../../lib/money'
 
 export default function PaymentDetailModal({
     payment,

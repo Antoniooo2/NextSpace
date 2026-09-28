@@ -1,13 +1,10 @@
 import { formatDueDate } from './rentSchedule'
+import { moneyExact as money } from './money'
 
 const NAVY = [15, 42, 82]
 const MUTED = [110, 120, 138]
 const TEXT = [26, 31, 43]
 const GREEN = [26, 138, 74]
-
-function money(value) {
-    return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
 
 function paidOn(payment) {
     if (!payment.paid_at) return '—'

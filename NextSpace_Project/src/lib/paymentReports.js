@@ -4,6 +4,7 @@
 import { PAYMENT_STATUS_LABEL, formatDueDate, todayInElSalvador } from './rentSchedule'
 import { daysLate, leaseStats, monthKeyShift, monthLabel, riskLevel, svDateOf, tenantName } from './leaseInsights'
 import { receiptNumber } from './paymentDocuments'
+import { moneyExact as usd } from './money'
 
 const NAVY = [15, 42, 82]
 const MUTED = [110, 120, 138]
@@ -15,10 +16,6 @@ const GREEN = [26, 138, 74]
 // Same ordinal blue pair as the on-screen collections chart.
 const EXPECTED = [134, 182, 239]
 const COLLECTED = [28, 92, 171]
-
-function usd(value) {
-    return `$${Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
 
 function fullName(person) {
     return [person?.first_name, person?.last_name].filter(Boolean).join(' ') || '—'

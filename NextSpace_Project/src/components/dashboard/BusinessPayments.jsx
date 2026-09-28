@@ -32,12 +32,9 @@ import { renewalOpen, renewalState } from '../../lib/contracts'
 import RonyInsightCard from './payments/RonyInsightCard'
 import { PageGroup, SectionNav } from './common/PageSections'
 import './payments/payments.css'
+import { money } from '../../lib/money'
 
 const CONTRACT_EMBED = `*, add_business!contract_property_id_fkey(property_name, owner_id, ${PROPERTY_PHOTO_EMBED}, users!add_business_owner_id_fkey(first_name,last_name))`
-
-function money(value) {
-    return `$${Number(value).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
-}
 
 // Which lease to open first when there are several: the one that owes the
 // oldest late month, then the one with the soonest due month, then the first.

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { money } from '../../lib/money'
 
 // Two-series ordinal pair from one blue ramp (validated with the dataviz
 // palette validator, --ordinal): light = expected, dark = collected.
@@ -11,10 +12,6 @@ const PAD = { top: 12, right: 8, bottom: 28, left: 52 }
 function compactMoney(value) {
     if (value >= 1000) return `$${Number((value / 1000).toFixed(2))}k`
     return `$${Math.round(value)}`
-}
-
-function money(value) {
-    return `$${Number(value).toLocaleString('en-US', { maximumFractionDigits: 2 })}`
 }
 
 // Round gridline step (1, 2 or 5 x 10^n) giving about four gridlines, so

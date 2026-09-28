@@ -34,6 +34,10 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
         e.preventDefault()
         setErrorMsg('')
         setSuccessMsg('')
+        if (!/^\d{8}-\d$/.test(dui)) {
+            setErrorMsg('Enter your DUI as 8 digits, a dash and 1 digit (00000000-0).')
+            return
+        }
         setLoading(true)
 
         const { error } = await supabase.auth.signUp({
@@ -52,7 +56,13 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
         setLoading(false)
 
         if (error) {
-            setErrorMsg(error.message)
+            // A DUI already registered (or rejected by the database) comes
+            // back as a generic database error.
+            setErrorMsg(
+                /database error/i.test(error.message)
+                    ? 'We could not create the account. Check your DUI, or sign in if you already have an account.'
+                    : error.message
+            )
             return
         }
 
@@ -129,7 +139,13 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                         <span className="input-group-text"><i className="bi bi-person-badge"></i></span>
                         <input
                             id="dui" type="text" className="form-control" placeholder="00000000-0"
-                            value={dui} onChange={(e) => setDui(e.target.value)}
+                            value={dui}
+                            onChange={(e) => {
+                                // Digits only, dash added before the last one: 00000000-0.
+                                const digits = e.target.value.replace(/\D/g, '').slice(0, 9)
+                                setDui(digits.length > 8 ? `${digits.slice(0, 8)}-${digits.slice(8)}` : digits)
+                            }}
+                            inputMode="numeric"
                             onFocus={() => setFocusedField('dui')} onBlur={() => setFocusedField(null)}
                         />
                     </div>

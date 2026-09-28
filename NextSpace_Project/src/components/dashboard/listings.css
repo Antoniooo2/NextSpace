@@ -375,10 +375,6 @@
 }
 
 .ns-owner-panel { margin-bottom: 16px; }
-.ns-owner-panel-line { font-size: 13.5px; color: #2b3240; margin: 12px 0; }
-.ns-owner-panel-actions { display: flex; flex-direction: column; gap: 8px; }
-.ns-owner-panel-actions button { justify-content: center; }
-.ns-owner-panel-note { font-size: 12px; color: var(--ns-text-muted); margin: 14px 0 0; }
 
 .ns-similar { margin-top: 36px; }
 .ns-similar h2 { font-size: 17px; font-weight: 700; color: var(--ns-navy); margin: 0 0 14px; }
@@ -407,9 +403,6 @@
 .ns-own-kpis strong { font-size: 22px; color: var(--ns-navy); }
 .ns-own-kpis strong span { font-size: 14px; color: var(--ns-text-muted); font-weight: 600; }
 .ns-own-kpis em { font-style: normal; font-size: 11.5px; color: var(--ns-text-muted); }
-
-.ns-own-kpi-bar { height: 6px; background: #eef0f4; border-radius: 999px; overflow: hidden; margin: 4px 0 2px; }
-.ns-own-kpi-bar div { height: 100%; background: var(--ns-navy); border-radius: 999px; }
 
 .ns-own-kpis button { cursor: pointer; }
 .ns-own-kpis button:disabled { cursor: default; }
@@ -552,16 +545,6 @@ button.ns-own-status:hover { filter: brightness(0.97); }
 .ns-own-quality-track div { height: 100%; background: #f0a630; border-radius: 999px; }
 .ns-own-quality-track div.is-good { background: #16a34a; }
 .ns-own-quality-track div.is-bad { background: #dc2626; }
-
-.ns-own-quality-tip {
-  border: none;
-  background: none;
-  padding: 4px 0 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ns-blue-accent);
-  cursor: pointer;
-}
 
 .ns-own-actions {
   display: flex;
@@ -929,15 +912,6 @@ button.ns-own-status:hover { filter: brightness(0.97); }
   color: var(--ns-blue-accent);
   cursor: pointer;
 }
-
-.ns-detail-price-insight {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 0 4px;
-}
-
-.ns-detail-price-insight small { font-size: 12px; color: var(--ns-text-muted); }
 
 @media (max-width: 575px) {
   .ns-cmp-tray { bottom: 8px; }
