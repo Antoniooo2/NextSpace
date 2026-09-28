@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabaseClient'
-import RonyAvatar from '../../RonyAvatar'
 import AdvisorForm from './AdvisorForm'
+import { AdvisorComposer, AdvisorHome, AdvisorTopBar, RonyTyping } from './AdvisorChrome'
 import BusinessChart from './BusinessChart'
+import { blocksFrom, clearHistory, linkHandler, persistableBlocks, revealReply } from './chatBlocks'
 import CompareTable from './CompareTable'
 import FilterPill from './FilterPill'
 import PropertyResultCard from './PropertyResultCard'
-import SuggestedChips from './SuggestedChips'
-
-const WELCOME_TEXT =
-    'Hi, I can help you find a commercial space from the listings on NextSpace.'
+import RonyReply from './RonyReply'
+import { BUSINESS_TOPICS, useAdvisorLiveCards } from './useAdvisorContext'
 
 // Shown in the side panel over Payments, where questions are about rent.
 const COMPACT_WELCOME_TEXT =
-    'Hi, ask me about your rent, your leases or your payments — or about finding another space.'
+    'Hi, ask me about your **rent**, your **leases** or your payments — or about finding another space.'
+const COMPACT_STARTERS = ['When is my next payment due?', 'Am I late on anything?', 'When does my lease end?']
 
 const RELAXED_LABELS = {
     required_services: 'dropped the required services',
@@ -48,6 +48,13 @@ function computeChips(lastTurn) {
     return ['Something cheaper', 'What should I check before signing?']
 }
 
+// A rent answer always offers a way to Payments, even when the model didn't
+// add the button itself (and for answers saved before buttons existed).
+function linksWithPayments(links = [], paymentsLink) {
+    if (!paymentsLink || links.some((l) => l.target === 'payments')) return links
+    return [{ label: 'Open Payments', target: 'payments', contractId: paymentsLink.contractId ?? null }, ...links].slice(0, 2)
+}
+
 function buildResultsBlock(payload) {
     return {
         type: 'results',
@@ -58,7 +65,7 @@ function buildResultsBlock(payload) {
     }
 }
 
-export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSeedConsumed, compact = false }) {
+export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate, seed, onSeedConsumed, compact = false }) {
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
@@ -67,12 +74,13 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
     const [relaxed, setRelaxed] = useState([])
     const [messages, setMessages] = useState([])
     const [chatLog, setChatLog] = useState([])
-    const [chips, setChips] = useState([])
     const [input, setInput] = useState('')
     const [pendingAttachment, setPendingAttachment] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const [searchFormOpen, setSearchFormOpen] = useState(false)
     const scrollRef = useRef(null)
+    const liveCards = useAdvisorLiveCards('business', !compact)
     // React does not run a setState updater synchronously, so anything computed
     // inside one (like the highlight-move logic below) is not readable right
     // after the call. This ref mirrors chatLog so sendTurn can build the next
@@ -150,8 +158,10 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
                 loadedChatLog.push({
                     type: 'assistant',
                     text: row.content,
+                    at: row.created_at,
                     relaxed: payload.isSearchTurn ? payload.relaxed || [] : [],
-                    paymentsLink: payload.paymentsLink || null,
+                    ...blocksFrom(payload),
+                    links: linksWithPayments(payload.links, payload.paymentsLink),
                 })
                 if (payload.isSearchTurn) {
                     loadedChatLog.push(buildResultsBlock(payload))
@@ -168,7 +178,7 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
             setFilter(lastFilter)
             setResults(lastResults)
             setRelaxed(lastRelaxed)
-            setFormOpen(lastFilter === null)
+            setFormOpen(false)
             setHistoryLoaded(true)
         }
 
@@ -256,13 +266,25 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
             const paymentsLink =
                 result.intent === 'account' && result.hasActiveLease ? { contractId: result.contractId ?? null } : null
 
+            const blocks = blocksFrom(
+                result,
+                computeChips({
+                    intent: result.intent,
+                    resultsCount: (result.results || []).length,
+                    relaxedCount: (result.relaxed || []).length,
+                })
+            )
+            blocks.links = linksWithPayments(blocks.links, paymentsLink)
+
             let next = [
                 ...chatLogRef.current,
                 {
                     type: 'assistant',
                     text: result.reply,
+                    at: new Date().toISOString(),
+                    fresh: true,
                     relaxed: isSearch ? result.relaxed || [] : [],
-                    paymentsLink,
+                    ...blocks,
                 },
             ]
 
@@ -301,18 +323,11 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
                 results: finalResults,
                 highlight: finalHighlight,
                 chart: finalChart,
+                ...persistableBlocks(blocks),
             }
 
             chatLogRef.current = next
             setChatLog(next)
-
-            setChips(
-                computeChips({
-                    intent: result.intent,
-                    resultsCount: (result.results || []).length,
-                    relaxedCount: (result.relaxed || []).length,
-                })
-            )
 
             persistTurn(userId, userVisibleText, result.reply, persistPayload, attachment)
         } catch (err) {
@@ -342,8 +357,7 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [historyLoaded, seed])
 
-    const handleComposerSubmit = (e) => {
-        e.preventDefault()
+    const handleComposerSubmit = () => {
         const text = input.trim()
         if (!text) return
         setInput('')
@@ -361,10 +375,31 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
         })
     }
 
-    const handleChipPick = (text) => {
-        setChips([])
+    const ask = (text) => {
+        if (loading) return
         sendTurn({ userVisibleText: text })
     }
+
+    const handleNewChat = async () => {
+        const { error: deleteError } = await clearHistory()
+        if (deleteError) {
+            setError('Could not clear the conversation. Please try again.')
+            return
+        }
+        chatLogRef.current = []
+        setChatLog([])
+        setMessages([])
+        setFilter(null)
+        setResults([])
+        setRelaxed([])
+        setFormOpen(false)
+        setSearchFormOpen(false)
+        setError('')
+    }
+
+    const onLink = linkHandler(onNavigate)
+    const lastAssistant = chatLog.reduce((last, item, i) => (item.type === 'assistant' ? i : last), -1)
+    const isEmpty = chatLog.length === 0 && !loading
 
     if (!historyLoaded) {
         return (
@@ -375,157 +410,134 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
         )
     }
 
-    return (
-        <>
-            {!compact && (
-                <div className="advisor-header ns-dash-header">
-                    <div>
-                        <h1>AI Advisor</h1>
-                        <p>Chat with Rony about your next space.</p>
-                    </div>
+    const renderResults = (item) => {
+        if (!item || item.items.length === 0) return null
+        return (
+            <div className="rony-results">
+                <BusinessChart chart={item.chart} results={item.items} budgetMax={item.budgetMax} />
+                <CompareTable results={item.items} highlight={item.highlight} />
+                <div className="advisor-results-grid rony-carousel">
+                    {item.items.map((property) => (
+                        <PropertyResultCard
+                            key={property.property_id}
+                            property={property}
+                            isHighlighted={item.highlight.includes(property.property_id)}
+                            onView={onViewProperty ? () => onViewProperty(property) : undefined}
+                        />
+                    ))}
                 </div>
+            </div>
+        )
+    }
+
+    const searchForm = (
+        <AdvisorForm initialFilter={filter} servicesCatalog={servicesCatalog} onSubmit={handleFormSubmit} />
+    )
+
+    return (
+        <div className={`advisor-shell ${compact ? 'is-compact' : ''}`}>
+            {!compact && (
+                <AdvisorTopBar
+                    subtitle={filter ? 'Searching with your filters' : 'Knows the marketplace, your rent and your leases'}
+                    canReset={chatLog.length > 0}
+                    onNewChat={handleNewChat}
+                >
+                    {filter && !formOpen && (
+                        <FilterPill filter={filter} servicesCatalog={servicesCatalog} onEdit={() => setFormOpen(true)} />
+                    )}
+                </AdvisorTopBar>
             )}
 
-            <div className="advisor-shell">
-                {filter && !formOpen && (
-                    <FilterPill
-                        filter={filter}
-                        servicesCatalog={servicesCatalog}
-                        onEdit={() => setFormOpen(true)}
+            {filter && formOpen && <div className="advisor-edit-form">{searchForm}</div>}
+
+            <div className={`advisor-stream ${isEmpty && !compact ? 'is-home' : ''}`} ref={scrollRef}>
+                {isEmpty && !compact && (
+                    <AdvisorHome
+                        firstName={firstName}
+                        intro="I search the NextSpace marketplace for you and keep an eye on your rent and leases."
+                        liveCards={liveCards}
+                        topics={BUSINESS_TOPICS}
+                        onAsk={ask}
+                        extra={
+                            <div className="rony-home-form">
+                                {searchFormOpen ? (
+                                    searchForm
+                                ) : (
+                                    <button type="button" className="ns-link-btn" onClick={() => setSearchFormOpen(true)}>
+                                        <i className="bi bi-sliders"></i> Prefer filters? Search with a form
+                                    </button>
+                                )}
+                            </div>
+                        }
                     />
                 )}
 
-                {filter && formOpen && (
-                    <div className="advisor-edit-form">
-                        <AdvisorForm
-                            initialFilter={filter}
-                            servicesCatalog={servicesCatalog}
-                            onSubmit={handleFormSubmit}
-                        />
-                    </div>
+                {isEmpty && compact && (
+                    <RonyReply item={{ text: COMPACT_WELCOME_TEXT, followUps: COMPACT_STARTERS }} onFollowUp={ask} />
                 )}
 
-                <div className="advisor-stream" ref={scrollRef}>
-                    <div className="advisor-msg advisor-msg-assistant">
-                        <div className="advisor-avatar">
-                            <RonyAvatar size={30} />
-                        </div>
-                        <div className="advisor-bubble">
-                            <p>{compact ? COMPACT_WELCOME_TEXT : WELCOME_TEXT}</p>
-                        </div>
-                    </div>
-
-                    {!filter && formOpen && (
-                        <div className="advisor-msg advisor-msg-assistant">
-                            <div className="advisor-avatar">
-                                <RonyAvatar size={30} />
-                            </div>
-                            <div className="advisor-bubble advisor-bubble-form">
-                                <AdvisorForm
-                                    initialFilter={filter}
-                                    servicesCatalog={servicesCatalog}
-                                    onSubmit={handleFormSubmit}
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {chatLog.map((item, i) => {
-                        if (item.type === 'user') {
-                            return (
-                                <div key={i} className="advisor-msg advisor-msg-user">
-                                    <div className="advisor-user-avatar">You</div>
-                                    <div className="advisor-bubble">
-                                        {item.attachment && (
-                                            <div className="advisor-attachment-chip">
-                                                {item.attachment.photo_url ? (
-                                                    <img src={item.attachment.photo_url} alt={item.attachment.property_name} />
-                                                ) : (
-                                                    <i className="bi bi-shop"></i>
-                                                )}
-                                                <span>{item.attachment.property_name}</span>
-                                            </div>
-                                        )}
-                                        <p>{item.text}</p>
-                                    </div>
+                {chatLog.map((item, i) => {
+                    if (item.type === 'user') {
+                        return (
+                            <div key={i} className="advisor-msg advisor-msg-user">
+                                <div className="advisor-bubble">
+                                    {item.attachment && (
+                                        <div className="advisor-attachment-chip">
+                                            {item.attachment.photo_url ? (
+                                                <img src={item.attachment.photo_url} alt={item.attachment.property_name} />
+                                            ) : (
+                                                <i className="bi bi-shop"></i>
+                                            )}
+                                            <span>{item.attachment.property_name}</span>
+                                        </div>
+                                    )}
+                                    <p>{item.text}</p>
                                 </div>
-                            )
-                        }
-                        if (item.type === 'assistant') {
-                            return (
-                                <div key={i} className="advisor-msg advisor-msg-assistant">
-                                    <div className="advisor-avatar">
-                                        <RonyAvatar size={30} />
-                                    </div>
-                                    <div className="advisor-bubble">
-                                        <p>{item.text}</p>
-                                        {item.paymentsLink && onNavigate && (
-                                            <button
-                                                type="button"
-                                                className="advisor-inline-action"
-                                                onClick={() =>
-                                                    onNavigate('payments', { contractId: item.paymentsLink.contractId })
-                                                }
-                                            >
-                                                <i className="bi bi-credit-card"></i> Open Payments
-                                            </button>
-                                        )}
-                                        {item.relaxed?.length > 0 && (
-                                            <p className="advisor-relaxed-note">
-                                                <i className="bi bi-funnel"></i>{' '}
-                                                {item.relaxed.map((key) => RELAXED_LABELS[key] || key).join(', ')}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-                            )
-                        }
-                        if (item.type === 'results') {
-                            if (item.items.length === 0) return null
-                            return (
-                                <div key={i}>
-                                    <BusinessChart chart={item.chart} results={item.items} budgetMax={item.budgetMax} />
-                                    <CompareTable results={item.items} highlight={item.highlight} />
-                                    <div className="advisor-results-grid">
-                                        {item.items.map((property) => (
-                                            <PropertyResultCard
-                                                key={property.property_id}
-                                                property={property}
-                                                isHighlighted={item.highlight.includes(property.property_id)}
-                                                onView={onViewProperty ? () => onViewProperty(property) : undefined}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            )
-                        }
-                        return null
-                    })}
+                            </div>
+                        )
+                    }
+                    if (item.type === 'assistant') {
+                        const following = chatLog[i + 1]
+                        return (
+                            <RonyReply
+                                key={i}
+                                item={item}
+                                onLink={onLink}
+                                onFollowUp={ask}
+                                showFollowUps={i === lastAssistant && !loading}
+                                disabled={loading}
+                                onSettled={(el) => revealReply(scrollRef.current, el)}
+                            >
+                                {item.relaxed?.length > 0 && (
+                                    <p className="advisor-relaxed-note">
+                                        <i className="bi bi-funnel"></i> I{' '}
+                                        {item.relaxed.map((key) => RELAXED_LABELS[key] || key).join(', ')} to find more.
+                                    </p>
+                                )}
+                                {following?.type === 'results' && renderResults(following)}
+                            </RonyReply>
+                        )
+                    }
+                    return null
+                })}
 
-                    {loading && (
-                        <div className="advisor-msg advisor-msg-assistant">
-                            <div className="advisor-avatar">
-                                <RonyAvatar size={30} />
-                            </div>
-                            <div className="advisor-bubble advisor-typing">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-                    )}
+                {loading && <RonyTyping />}
+            </div>
+
+            {error && (
+                <div className="alert alert-danger py-2 mb-0" role="alert">
+                    {error}
                 </div>
+            )}
 
-                {error && (
-                    <div className="alert alert-danger py-2" role="alert">
-                        {error}
-                    </div>
-                )}
-
-                <SuggestedChips chips={chips} onPick={handleChipPick} disabled={loading} />
-
-                <form className="advisor-composer-wrap" onSubmit={handleComposerSubmit}>
-                    {pendingAttachment && (
+            <AdvisorComposer
+                value={input}
+                onChange={setInput}
+                onSubmit={handleComposerSubmit}
+                disabled={loading}
+                placeholder="Ask Rony anything, or say what to change..."
+                attachment={
+                    pendingAttachment && (
                         <div className="advisor-attachment-preview">
                             {pendingAttachment.photo_url ? (
                                 <img src={pendingAttachment.photo_url} alt={pendingAttachment.property_name} />
@@ -542,21 +554,9 @@ export default function BusinessAdvisor({ onViewProperty, onNavigate, seed, onSe
                                 <i className="bi bi-x-lg"></i>
                             </button>
                         </div>
-                    )}
-                    <div className="advisor-composer">
-                        <input
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            placeholder="Ask anything, or say what to change..."
-                            disabled={loading}
-                        />
-                        <button type="submit" className="advisor-composer-send" disabled={loading || !input.trim()}>
-                            <i className="bi bi-send"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </>
+                    )
+                }
+            />
+        </div>
     )
 }

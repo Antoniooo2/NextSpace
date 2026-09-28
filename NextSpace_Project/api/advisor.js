@@ -84,6 +84,109 @@ const OWNER_PORTFOLIO_EMBED = `property_id, business_id, property_name, property
 const OWNER_CONTRACT_EMBED = `contract_id, property_id, status, start_date, end_date, monthly_rent, tenant_dui,
     users!contract_tenant_dui_fkey(first_name, last_name)`
 
+// ---------------------------------------------------------------------------
+// Reply blocks: besides the text reply, every answer can carry a few
+// structured pieces the app renders visually (key figures, short points,
+// buttons to the right screen, next questions). Ids in links are checked
+// against the user's own data before they leave the server.
+// ---------------------------------------------------------------------------
+const REPLY_FORMAT_RULES = `How to shape each answer (the app turns these fields into visual blocks):
+- reply: the headline answer in one or two short sentences. Wrap the single
+  most important figure or name in **double asterisks**. Don't repeat in it
+  what the points below already say.
+- highlights: up to 3 key figures taken from the context data, e.g.
+  value "$1,600" label "owed now", value "Oct 27" label "next payment",
+  value "3 of 6" label "listings complete". Only numbers and dates that
+  appear in the context. tone: "bad" for late or overdue, "warn" for due
+  soon or needs attention, "good" for positive, "info" otherwise. Leave it
+  empty for general questions.
+- points: up to 4 short lines (under 15 words each) when there are several
+  facts, reasons or steps. Leave it empty when the reply already says it all.
+- links: up to 2 buttons to where the user can act on this, only with ids
+  that appear in the context: "payments" (optional contract_id), "contracts"
+  (optional contract_id), "property" (property_id required), and
+  "marketplace" or "my_properties". label is 2-4 words, e.g. "Open Payments".
+- follow_ups: 2 or 3 short questions the user is likely to ask next, written
+  in their voice, e.g. "How much is left this year?".`
+
+const BLOCK_TONES = ['good', 'warn', 'bad', 'info']
+
+function replyBlockProps(targets) {
+    return {
+        highlights: {
+            type: 'ARRAY',
+            items: {
+                type: 'OBJECT',
+                properties: {
+                    value: { type: 'STRING' },
+                    label: { type: 'STRING' },
+                    tone: { type: 'STRING', enum: BLOCK_TONES },
+                },
+                propertyOrdering: ['value', 'label', 'tone'],
+            },
+        },
+        points: {
+            type: 'ARRAY',
+            items: {
+                type: 'OBJECT',
+                properties: { text: { type: 'STRING' }, tone: { type: 'STRING', enum: BLOCK_TONES } },
+                propertyOrdering: ['text', 'tone'],
+            },
+        },
+        links: {
+            type: 'ARRAY',
+            items: {
+                type: 'OBJECT',
+                properties: {
+                    label: { type: 'STRING' },
+                    target: { type: 'STRING', enum: targets },
+                    contract_id: { type: 'INTEGER', nullable: true },
+                    property_id: { type: 'INTEGER', nullable: true },
+                },
+                propertyOrdering: ['label', 'target', 'contract_id', 'property_id'],
+            },
+        },
+        follow_ups: { type: 'ARRAY', items: { type: 'STRING' } },
+    }
+}
+
+const REPLY_BLOCK_ORDER = ['highlights', 'points', 'links', 'follow_ups']
+
+// Keeps only well-formed blocks, caps their size, and drops any link whose
+// contract or property id isn't this user's.
+function sanitizeBlocks(result, { contractIds = [], propertyIds = [], targets = [] }) {
+    const text = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
+    const tone = (t) => (BLOCK_TONES.includes(t) ? t : 'info')
+    const contracts = new Set(contractIds)
+    const props = new Set(propertyIds)
+
+    const highlights = (Array.isArray(result?.highlights) ? result.highlights : [])
+        .map((h) => ({ value: text(h?.value, 24), label: text(h?.label, 40), tone: tone(h?.tone) }))
+        .filter((h) => h.value && h.label)
+        .slice(0, 3)
+    const points = (Array.isArray(result?.points) ? result.points : [])
+        .map((pt) => ({ text: text(pt?.text, 160), tone: tone(pt?.tone) }))
+        .filter((pt) => pt.text)
+        .slice(0, 4)
+    const links = (Array.isArray(result?.links) ? result.links : [])
+        .map((l) => ({
+            label: text(l?.label, 32),
+            target: targets.includes(l?.target) ? l.target : null,
+            contractId: contracts.has(l?.contract_id) ? l.contract_id : null,
+            propertyId: props.has(l?.property_id) ? l.property_id : null,
+        }))
+        .filter((l) => l.label && l.target && (l.target !== 'property' || l.propertyId != null))
+        .slice(0, 2)
+    const followUps = (Array.isArray(result?.follow_ups) ? result.follow_ups : [])
+        .map((q) => text(q, 80))
+        .filter(Boolean)
+        .slice(0, 3)
+    return { highlights, points, links, followUps }
+}
+
+const BUSINESS_LINK_TARGETS = ['payments', 'contracts', 'property', 'marketplace']
+const OWNER_LINK_TARGETS = ['payments', 'contracts', 'property', 'my_properties']
+
 function businessSystemPrompt() {
     return `You are Rony, an assistant inside NextSpace, a commercial real estate rental
 marketplace in El Salvador. You help businesses find a commercial space to
@@ -131,7 +234,7 @@ After a search that returns two or more results, set chart to "budget_fit" so
 the user can see rent against their budget visually. Leave chart null for a
 single result, an explanation, or a general question.
 
-Keep replies short. Two or three sentences unless they ask for detail.
+${REPLY_FORMAT_RULES}
 Write in English.
 
 Valid property_type values, use these exact strings:
@@ -190,11 +293,11 @@ Your job each turn:
    with how much and how many days late. When comparing months or showing
    how collection is going, set chart to "expected_vs_collected". If a
    tenant is late, offer to draft a reminder (the Payments screen also has
-   Send reminder and Record payment buttons).
+   a Send reminder button).
 8. If they ask a general leasing question unrelated to their own data,
    answer from your own knowledge: intent "general".
 
-Keep replies short. Two or three sentences unless they ask for detail.
+${REPLY_FORMAT_RULES}
 Write in English.
 
 Respond only with JSON matching the given schema.`
@@ -225,8 +328,9 @@ const BUSINESS_RESPONSE_SCHEMA = {
         // business searching for space has no data for.
         chart: { type: 'STRING', nullable: true, enum: ['budget_fit'] },
         contract_id: { type: 'INTEGER', nullable: true },
+        ...replyBlockProps(BUSINESS_LINK_TARGETS),
     },
-    propertyOrdering: ['reply', 'intent', 'filter', 'missing', 'highlight', 'chart', 'contract_id'],
+    propertyOrdering: ['reply', 'intent', 'filter', 'missing', 'highlight', 'chart', 'contract_id', ...REPLY_BLOCK_ORDER],
 }
 
 const OWNER_RESPONSE_SCHEMA = {
@@ -255,6 +359,7 @@ const OWNER_RESPONSE_SCHEMA = {
             nullable: true,
             enum: ['occupancy', 'income_by_month', 'payment_status', 'expected_vs_collected', 'budget_fit'],
         },
+        ...replyBlockProps(OWNER_LINK_TARGETS),
     },
     propertyOrdering: [
         'reply',
@@ -264,6 +369,7 @@ const OWNER_RESPONSE_SCHEMA = {
         'highlight_property_id',
         'highlight_contract_id',
         'chart',
+        ...REPLY_BLOCK_ORDER,
     ],
 }
 
@@ -774,6 +880,11 @@ async function handleBusinessTurn(userClient, user, body, contents, res) {
                         ? call1.result.contract_id
                         : null,
                 hasActiveLease: rentSummary.length > 0,
+                ...sanitizeBlocks(call1.result, {
+                    contractIds: myContracts.map((c) => c.contract_id),
+                    propertyIds: priorResults.map((r) => r.property_id),
+                    targets: BUSINESS_LINK_TARGETS,
+                }),
             })
             return
         }
@@ -825,6 +936,11 @@ async function handleBusinessTurn(userClient, user, body, contents, res) {
         missing,
         highlight: Array.isArray(call2.result.highlight) ? call2.result.highlight : [],
         chart: call2.result.chart ?? null,
+        ...sanitizeBlocks(call2.result, {
+            contractIds: myContracts.map((c) => c.contract_id),
+            propertyIds: results.map((r) => r.property_id),
+            targets: BUSINESS_LINK_TARGETS,
+        }),
     })
 }
 
@@ -1296,6 +1412,11 @@ async function handleOwnerTurn(userClient, user, body, contents, res) {
             chart: call1.result.chart ?? null,
             stats,
             audit,
+            ...sanitizeBlocks(call1.result, {
+                contractIds: contracts.map((c) => c.contract_id),
+                propertyIds: properties.map((pr) => pr.property_id),
+                targets: OWNER_LINK_TARGETS,
+            }),
         })
         return
     }
@@ -1326,6 +1447,11 @@ async function handleOwnerTurn(userClient, user, body, contents, res) {
         chart: call2.result.chart ?? null,
         stats,
         audit,
+        ...sanitizeBlocks(call2.result, {
+            contractIds: contracts.map((c) => c.contract_id),
+            propertyIds: properties.map((pr) => pr.property_id),
+            targets: OWNER_LINK_TARGETS,
+        }),
     })
 }
 
