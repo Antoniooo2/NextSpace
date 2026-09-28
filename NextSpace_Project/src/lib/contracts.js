@@ -224,6 +224,25 @@ export function recordSummary(record) {
     return { tone, short: `${pct}% on time`, pct }
 }
 
+// Ranking for "who should I accept": on-time rate smoothed by how much history
+// there is (1 month at 100% isn't as telling as 12), minus months late now.
+// A business with no history sits in the middle, at 0.5.
+export function recordScore(record) {
+    if (!record || record.months_due === 0) return 0.5
+    return (record.months_on_time + 1) / (record.months_due + 2) - 0.15 * record.months_late_now
+}
+
+// Why a record ranks where it does, in one short phrase.
+export function recordReason(record) {
+    const summary = recordSummary(record)
+    if (summary.pct == null) return 'no payment history on NextSpace yet'
+    const months = `${record.months_on_time} of ${record.months_due} months on time`
+    if (record.months_late_now > 0) {
+        return `${months}, but ${record.months_late_now} ${record.months_late_now === 1 ? 'month' : 'months'} late right now`
+    }
+    return `${months} and nothing late right now`
+}
+
 export const EVENT_META = {
     requested: { icon: 'bi-inbox-fill', label: 'Lease requested' },
     invited: { icon: 'bi-envelope-paper-fill', label: 'Invitation sent' },

@@ -10,6 +10,8 @@ import {
     money,
     offerExpiresIn,
     personName,
+    recordReason,
+    recordScore,
     recordSummary,
     renewalExpiresIn,
     renewalOpen,
@@ -70,21 +72,20 @@ function boardInsights({ contracts, records, viewer, today }) {
         }
         for (const { name, list } of Object.values(byProperty)) {
             const ranked = [...list].sort(
-                (a, b) => (recordSummary(records[b.tenant_dui]).pct ?? -1) - (recordSummary(records[a.tenant_dui]).pct ?? -1)
+                (a, b) => recordScore(records[b.tenant_dui]) - recordScore(records[a.tenant_dui])
             )
             const best = ranked[0]
             const bestSummary = recordSummary(records[best.tenant_dui])
+            const allNew = ranked.every((c) => recordSummary(records[c.tenant_dui]).pct == null)
             items.push({
                 tone: 'info',
                 icon: 'bi-inbox',
                 text:
                     list.length === 1
                         ? `${personName(best.users)} is waiting for your answer on ${name} (${bestSummary.short.toLowerCase()}).`
-                        : `${list.length} businesses want ${name}. ${
-                              bestSummary.pct != null
-                                  ? `${personName(best.users)} has the best record: ${bestSummary.short}.`
-                                  : 'None of them has a payment record on NextSpace yet.'
-                          }`,
+                        : allNew
+                          ? `${list.length} businesses want ${name}. None of them has a payment record on NextSpace yet, so compare their requests and ask Rony.`
+                          : `${list.length} businesses want ${name}. I'd go with ${personName(best.users)}: ${recordReason(records[best.tenant_dui])}.`,
                 contractId: best.contract_id,
                 label: list.length === 1 ? 'Review request' : `Review ${personName(best.users).split(' ')[0]}’s request`,
             })
@@ -138,6 +139,21 @@ function boardInsights({ contracts, records, viewer, today }) {
     return items.slice(0, 5).map(({ contractId, label, ...item }) =>
         contractId ? { ...item, action: { contractId, label } } : item
     )
+}
+
+// The question for Rony carries each applicant's record, so the answer can
+// compare them (Rony can't see other businesses' payments on its own).
+function ownerRonyQuestion(requests, records) {
+    if (requests.length === 0) return 'Look at my contracts: which leases should I renew, and what should I do next?'
+    const lines = requests.map((c) => {
+        const r = records[c.tenant_dui]
+        return `- ${personName(c.users)} for "${c.add_business?.property_name}": ${
+            r && r.months_due > 0
+                ? `${r.months_on_time}/${r.months_due} months paid on time, ${r.months_late_now} late now, ${r.leases} leases signed`
+                : 'no payment history on NextSpace'
+        }`
+    })
+    return `These businesses requested my spaces. Who should I accept for each space, and why?\n${lines.join('\n')}`
 }
 
 function ContractCard({ contract, viewer, record, onOpen }) {
@@ -283,7 +299,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
         groups.ending.sort(byEnd)
         groups.active.sort(byEnd)
         groups.requests.sort(
-            (a, b) => (recordSummary(records[b.tenant_dui]).pct ?? -1) - (recordSummary(records[a.tenant_dui]).pct ?? -1)
+            (a, b) => recordScore(records[b.tenant_dui]) - recordScore(records[a.tenant_dui])
         )
         return groups
     }, [contracts, records, today])
@@ -417,7 +433,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                             ? () =>
                                   onAskRony({
                                       text: isOwner
-                                          ? 'Look at my contracts: which requests should I accept and which leases should I renew?'
+                                          ? ownerRonyQuestion(grouped.requests, records)
                                           : 'Look at my leases and offers: what should I do next?',
                                   })
                             : undefined
