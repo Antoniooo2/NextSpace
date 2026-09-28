@@ -195,10 +195,6 @@
   white-space: nowrap;
 }
 
-.ns-pf-contact strong.is-missing {
-  color: var(--ns-text-muted);
-  font-weight: 500;
-}
 
 .ns-pf-eye {
   border: none;

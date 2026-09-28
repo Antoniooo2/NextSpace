@@ -315,13 +315,6 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                             </div>
                         </li>
                         <li>
-                            <i className="bi bi-telephone"></i>
-                            <div>
-                                <span>Phone</span>
-                                <strong className={meta.phone ? '' : 'is-missing'}>{meta.phone || 'Not added yet'}</strong>
-                            </div>
-                        </li>
-                        <li>
                             <i className="bi bi-person-vcard"></i>
                             <div>
                                 <span>DUI</span>

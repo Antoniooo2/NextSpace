@@ -5,15 +5,8 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
     const meta = user.user_metadata || {}
     const [firstName, setFirstName] = useState(meta.first_name || '')
     const [lastName, setLastName] = useState(meta.last_name || '')
-    const [phone, setPhone] = useState(meta.phone || '')
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
-
-    // Salvadoran numbers: 8 digits, shown as ####-####.
-    const formatPhone = (value) => {
-        const digits = value.replace(/\D/g, '').slice(0, 8)
-        return digits.length > 4 ? `${digits.slice(0, 4)}-${digits.slice(4)}` : digits
-    }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
@@ -23,40 +16,36 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
             setErrorMsg('Please enter your first and last name.')
             return
         }
-        if (phone && !/^\d{4}-\d{4}$/.test(phone)) {
-            setErrorMsg('Enter an 8-digit phone number, like 7123-4567.')
-            return
-        }
 
         setSaving(true)
         setErrorMsg('')
 
-        const { error: authError } = await supabase.auth.updateUser({
-            data: { first_name: first, last_name: last, phone },
-        })
+        // The users row first (it's what owners, tenants and Rony read), then
+        // the account metadata, so a failure never leaves the two different.
+        const { data: authData } = await supabase.auth.getUser()
+        const { data: dbData, error: dbError } = await supabase
+            .from('users')
+            .update({ first_name: first, last_name: last })
+            .eq('id_supabase_auth', authData?.user?.id || user.id)
+            .select('dui')
 
-        if (authError) {
+        if (dbError || !dbData || dbData.length === 0) {
+            console.error('Profile: users row not updated', dbError)
             setSaving(false)
             setErrorMsg('We could not save your changes. Check your connection and try again.')
             return
         }
 
-        if (meta.dui) {
-            const { data: dbData, error: dbError } = await supabase
-                .from('users')
-                .update({ first_name: first, last_name: last, phone_number: phone })
-                .eq('dui', meta.dui)
-                .select()
-
-            if (dbError || !dbData || dbData.length === 0) {
-                console.error('Profile: users row not updated', dbError)
-                setSaving(false)
-                setErrorMsg('Your changes were only partly saved. Please try again in a moment.')
-                return
-            }
-        }
+        const { error: authError } = await supabase.auth.updateUser({
+            data: { first_name: first, last_name: last },
+        })
 
         setSaving(false)
+        if (authError) {
+            setErrorMsg('We could not save your changes. Check your connection and try again.')
+            return
+        }
+
         onUpdated()
         onClose()
     }
@@ -73,7 +62,7 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                     <p className="ns-modal-form-subtitle">
                         {meta.account_type === 'property-owner'
                             ? 'Businesses see your name on your listings and leases.'
-                            : 'Owners see your name and phone when you apply for a space or sign a lease.'}
+                            : 'Owners see your name when you apply for a space or sign a lease.'}
                     </p>
 
                     {errorMsg && (
@@ -117,18 +106,6 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                                         />
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div className="ns-mb-field">
-                            <label className="ns-label" htmlFor="editPhone">Phone number</label>
-                            <div className="ns-input-group input-group">
-                                <span className="input-group-text"><i className="bi bi-phone"></i></span>
-                                <input
-                                    id="editPhone" type="tel" inputMode="numeric" className="form-control"
-                                    placeholder="7123-4567"
-                                    value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))}
-                                />
                             </div>
                         </div>
 

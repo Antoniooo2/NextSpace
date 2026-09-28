@@ -28,7 +28,6 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
     // Occupied is set by the lease flow; owners only choose listed or paused.
     const isLeased = property?.availability === 'Occupied'
     const [listed, setListed] = useState(property?.availability !== 'Reserved')
-    const [phoneNumber, setPhoneNumber] = useState(base?.phone_number || '')
     const [description, setDescription] = useState(base?.description || '')
     const [department, setDepartment] = useState(base?.department || '')
     const [municipality, setMunicipality] = useState(base?.municipality || '')
@@ -184,7 +183,6 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
         const errors = []
         if (!propertyName.trim()) errors.push('Property name is required.')
         if (!PROPERTY_TYPES.includes(propertyType)) errors.push('Select a valid property type.')
-        if (!phoneNumber.trim()) errors.push('Phone number is required.')
 
         const widthNum = Number(width)
         const lengthNum = Number(length)
@@ -215,7 +213,6 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
             business_size_width: widthNum,
             business_size_length: lengthNum,
             ...(isLeased ? {} : { availability: listed ? 'Available' : 'Reserved' }),
-            phone_number: phoneNumber.trim(),
             description: description.trim() || null,
             department: department || null,
             municipality: municipality || null,
@@ -497,20 +494,6 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                     ))}
                                 </div>
                             )}
-                        </div>
-
-                        <div className="ns-form-section">
-                            <span className="ns-account-type-label"><i className="bi bi-telephone"></i> Contact</span>
-                            <div className="ns-mb-field mb-0">
-                                <label className="ns-label" htmlFor="propPhone">Phone number</label>
-                                <div className="ns-input-group input-group">
-                                    <span className="input-group-text"><i className="bi bi-telephone"></i></span>
-                                    <input
-                                        id="propPhone" type="text" className="form-control" placeholder="7000-0000"
-                                        value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required
-                                    />
-                                </div>
-                            </div>
                         </div>
 
                         <button type="submit" className="ns-submit-btn" disabled={saving}>

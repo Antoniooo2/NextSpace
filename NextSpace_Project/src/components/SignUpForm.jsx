@@ -21,7 +21,6 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [dui, setDui] = useState('')
-    const [phone, setPhone] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
@@ -45,7 +44,6 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                     first_name: firstName,
                     last_name: lastName,
                     dui,
-                    phone,
                     account_type: accountType,
                 },
             },
@@ -133,18 +131,6 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                             id="dui" type="text" className="form-control" placeholder="00000000-0"
                             value={dui} onChange={(e) => setDui(e.target.value)}
                             onFocus={() => setFocusedField('dui')} onBlur={() => setFocusedField(null)}
-                        />
-                    </div>
-                </div>
-
-                <div className="ns-mb-field">
-                    <label htmlFor="phone" className="ns-label">Phone Number</label>
-                    <div className={`ns-input-group input-group ${focusedField === 'phone' ? 'focused' : ''}`}>
-                        <span className="input-group-text"><i className="bi bi-phone"></i></span>
-                        <input
-                            id="phone" type="text" className="form-control" placeholder="7517-1234"
-                            value={phone} onChange={(e) => setPhone(e.target.value)}
-                            onFocus={() => setFocusedField('phone')} onBlur={() => setFocusedField(null)}
                         />
                     </div>
                 </div>
