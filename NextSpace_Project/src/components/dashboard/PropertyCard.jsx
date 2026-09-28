@@ -79,13 +79,17 @@ export default function PropertyCard({
                         <span className="ns-mk-card-noprice">Price on request</span>
                     )}
                 </div>
-                {insight && (
-                    <span className={`ns-price-tag tone-${insight.tone}`} title={`${formatPpm(insight.ppm)} vs ${formatPpm(insight.median)} for ${insight.scope}`}>
-                        {insight.label} · {formatPpm(insight.ppm)}
-                    </span>
-                )}
+                <div className="ns-mk-card-tagrow">
+                    {insight ? (
+                        <span className={`ns-price-tag tone-${insight.tone}`} title={`${formatPpm(insight.ppm)} vs ${formatPpm(insight.median)} for ${insight.scope}`}>
+                            {insight.label} · {formatPpm(insight.ppm)}
+                        </span>
+                    ) : (
+                        <span className="ns-mk-card-ppm">{area && rent != null ? formatPpm(Number(rent) / area) : '\u00a0'}</span>
+                    )}
+                </div>
                 <h3>{property.property_name}</h3>
-                <p className="ns-mk-card-loc">
+                <p className="ns-mk-card-loc" title={location || undefined}>
                     <i className="bi bi-geo-alt"></i> {location || 'Location not listed'}
                 </p>
                 <div className="ns-mk-card-facts">
@@ -98,16 +102,20 @@ export default function PropertyCard({
                         </span>
                     )}
                 </div>
-                {services.length > 0 && (
-                    <div className="ns-mk-card-services" aria-label="Amenities">
-                        {services.slice(0, 4).map((name) => (
-                            <span key={name} title={name}>
-                                <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i>
-                            </span>
-                        ))}
-                        {services.length > 4 && <small>+{services.length - 4}</small>}
-                    </div>
-                )}
+                <div className="ns-mk-card-services" aria-label="Amenities">
+                    {services.length > 0 ? (
+                        <>
+                            {services.slice(0, 4).map((name) => (
+                                <span key={name} title={name}>
+                                    <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i>
+                                </span>
+                            ))}
+                            {services.length > 4 && <small>+{services.length - 4}</small>}
+                        </>
+                    ) : (
+                        <em>No amenities listed</em>
+                    )}
+                </div>
             </button>
 
             {onToggleCompare && (

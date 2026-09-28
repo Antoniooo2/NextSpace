@@ -225,3 +225,22 @@ grant execute on function public.record_property_view(bigint) to authenticated;
 grant execute on function public.owner_listing_stats() to authenticated;
 grant execute on function public.market_price_stats() to authenticated;
 grant execute on function public.notify_saved_searches(bigint) to authenticated;
+
+-- Daily views of one space for its owner: the last 60 days, zero-filled,
+-- so the chart can show the last 30 and compare with the 30 before.
+create or replace function public.owner_property_views(p_property_id bigint)
+returns table (day date, views integer)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+    select d::date, coalesce(count(v.viewer_dui), 0)::int
+    from generate_series(sv_today() - 59, sv_today(), interval '1 day') d
+    left join property_views v on v.property_id = p_property_id and v.view_date = d::date
+    where exists (select 1 from add_business b where b.property_id = p_property_id and b.owner_id = caller_dui())
+    group by d
+    order by d
+$$;
+revoke all on function public.owner_property_views(bigint) from public, anon;
+grant execute on function public.owner_property_views(bigint) to authenticated;

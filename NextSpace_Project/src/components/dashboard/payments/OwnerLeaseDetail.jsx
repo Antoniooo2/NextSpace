@@ -234,15 +234,6 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
                     </div>
                 </div>
                 <div className="ns-lease-kpi">
-                    <span className={`ns-lease-kpi-big ${stats.avgDaysLate > 3 ? 'is-bad' : ''}`}>
-                        {stats.monthsDue > 0 ? stats.avgDaysLate.toFixed(1) : '—'}
-                    </span>
-                    <div>
-                        <span className="ns-lease-kpi-value">Avg. days late</span>
-                        <span className="ns-lease-kpi-label">per month due</span>
-                    </div>
-                </div>
-                <div className="ns-lease-kpi">
                     <span className={`ns-lease-kpi-big ${stats.lateMonths > 0 ? 'is-bad' : ''}`}>{money(stats.owedNow)}</span>
                     <div>
                         <span className="ns-lease-kpi-value">Owed now</span>

@@ -2,13 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import NewPropertyModal from './NewPropertyModal'
-import { describeSupabaseError } from '../../lib/supabaseErrors'
-import ConfirmDialog from './ConfirmDialog'
 import { LISTING_STATUS } from '../../lib/propertyTypes'
 import { formatDueDate } from '../../lib/rentSchedule'
-import { areaOf, daysSince, listingChecklist, listingScore, locationOf, typeIcon } from '../../lib/listings'
+import { areaOf, daysSince, listingScore, locationOf, typeColors, typeIcon } from '../../lib/listings'
 import { money, offerExpiresIn, personName } from '../../lib/contracts'
-import { formatPpm, loadMarketStats, priceInsight } from '../../lib/market'
 import './listings.css'
 
 const TABS = [
@@ -97,25 +94,20 @@ function StatusLine({ property, status, onOpenContracts }) {
             </p>
         )
     }
-    // What the empty days have cost, at the listed rent.
-    const missed = property.monthly_rent != null && status.vacantDays > 0 ? (Number(property.monthly_rent) / 30) * status.vacantDays : 0
-    return (
+        return (
         <p className={`ns-own-status ${status.vacantDays >= 30 ? 'tone-warning' : 'tone-neutral'}`}>
             <i className="bi bi-hourglass"></i>
-            <span>
-                Listed · vacant {status.vacantDays === 0 ? 'since today' : `for ${status.vacantDays} ${status.vacantDays === 1 ? 'day' : 'days'}`}
-                {missed >= 1 && <em> · {money(Math.round(missed))} in rent missed</em>}
-            </span>
+            <span>Listed · vacant {status.vacantDays === 0 ? 'since today' : `for ${status.vacantDays} ${status.vacantDays === 1 ? 'day' : 'days'}`}</span>
         </p>
     )
 }
 
-function OwnerListingCard({ property, status, stats, insight, onOpen, onEdit, onDuplicate, onTogglePause, onDelete, onOpenContracts, onAskRony, busy }) {
+// The basics at a glance; everything else lives in the space's own page.
+function OwnerListingCard({ property, status, views, onOpen, onEdit, onOpenContracts }) {
     const meta = LISTING_STATUS[property.availability] || LISTING_STATUS.Available
     const area = areaOf(property)
     const score = listingScore(property)
-    const missing = listingChecklist(property).filter((i) => !i.done)
-    const leased = Boolean(status.active)
+    const [bg, fg] = typeColors(property.property_type)
 
     return (
         <article className="ns-own-card">
@@ -123,7 +115,7 @@ function OwnerListingCard({ property, status, stats, insight, onOpen, onEdit, on
                 {property.photo_url ? (
                     <img src={property.photo_url} alt="" loading="lazy" />
                 ) : (
-                    <span className="ns-mk-card-placeholder">
+                    <span className="ns-mk-card-placeholder" style={{ background: bg, color: fg }}>
                         <i className={`bi ${typeIcon(property.property_type)}`}></i>
                     </span>
                 )}
@@ -137,9 +129,7 @@ function OwnerListingCard({ property, status, stats, insight, onOpen, onEdit, on
                     <button type="button" onClick={() => onOpen(property)}>
                         {property.property_name}
                     </button>
-                    <span className="ns-own-rent">
-                        {property.monthly_rent != null ? `${money(property.monthly_rent)}/mo` : 'No rent set'}
-                    </span>
+                    <span className="ns-own-rent">{property.monthly_rent != null ? `${money(property.monthly_rent)}/mo` : 'No rent set'}</span>
                 </div>
                 <p className="ns-own-meta">
                     <i className="bi bi-geo-alt"></i> {locationOf(property) || 'No location'}
@@ -153,98 +143,38 @@ function OwnerListingCard({ property, status, stats, insight, onOpen, onEdit, on
 
                 <StatusLine property={property} status={status} onOpenContracts={onOpenContracts} />
 
-                {stats && (
-                    <div className="ns-own-interest" aria-label="Interest in this listing">
-                        <span title="Businesses that opened this listing in the last 30 days">
-                            <i className="bi bi-eye"></i> <strong>{stats.views_30d}</strong> views
+                <div className="ns-own-foot">
+                    <span className="ns-own-foot-stats">
+                        <span title="Views in the last 30 days">
+                            <i className="bi bi-eye"></i> {views ?? 0}
                         </span>
-                        <span title="Businesses that saved it">
-                            <i className="bi bi-heart"></i> <strong>{stats.saves}</strong> saved
-                        </span>
-                        <span title="Lease requests received, all time">
-                            <i className="bi bi-inbox"></i> <strong>{stats.requests_total}</strong> requests
-                        </span>
-                    </div>
-                )}
-
-                {!leased && insight && (
-                    <div className={`ns-own-price tone-${insight.tone}`}>
-                        <span>
-                            {formatPpm(insight.ppm)} · <strong>{insight.label.toLowerCase()}</strong>{' '}
-                            <small>
-                                ({formatPpm(insight.median)} {insight.scope})
-                            </small>
-                        </span>
-                        {onAskRony && (
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    onAskRony({
-                                        text: `What rent should I ask for "${property.property_name}" (${property.property_type}, ${areaOf(property) || '?'} m² in ${locationOf(property) || 'El Salvador'})? It's listed at ${money(property.monthly_rent)}/month (${formatPpm(insight.ppm)}); similar spaces go for about ${formatPpm(insight.median)}.${stats ? ` It had ${stats.views_30d} views and ${stats.requests_total} requests.` : ''}`,
-                                    })
-                                }
-                            >
-                                <i className="bi bi-stars"></i> Ask Rony for a price
-                            </button>
+                        {score < 100 && !status.active && (
+                            <span className={`ns-own-chip ${score < 60 ? 'is-bad' : ''}`} title="Listing quality">
+                                Listing {score}%
+                            </span>
                         )}
-                    </div>
-                )}
-
-                {!leased && (
-                    <div className="ns-own-quality" title={missing.length ? `Missing: ${missing.map((m) => m.label).join(', ')}` : 'Complete'}>
-                        <div className="ns-own-quality-head">
-                            <span>Listing quality</span>
-                            <strong className={score === 100 ? 'is-good' : score < 60 ? 'is-bad' : ''}>{score}%</strong>
-                        </div>
-                        <div className="ns-own-quality-track">
-                            <div style={{ width: `${score}%` }} className={score === 100 ? 'is-good' : score < 60 ? 'is-bad' : ''} />
-                        </div>
-                        {missing.length > 0 && (
-                            <button type="button" className="ns-own-quality-tip" onClick={() => onEdit(property)}>
-                                Add {missing.slice(0, 2).map((m) => m.label.toLowerCase()).join(' and ')}
-                                {missing.length > 2 ? ` +${missing.length - 2}` : ''} <i className="bi bi-arrow-right"></i>
-                            </button>
-                        )}
-                    </div>
-                )}
-
-                <div className="ns-own-actions">
-                    <button type="button" onClick={() => onEdit(property)}>
-                        <i className="bi bi-pencil"></i> Edit
-                    </button>
-                    <button type="button" onClick={() => onDuplicate(property)} title="Publish a similar space">
-                        <i className="bi bi-copy"></i> Duplicate
-                    </button>
-                    {!leased && (
-                        <button type="button" onClick={() => onTogglePause(property)} disabled={busy}>
-                            <i className={`bi ${property.availability === 'Reserved' ? 'bi-play-circle' : 'bi-pause-circle'}`}></i>{' '}
-                            {property.availability === 'Reserved' ? 'Resume listing' : 'Pause listing'}
+                    </span>
+                    <span className="ns-own-foot-actions">
+                        <button type="button" onClick={() => onEdit(property)}>
+                            <i className="bi bi-pencil"></i> Edit
                         </button>
-                    )}
-                    {!status.hasHistory && (
-                        <button type="button" className="is-danger" onClick={() => onDelete(property)}>
-                            <i className="bi bi-trash"></i> Delete
+                        <button type="button" className="is-primary" onClick={() => onOpen(property)}>
+                            Manage <i className="bi bi-arrow-right"></i>
                         </button>
-                    )}
+                    </span>
                 </div>
             </div>
         </article>
     )
 }
 
-export default function OwnerHome({ user, firstName, search, onViewProperty, onNavigate, onAskRony }) {
-    const { ownerDui, properties, setProperties, loading, error: loadError, reload } = useOwnerProperties(user)
+export default function OwnerHome({ user, firstName, search, onViewProperty, onNavigate }) {
+    const { ownerDui, properties, loading, error: loadError, reload } = useOwnerProperties(user)
     const [contracts, setContracts] = useState([])
+    const [views, setViews] = useState(() => new Map())
     const [tab, setTab] = useState('all')
     const [showFormModal, setShowFormModal] = useState(false)
     const [editingProperty, setEditingProperty] = useState(null)
-    const [deleteTarget, setDeleteTarget] = useState(null)
-    const [deleting, setDeleting] = useState(false)
-    const [actionError, setActionError] = useState('')
-    const [busyId, setBusyId] = useState(null)
-    const [templateProperty, setTemplateProperty] = useState(null)
-    const [listingStats, setListingStats] = useState(() => new Map())
-    const [marketStats, setMarketStats] = useState(() => new Map())
 
     const loadContracts = useCallback(async () => {
         const { data } = await supabase
@@ -258,28 +188,11 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
     useEffect(() => {
         loadContracts()
         supabase.rpc('owner_listing_stats').then(({ data }) => {
-            setListingStats(new Map((data || []).map((r) => [r.property_id, r])))
+            setViews(new Map((data || []).map((r) => [r.property_id, r.views_30d])))
         })
-        loadMarketStats().then(setMarketStats)
     }, [loadContracts])
 
-    const rows = useMemo(
-        () => properties.map((p) => ({ property: p, status: statusOf(p, contracts) })),
-        [properties, contracts]
-    )
-
-    const kpis = useMemo(() => {
-        const leased = rows.filter((r) => r.status.active)
-        const vacant = rows.filter((r) => !r.status.active)
-        return {
-            leased: leased.length,
-            total: rows.length,
-            income: leased.reduce((s, r) => s + Number(r.status.active.monthly_rent || 0), 0),
-            potential: vacant.reduce((s, r) => s + Number(r.property.monthly_rent || 0), 0),
-            vacant: vacant.length,
-            requests: rows.reduce((s, r) => s + r.status.pending.length, 0),
-        }
-    }, [rows])
+    const rows = useMemo(() => properties.map((p) => ({ property: p, status: statusOf(p, contracts) })), [properties, contracts])
 
     const counts = {
         all: rows.length,
@@ -303,70 +216,16 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
 
     const openCreateModal = () => {
         setEditingProperty(null)
-        setTemplateProperty(null)
-        setShowFormModal(true)
-    }
-
-    const openEditModal = (property) => {
-        setTemplateProperty(null)
-        setEditingProperty(property)
-        setShowFormModal(true)
-    }
-
-    // New listing prefilled from an existing one (not its photos).
-    const openDuplicate = (property) => {
-        setEditingProperty(null)
-        setTemplateProperty(property)
         setShowFormModal(true)
     }
 
     const handleSaved = async () => {
         setShowFormModal(false)
         setEditingProperty(null)
-        setTemplateProperty(null)
         await reload()
     }
 
     const openContracts = (contractId) => onNavigate?.('contracts', { contractId: contractId || null })
-
-    const togglePause = async (property) => {
-        setBusyId(property.property_id)
-        setActionError('')
-        const next = property.availability === 'Reserved' ? 'Available' : 'Reserved'
-        const { data, error } = await supabase
-            .from('add_business')
-            .update({ availability: next })
-            .eq('property_id', property.property_id)
-            .select('property_id, availability')
-        setBusyId(null)
-        if (error || !data?.length) {
-            setActionError(error ? describeSupabaseError(error) : 'The listing could not be updated.')
-            return
-        }
-        setProperties((prev) => prev.map((p) => (p.property_id === property.property_id ? { ...p, availability: next } : p)))
-    }
-
-    const handleDelete = async () => {
-        setDeleting(true)
-        setActionError('')
-
-        const { data, error } = await supabase
-            .from('add_business')
-            .delete()
-            .eq('property_id', deleteTarget.property_id)
-            .select()
-
-        setDeleting(false)
-
-        if (error || !data?.length) {
-            setActionError(error ? describeSupabaseError(error) : 'The property could not be deleted.')
-            setDeleteTarget(null)
-            return
-        }
-
-        setProperties((prev) => prev.filter((p) => p.property_id !== deleteTarget.property_id))
-        setDeleteTarget(null)
-    }
 
     if (loading) {
         return (
@@ -377,14 +236,12 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
         )
     }
 
-    const occupancy = kpis.total ? Math.round((kpis.leased / kpis.total) * 100) : 0
-
     return (
         <>
             <div className="ns-dash-header">
                 <div>
                     <h1>My Properties</h1>
-                    <p>Your spaces, who is leasing them and what each one needs, {firstName}.</p>
+                    <p>Your spaces and what each one needs, {firstName}. Open one to manage it.</p>
                 </div>
                 <div className="ns-dash-header-actions">
                     <button type="button" className="ns-filled-btn" onClick={openCreateModal}>
@@ -393,48 +250,9 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
                 </div>
             </div>
 
-            {(loadError || actionError) && (
-                <div className="alert alert-danger d-flex justify-content-between align-items-center gap-2 py-2" role="alert">
-                    <span>{loadError || actionError}</span>
-                    {actionError && <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setActionError('')} />}
-                </div>
-            )}
-
-            {properties.length > 0 && (
-                <div className="ns-own-kpis">
-                    <div>
-                        <small>Leased</small>
-                        <strong>
-                            {kpis.leased}
-                            <span>/{kpis.total}</span>
-                        </strong>
-                        <div className="ns-own-kpi-bar">
-                            <div style={{ width: `${occupancy}%` }} />
-                        </div>
-                        <em>{occupancy}% occupancy</em>
-                    </div>
-                    <div>
-                        <small>Income from leases</small>
-                        <strong>{money(kpis.income)}</strong>
-                        <em>per month, active leases</em>
-                    </div>
-                    <div>
-                        <small>Vacant potential</small>
-                        <strong>{money(kpis.potential)}</strong>
-                        <em>
-                            per month if your {kpis.vacant} free {kpis.vacant === 1 ? 'space is' : 'spaces are'} leased
-                        </em>
-                    </div>
-                    <button
-                        type="button"
-                        className={kpis.requests > 0 ? 'is-hot' : ''}
-                        onClick={() => kpis.requests > 0 && openContracts(null)}
-                        disabled={kpis.requests === 0}
-                    >
-                        <small>Requests waiting</small>
-                        <strong>{kpis.requests}</strong>
-                        <em>{kpis.requests > 0 ? 'Answer them in Contracts →' : 'Nothing to answer'}</em>
-                    </button>
+            {loadError && (
+                <div className="alert alert-danger py-2" role="alert">
+                    {loadError}
                 </div>
             )}
 
@@ -485,19 +303,13 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
                             key={property.property_id}
                             property={property}
                             status={status}
+                            views={views.get(property.property_id)}
                             onOpen={onViewProperty}
-                            onEdit={openEditModal}
-                            onDuplicate={openDuplicate}
-                            stats={listingStats.get(property.property_id)}
-                            insight={priceInsight(property, marketStats)}
-                            onAskRony={onAskRony}
-                            onTogglePause={togglePause}
-                            onDelete={(p) => {
-                                setActionError('')
-                                setDeleteTarget(p)
+                            onEdit={(p) => {
+                                setEditingProperty(p)
+                                setShowFormModal(true)
                             }}
                             onOpenContracts={openContracts}
-                            busy={busyId === property.property_id}
                         />
                     ))}
                 </div>
@@ -506,26 +318,12 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
             {showFormModal && (
                 <NewPropertyModal
                     property={editingProperty}
-                    template={templateProperty}
                     ownerDui={ownerDui}
                     onClose={() => {
                         setShowFormModal(false)
                         setEditingProperty(null)
-                        setTemplateProperty(null)
                     }}
                     onSaved={handleSaved}
-                />
-            )}
-
-            {deleteTarget && (
-                <ConfirmDialog
-                    icon="bi-trash"
-                    title="Delete this property?"
-                    description={`"${deleteTarget.property_name}" will be permanently removed from your listings. This can't be undone.`}
-                    confirmLabel={deleting ? 'Deleting...' : 'Delete'}
-                    cancelLabel="Cancel"
-                    onConfirm={handleDelete}
-                    onCancel={() => setDeleteTarget(null)}
                 />
             )}
         </>

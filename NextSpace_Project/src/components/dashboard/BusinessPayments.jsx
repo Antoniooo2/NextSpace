@@ -733,19 +733,6 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                             <span className="ns-lease-kpi-label">through Dec 31, this lease</span>
                         </div>
                     </div>
-                    <div className="ns-lease-kpi">
-                        <span className={`ns-lease-kpi-big ${stats.lateMonths > 0 ? 'is-bad' : ''}`}>{money(stats.owedNow)}</span>
-                        <div>
-                            <span className="ns-lease-kpi-value">Owed now</span>
-                            <span className="ns-lease-kpi-label">
-                                {stats.lateMonths > 0
-                                    ? `${stats.lateMonths} ${stats.lateMonths === 1 ? 'month' : 'months'} late`
-                                    : stats.owedNow > 0
-                                      ? 'Due this week'
-                                      : 'Nothing due right now'}
-                            </span>
-                        </div>
-                    </div>
                 </div>
 
                 <section className="ns-panel">

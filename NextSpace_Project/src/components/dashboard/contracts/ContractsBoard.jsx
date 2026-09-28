@@ -175,7 +175,7 @@ const FLOW_STEPS = {
     ],
 }
 
-function ContractFlow({ viewer, grouped, onJump }) {
+function ContractFlow({ viewer, grouped, monthly, onJump }) {
     return (
         <ol className="ns-contract-flow" aria-label="Lease steps">
             {FLOW_STEPS[viewer].map((step) => {
@@ -196,7 +196,7 @@ function ContractFlow({ viewer, grouped, onJump }) {
                                 <strong>
                                     {step.label} <em>{count}</em>
                                 </strong>
-                                <small>{step.hint}</small>
+                                <small>{step.id === 'active' && monthly > 0 ? `${money(monthly)}/month` : step.hint}</small>
                             </span>
                         </button>
                     </li>
@@ -354,19 +354,11 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
         return groups
     }, [contracts, records, today])
 
+    // Rent under active leases, shown on the "Active" step of the flow.
     const kpis = useMemo(() => {
         const active = [...grouped.active, ...grouped.ending]
-        const monthly = active.reduce((sum, c) => sum + Number(c.monthly_rent || 0), 0)
-        const endingSoon = active.filter((c) => {
-            const d = daysLeft(c, today)
-            return d != null && d <= 60
-        }).length
-        const waiting = contracts.filter((c) => needsAction(c, viewer)).length
-        const occupied = properties.filter((p) => p.availability === 'Occupied').length
-        const signed = contracts.filter((c) => c.tenant_signed_at && c.duration_months)
-        const avgMonths = signed.length ? Math.round(signed.reduce((s, c) => s + c.duration_months, 0) / signed.length) : null
-        return { activeCount: active.length, monthly, endingSoon, waiting, occupied, avgMonths }
-    }, [grouped, contracts, properties, viewer, today])
+        return { monthly: active.reduce((sum, c) => sum + Number(c.monthly_rent || 0), 0) }
+    }, [grouped])
 
     const insights = useMemo(() => boardInsights({ contracts, records, viewer, today }), [contracts, records, viewer, today])
 
@@ -442,6 +434,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                 <ContractFlow
                     viewer={viewer}
                     grouped={grouped}
+                    monthly={kpis.monthly}
                     onJump={(id) => {
                         if (id === 'closed') setShowClosed(true)
                         document.getElementById(`ct-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -466,41 +459,6 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                     }
                 />
             )}
-
-            <div className="ns-contract-kpis">
-                <div className={kpis.waiting > 0 ? 'is-hot' : ''}>
-                    <small>Waiting for you</small>
-                    <strong>{kpis.waiting}</strong>
-                </div>
-                {isOwner && (
-                    <div>
-                        <small>Occupancy</small>
-                        <strong>
-                            {properties.length ? `${Math.round((kpis.occupied / properties.length) * 100)}%` : '—'}
-                        </strong>
-                        <span className="ns-contract-kpi-sub">
-                            {kpis.occupied} of {properties.length} spaces leased
-                        </span>
-                    </div>
-                )}
-                <div>
-                    <small>Active leases</small>
-                    <strong>{kpis.activeCount}</strong>
-                    <span className="ns-contract-kpi-sub">
-                        {money(kpis.monthly)}/month {isOwner ? 'under contract' : 'in rent'}
-                    </span>
-                </div>
-                <div className={kpis.endingSoon > 0 ? 'is-warn' : ''}>
-                    <small>Ending in 60 days</small>
-                    <strong>{kpis.endingSoon}</strong>
-                </div>
-                {isOwner && (
-                    <div>
-                        <small>Average lease length</small>
-                        <strong>{kpis.avgMonths ? `${kpis.avgMonths} mo` : '—'}</strong>
-                    </div>
-                )}
-            </div>
 
             {contracts.length === 0 ? (
                 <div className="ns-panel ns-contract-empty">

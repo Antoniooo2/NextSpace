@@ -219,7 +219,6 @@ export default function Dashboard() {
                         search={search}
                         onViewProperty={openProperty('home')}
                         onNavigate={handleSectionChange}
-                        onAskRony={handleAskRony}
                     />
                 ) : (
                     <BusinessHome

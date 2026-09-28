@@ -943,3 +943,68 @@ button.ns-own-status:hover { filter: brightness(0.97); }
   .ns-cmp-tray { bottom: 8px; }
   .ns-mk-alerts-panel { right: auto; left: 0; }
 }
+
+/* ---------- Marketplace cards: fixed structure so every card in a row has
+   the same height (one-line name, location and facts; reserved tag and
+   amenity rows; Compare pinned to the bottom). ---------- */
+.ns-mk-grid { align-items: stretch; }
+.ns-mk-card-body { justify-content: flex-start; min-width: 0; }
+.ns-mk-card-tagrow { min-height: 22px; display: flex; align-items: center; }
+.ns-mk-card-tagrow .ns-price-tag { margin-bottom: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ns-mk-card-ppm { font-size: 11.5px; font-weight: 600; color: var(--ns-text-muted); }
+
+.ns-mk-card-loc,
+.ns-mk-card-facts {
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns-mk-card-facts { flex-wrap: nowrap; }
+.ns-mk-card-facts span { white-space: nowrap; }
+.ns-mk-card-services { min-height: 37px; margin-top: auto; }
+.ns-mk-card-services em { font-style: normal; font-size: 12px; color: var(--ns-text-muted); }
+.ns-mk-compare { margin-top: 0; }
+
+/* ---------- My Properties: simple card footer ---------- */
+.ns-own-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid #f0f2f6;
+}
+
+.ns-own-foot-stats { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #4a5263; }
+.ns-own-foot-stats i { color: var(--ns-blue-accent); }
+
+.ns-own-chip {
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 1px 8px;
+  background: #fff4e0;
+  color: #a86400;
+}
+
+.ns-own-chip.is-bad { background: #fdecec; color: #b42318; }
+.ns-own-foot-actions { display: flex; gap: 12px; }
+
+.ns-own-foot-actions button {
+  border: none;
+  background: none;
+  padding: 2px 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4a5263;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.ns-own-foot-actions button:hover { color: var(--ns-blue-accent); }
+.ns-own-foot-actions button.is-primary { color: var(--ns-blue-accent); font-weight: 700; }

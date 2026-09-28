@@ -1,17 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { TYPE_ICON } from '../../lib/propertyTypes'
+import { LISTING_STATUS } from '../../lib/propertyTypes'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
-import { PROPERTY_SERVICE_NAMES_EMBED, withServiceNames } from '../../lib/propertyServices'
+import { PROPERTY_SERVICES_FULL_EMBED, PROPERTY_SERVICE_NAMES_EMBED, withServiceNames, withServices } from '../../lib/propertyServices'
 import { createNotification } from '../../lib/notifications'
-import { LISTING_STATUS } from '../../lib/propertyTypes'
-import { SERVICE_ICON, areaOf } from '../../lib/listings'
+import { SERVICE_ICON, areaOf, daysSince, listingChecklist, listingScore, locationOf, typeIcon } from '../../lib/listings'
 import { formatDueDate } from '../../lib/rentSchedule'
 import { money, personName } from '../../lib/contracts'
-import PropertyCard from './PropertyCard'
 import { formatPpm, loadMarketStats, priceInsight } from '../../lib/market'
+import { setSaved as persistSaved } from '../../lib/savedProperties'
+import PropertyCard from './PropertyCard'
+import NewPropertyModal from './NewPropertyModal'
+import ConfirmDialog from './ConfirmDialog'
+import PropertyGallery from './property/PropertyGallery'
+import PriceMarketBar from './property/PriceMarketBar'
+import ViewsChart from './property/ViewsChart'
 import './listings.css'
+import './property/property.css'
+
+const OWNER_EMBED = 'users!add_business_owner_id_fkey(first_name,last_name)'
 
 function toAdvisorPropertyCard(detail) {
     return {
@@ -28,210 +36,207 @@ function toAdvisorPropertyCard(detail) {
     }
 }
 
-const AVAILABILITY_CLASS = {
-    Available: 'available',
-    Occupied: 'occupied',
-    Reserved: 'reserved',
+function listedAgo(ts) {
+    const d = daysSince(ts)
+    if (d == null) return null
+    if (d === 0) return 'Listed today'
+    if (d < 30) return `Listed ${d} ${d === 1 ? 'day' : 'days'} ago`
+    const months = Math.round(d / 30)
+    return `Listed ${months} ${months === 1 ? 'month' : 'months'} ago`
 }
 
-const OWNER_EMBED = 'users!add_business_owner_id_fkey(first_name,last_name)'
+// What businesses read about the space: description, amenities, location.
+function ListingContent({ detail }) {
+    return (
+        <>
+            <section className="ns-pd-section">
+                <h3>About this space</h3>
+                <p className="ns-pd-desc">
+                    {detail.description || 'The owner has not added a description yet. Ask Rony whether it fits your business, or request the lease to talk terms.'}
+                </p>
+            </section>
+
+            <section className="ns-pd-section">
+                <h3>Amenities</h3>
+                {detail.service_names?.length > 0 ? (
+                    <ul className="ns-amenity-list">
+                        {detail.service_names.map((name) => (
+                            <li key={name}>
+                                <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i> {name}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="ns-pay-muted mb-0">No amenities listed.</p>
+                )}
+            </section>
+
+            <section className="ns-pd-section">
+                <h3>Location</h3>
+                <p className="ns-pd-location">
+                    <i className="bi bi-geo-alt-fill"></i>
+                    <span>
+                        <strong>{locationOf(detail) || 'Location on request'}</strong>
+                        {detail.address && <small>{detail.address}</small>}
+                    </span>
+                </p>
+            </section>
+        </>
+    )
+}
 
 export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony, onViewProperty, onNavigate, backLabel = 'Back' }) {
+    const isBusiness = accountType === 'business'
+    const isOwnerView = accountType === 'property-owner'
+
     const [detail, setDetail] = useState(property || null)
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState('')
+    const [marketStats, setMarketStats] = useState(null)
+
+    // Business
     const [tenantDui, setTenantDui] = useState(null)
-    // Status of this business's open request on the space: 'Pending', 'Offered' or null.
-    const [openRequest, setOpenRequest] = useState(null)
+    const [openRequest, setOpenRequest] = useState(null) // 'Pending' | 'Offered' | 'Active' | null
     const [requesting, setRequesting] = useState(false)
     const [requestError, setRequestError] = useState('')
     const [requestSuccess, setRequestSuccess] = useState(false)
-
     const [saved, setSaved] = useState(false)
-    const [savingFavorite, setSavingFavorite] = useState(false)
-
-    const isBusiness = accountType === 'business'
-    const isOwnerView = accountType === 'property-owner'
-    const [photoIndex, setPhotoIndex] = useState(0)
     const [similar, setSimilar] = useState([])
+
+    // Owner
+    const [tab, setTab] = useState('overview')
+    const [ownerDui, setOwnerDui] = useState(null)
     const [ownerContracts, setOwnerContracts] = useState([])
-    const [marketStats, setMarketStats] = useState(null)
+    const [stats, setStats] = useState(null)
+    const [viewDays, setViewDays] = useState([])
+    const [modal, setModal] = useState(null) // 'edit' | 'duplicate' | 'delete'
+    const [busy, setBusy] = useState(false)
+    const [actionError, setActionError] = useState('')
 
-    useEffect(() => {
-        let cancelled = false
-
-        const load = async () => {
-            if (!property?.property_id) {
-                setLoading(false)
-                return
-            }
-
-            setLoading(true)
-            setLoadError('')
-
-            const { data, error } = await supabase
-                .from('add_business')
-                .select(`*, ${PROPERTY_PHOTO_EMBED}, ${PROPERTY_SERVICE_NAMES_EMBED}, ${OWNER_EMBED}`)
-                .eq('property_id', property.property_id)
-                .single()
-
-            if (cancelled) return
-
-            if (error || !data) {
-                setLoadError("We couldn't load this property. It may have been removed.")
-                setLoading(false)
-                return
-            }
-
-            setDetail(withServiceNames(withCoverPhoto(data)))
+    const load = useCallback(async () => {
+        if (!property?.property_id) {
             setLoading(false)
+            return
         }
+        const embed = isOwnerView ? PROPERTY_SERVICES_FULL_EMBED : PROPERTY_SERVICE_NAMES_EMBED
+        const { data, error } = await supabase
+            .from('add_business')
+            .select(`*, ${PROPERTY_PHOTO_EMBED}, ${embed}, ${OWNER_EMBED}`)
+            .eq('property_id', property.property_id)
+            .single()
+        if (error || !data) {
+            setLoadError("We couldn't load this property. It may have been removed.")
+            setLoading(false)
+            return
+        }
+        setDetail(isOwnerView ? withServices(withCoverPhoto(data)) : withServiceNames(withCoverPhoto(data)))
+        setLoading(false)
+    }, [property?.property_id, isOwnerView])
 
+    useEffect(() => {
+        setLoading(true)
+        setLoadError('')
+        setTab('overview')
         load()
-
-        return () => {
-            cancelled = true
-        }
-    }, [property?.property_id])
-
-    useEffect(() => {
-        let cancelled = false
-
-        const checkExistingRequest = async () => {
-            if (!isBusiness || !user?.id || !detail?.property_id) return
-
-            const { data: userRow, error: userError } = await supabase
-                .from('users')
-                .select('dui')
-                .eq('id_supabase_auth', user.id)
-                .single()
-
-            if (cancelled) return
-            if (userError || !userRow?.dui) {
-                setRequestError(
-                    "We couldn't find your account record (DUI), so you can't request a contract yet. Please contact support."
-                )
-                return
-            }
-
-            setTenantDui(userRow.dui)
-
-            const { data: existing, error: existingError } = await supabase
-                .from('contract')
-                .select('contract_id, status')
-                .eq('property_id', detail.property_id)
-                .eq('tenant_dui', userRow.dui)
-                .in('status', ['Pending', 'Offered'])
-
-            if (cancelled || existingError) return
-
-            setOpenRequest(existing?.some((c) => c.status === 'Offered') ? 'Offered' : existing?.length ? 'Pending' : null)
-        }
-
-        checkExistingRequest()
-
-        return () => {
-            cancelled = true
-        }
-    }, [isBusiness, user?.id, detail?.property_id])
-
-    useEffect(() => {
-        let cancelled = false
-
-        const checkSaved = async () => {
-            if (!isBusiness || !user?.id || !detail?.property_id) return
-
-            const { data } = await supabase
-                .from('saved_properties')
-                .select('id')
-                .eq('user_auth_id', user.id)
-                .eq('property_id', detail.property_id)
-                .maybeSingle()
-
-            if (!cancelled) setSaved(Boolean(data))
-        }
-
-        checkSaved()
-
-        return () => {
-            cancelled = true
-        }
-    }, [isBusiness, user?.id, detail?.property_id])
-
-    useEffect(() => {
-        setPhotoIndex(0)
         window.scrollTo({ top: 0 })
-    }, [detail?.property_id])
-
-    // Count a business's visit (once a day; owners see only totals) and load
-    // the price comparison.
-    useEffect(() => {
-        if (!isBusiness || !detail?.property_id) return
-        supabase.rpc('record_property_view', { p_property_id: detail.property_id }).then(() => {})
-    }, [isBusiness, detail?.property_id])
+    }, [load])
 
     useEffect(() => {
         let cancelled = false
-        loadMarketStats().then((stats) => {
-            if (!cancelled) setMarketStats(stats)
-        })
+        loadMarketStats().then((m) => !cancelled && setMarketStats(m))
         return () => {
             cancelled = true
         }
     }, [])
 
+    // ---------- Business data ----------
+    useEffect(() => {
+        let cancelled = false
+        if (!isBusiness || !user?.id || !detail?.property_id) return undefined
+
+        const run = async () => {
+            supabase.rpc('record_property_view', { p_property_id: detail.property_id }).then(() => {})
+
+            const [{ data: userRow }, { data: savedRow }] = await Promise.all([
+                supabase.from('users').select('dui').eq('id_supabase_auth', user.id).single(),
+                supabase.from('saved_properties').select('id').eq('user_auth_id', user.id).eq('property_id', detail.property_id).maybeSingle(),
+            ])
+            if (cancelled) return
+            setSaved(Boolean(savedRow))
+            if (!userRow?.dui) {
+                setRequestError("We couldn't find your account record (DUI), so you can't request a contract yet. Please contact support.")
+                return
+            }
+            setTenantDui(userRow.dui)
+            const { data: existing } = await supabase
+                .from('contract')
+                .select('status')
+                .eq('property_id', detail.property_id)
+                .eq('tenant_dui', userRow.dui)
+                .in('status', ['Pending', 'Offered', 'Active'])
+            if (cancelled) return
+            const statuses = (existing || []).map((c) => c.status)
+            setOpenRequest(['Active', 'Offered', 'Pending'].find((s) => statuses.includes(s)) || null)
+        }
+        run()
+        return () => {
+            cancelled = true
+        }
+    }, [isBusiness, user?.id, detail?.property_id])
+
     // Other listed spaces of the same type or in the same municipality.
     useEffect(() => {
         let cancelled = false
         if (!isBusiness || !detail?.property_id) return undefined
-        const load = async () => {
-            const filters = [`property_type.eq.${JSON.stringify(detail.property_type)}`]
-            if (detail.municipality) filters.push(`municipality.eq.${JSON.stringify(detail.municipality)}`)
-            const { data } = await supabase
-                .from('add_business')
-                .select(`*, ${PROPERTY_PHOTO_EMBED}, ${PROPERTY_SERVICE_NAMES_EMBED}`)
-                .eq('availability', 'Available')
-                .neq('property_id', detail.property_id)
-                .or(filters.join(','))
-                .order('registration_date', { ascending: false })
-                .limit(12)
-            if (cancelled) return
-            const rows = (data || []).map((r) => withServiceNames(withCoverPhoto(r)))
-            // Same type and same municipality first.
-            const score = (r) => (r.property_type === detail.property_type ? 2 : 0) + (r.municipality === detail.municipality ? 1 : 0)
-            setSimilar(rows.sort((a, b) => score(b) - score(a)).slice(0, 3))
-        }
-        load()
+        const filters = [`property_type.eq.${JSON.stringify(detail.property_type)}`]
+        if (detail.municipality) filters.push(`municipality.eq.${JSON.stringify(detail.municipality)}`)
+        supabase
+            .from('add_business')
+            .select(`*, ${PROPERTY_PHOTO_EMBED}, ${PROPERTY_SERVICE_NAMES_EMBED}`)
+            .eq('availability', 'Available')
+            .neq('property_id', detail.property_id)
+            .or(filters.join(','))
+            .order('registration_date', { ascending: false })
+            .limit(12)
+            .then(({ data }) => {
+                if (cancelled) return
+                const rows = (data || []).map((r) => withServiceNames(withCoverPhoto(r)))
+                const score = (r) => (r.property_type === detail.property_type ? 2 : 0) + (r.municipality === detail.municipality ? 1 : 0)
+                setSimilar(rows.sort((a, b) => score(b) - score(a)).slice(0, 3))
+            })
         return () => {
             cancelled = true
         }
     }, [isBusiness, detail?.property_id, detail?.property_type, detail?.municipality])
 
-    // Owner looking at their own space: who leases it or who asked for it.
+    // ---------- Owner data ----------
+    const loadOwnerData = useCallback(async () => {
+        if (!isOwnerView || !property?.property_id) return
+        const [{ data: contracts }, { data: statRows }, { data: days }, { data: me }] = await Promise.all([
+            supabase
+                .from('contract')
+                .select('contract_id, status, end_date, closed_at, users!contract_tenant_dui_fkey(first_name,last_name)')
+                .eq('property_id', property.property_id),
+            supabase.rpc('owner_listing_stats'),
+            supabase.rpc('owner_property_views', { p_property_id: property.property_id }),
+            user?.id ? supabase.from('users').select('dui').eq('id_supabase_auth', user.id).single() : Promise.resolve({ data: null }),
+        ])
+        setOwnerContracts(contracts || [])
+        setStats((statRows || []).find((r) => r.property_id === property.property_id) || null)
+        setViewDays(days || [])
+        if (me?.dui) setOwnerDui(me.dui)
+    }, [isOwnerView, property?.property_id, user?.id])
+
     useEffect(() => {
-        let cancelled = false
-        if (!isOwnerView || !detail?.property_id) return undefined
-        supabase
-            .from('contract')
-            .select('contract_id, status, end_date, requested_at, users!contract_tenant_dui_fkey(first_name,last_name)')
-            .eq('property_id', detail.property_id)
-            .in('status', ['Active', 'Offered', 'Pending'])
-            .then(({ data }) => {
-                if (!cancelled) setOwnerContracts(data || [])
-            })
-        return () => {
-            cancelled = true
-        }
-    }, [isOwnerView, detail?.property_id])
+        loadOwnerData()
+    }, [loadOwnerData])
 
+    // ---------- Actions ----------
     const handleRequestContract = async () => {
-        if (!tenantDui || !detail) return
-        if (detail.availability && detail.availability !== 'Available') return
-
+        if (!tenantDui || !detail || detail.availability !== 'Available') return
         setRequesting(true)
         setRequestError('')
         setRequestSuccess(false)
-
         const { data, error } = await supabase
             .from('contract')
             .insert({
@@ -244,20 +249,11 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 end_date: null,
             })
             .select()
-
         setRequesting(false)
-
-        if (error) {
-            setRequestError(describeSupabaseError(error))
+        if (error || !data?.length) {
+            setRequestError(error ? describeSupabaseError(error) : 'The request could not be sent.')
             return
         }
-        if (!data || data.length === 0) {
-            setRequestError(
-                "The request could not be sent. This is usually caused by a permissions (row-level security) rule blocking it."
-            )
-            return
-        }
-
         createNotification({
             recipientDui: detail.owner_id,
             senderDui: tenantDui,
@@ -266,39 +262,43 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             description: 'A business requested to lease this property.',
             contractId: data[0].contract_id,
         })
-
         setRequestSuccess(true)
         setOpenRequest('Pending')
     }
 
-    const handleToggleSave = async () => {
-        if (!user?.id || !detail?.property_id || savingFavorite) return
-
-        setSavingFavorite(true)
-
-        if (saved) {
-            const { error } = await supabase
-                .from('saved_properties')
-                .delete()
-                .eq('user_auth_id', user.id)
-                .eq('property_id', detail.property_id)
-            if (!error) setSaved(false)
-        } else {
-            const { error } = await supabase
-                .from('saved_properties')
-                .insert({ user_auth_id: user.id, property_id: detail.property_id })
-            if (!error) setSaved(true)
-        }
-
-        setSavingFavorite(false)
+    const toggleSave = async () => {
+        if (!user?.id || !detail) return
+        const next = !saved
+        setSaved(next)
+        if (!(await persistSaved(user.id, detail.property_id, next))) setSaved(!next)
     }
 
-    const handleAskRony = () => {
-        if (!detail || !onAskRony) return
-        onAskRony({
-            text: `Is "${detail.property_name}" a good fit for my business?`,
-            property: toAdvisorPropertyCard(detail),
-        })
+    const askRony = (text) => onAskRony?.(text ? { text } : { text: `Is "${detail.property_name}" a good fit for my business?`, property: toAdvisorPropertyCard(detail) })
+
+    const togglePause = async () => {
+        setBusy(true)
+        setActionError('')
+        const next = detail.availability === 'Reserved' ? 'Available' : 'Reserved'
+        const { data, error } = await supabase.from('add_business').update({ availability: next }).eq('property_id', detail.property_id).select('availability')
+        setBusy(false)
+        if (error || !data?.length) {
+            setActionError(error ? describeSupabaseError(error) : 'The listing could not be updated.')
+            return
+        }
+        setDetail((d) => ({ ...d, availability: next }))
+    }
+
+    const handleDelete = async () => {
+        setBusy(true)
+        setActionError('')
+        const { data, error } = await supabase.from('add_business').delete().eq('property_id', detail.property_id).select()
+        setBusy(false)
+        setModal(null)
+        if (error || !data?.length) {
+            setActionError(error ? describeSupabaseError(error) : 'The property could not be deleted.')
+            return
+        }
+        onBack()
     }
 
     if (!property) return null
@@ -325,338 +325,427 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         )
     }
 
-    const typeIcon = TYPE_ICON[detail.property_type] || 'bi-building'
-    const availabilityClass = AVAILABILITY_CLASS[detail.availability] || 'available'
-    const locationText = [detail.municipality, detail.department].filter(Boolean).join(', ')
-    const ownerName = [detail.users?.first_name, detail.users?.last_name].filter(Boolean).join(' ')
-    const photos = detail.photos || (detail.photo_url ? [{ photo_url: detail.photo_url }] : [])
     const area = areaOf(detail)
     const insight = priceInsight(detail, marketStats)
-    const ownerStatus = LISTING_STATUS[detail.availability] || LISTING_STATUS.Available
-    const activeLease = ownerContracts.find((c) => c.status === 'Active')
-    const offer = ownerContracts.find((c) => c.status === 'Offered')
-    const requests = ownerContracts.filter((c) => c.status === 'Pending')
-    const listedSince = detail.registration_date
-        ? new Date(detail.registration_date).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-        : null
+    const ownerName = personName(detail.users)
+    const status = LISTING_STATUS[detail.availability] || LISTING_STATUS.Available
 
-    return (
-        <div className="ns-detail-page">
+    const header = (
+        <>
             <button type="button" className="ns-detail-back" onClick={onBack}>
                 <i className="bi bi-arrow-left"></i> {backLabel}
             </button>
 
-            <div className="ns-gallery">
-                <div className="ns-detail-hero">
-                    {photos.length > 0 ? (
-                        <img src={photos[photoIndex]?.photo_url} alt={`${detail.property_name}, photo ${photoIndex + 1}`} />
-                    ) : (
-                        <div className="ns-detail-hero-placeholder">
-                            <i className={`bi ${typeIcon}`}></i>
-                        </div>
-                    )}
-                    {detail.availability && (
-                        <span className={`ns-prop-availability ${availabilityClass}`}>{detail.availability}</span>
-                    )}
-                    {photos.length > 1 && (
-                        <>
-                            <button
-                                type="button"
-                                className="ns-gallery-nav is-prev"
-                                aria-label="Previous photo"
-                                onClick={() => setPhotoIndex((i) => (i - 1 + photos.length) % photos.length)}
-                            >
-                                <i className="bi bi-chevron-left"></i>
-                            </button>
-                            <button
-                                type="button"
-                                className="ns-gallery-nav is-next"
-                                aria-label="Next photo"
-                                onClick={() => setPhotoIndex((i) => (i + 1) % photos.length)}
-                            >
-                                <i className="bi bi-chevron-right"></i>
-                            </button>
-                            <span className="ns-gallery-count">
-                                {photoIndex + 1} / {photos.length}
-                            </span>
-                        </>
-                    )}
-                    <div className="ns-detail-hero-overlay">
-                        <h1>{detail.property_name}</h1>
+            <PropertyGallery
+                property={detail}
+                badge={
+                    isOwnerView ? (
+                        <span className={`ns-own-badge tone-${status.tone} ns-pg-badge`}>
+                            <i className={`bi ${status.icon}`}></i> {status.label}
+                        </span>
+                    ) : null
+                }
+            />
+
+            <div className="ns-pd-head">
+                <div className="ns-pd-title">
+                    <span className="ns-pd-type">
+                        <i className={`bi ${typeIcon(detail.property_type)}`}></i> {detail.property_type}
+                    </span>
+                    <h1>{detail.property_name}</h1>
+                    <p>
+                        <i className="bi bi-geo-alt"></i> {locationOf(detail) || 'Location on request'}
+                    </p>
+                </div>
+                <div className="ns-pd-facts">
+                    <div>
+                        <strong>{detail.monthly_rent != null ? money(detail.monthly_rent) : '—'}</strong>
+                        <small>per month</small>
+                    </div>
+                    <div>
+                        <strong>{area ? `${area} m²` : '—'}</strong>
+                        <small>
+                            {detail.business_size_width} × {detail.business_size_length} m
+                        </small>
+                    </div>
+                    <div>
+                        <strong>{insight ? formatPpm(insight.ppm) : '—'}</strong>
+                        <small>per m²</small>
+                    </div>
+                    <div>
+                        <strong>{detail.service_names?.length || 0}</strong>
+                        <small>amenities</small>
                     </div>
                 </div>
-                {photos.length > 1 && (
-                    <div className="ns-gallery-thumbs">
-                        {photos.map((ph, i) => (
-                            <button
-                                type="button"
-                                key={ph.photo_id || ph.photo_url}
-                                className={i === photoIndex ? 'active' : ''}
-                                onClick={() => setPhotoIndex(i)}
-                                aria-label={`Photo ${i + 1}`}
-                            >
-                                <img src={ph.photo_url} alt="" />
-                            </button>
-                        ))}
-                    </div>
-                )}
             </div>
+        </>
+    )
 
-            <div className="ns-detail-grid">
-                <div className="ns-detail-main">
-                    <div className="ns-detail-card">
-                        <h3>About this space</h3>
-                        <p className="ns-detail-desc">
-                            {detail.description ||
-                                'A commercial space ready for your business. Ask Rony whether it fits what you need, or request the digital contract through NextSpace.'}
-                        </p>
-                    </div>
-
-                    <div className="ns-detail-card">
-                        <h3>Space Information</h3>
-                        <div className="ns-detail-info-grid">
-                            <div className="ns-detail-info-item">
-                                <i className={`bi ${typeIcon}`}></i>
-                                <span>{detail.property_type}</span>
-                            </div>
-                            <div className="ns-detail-info-item">
-                                <i className="bi bi-arrows-angle-expand"></i>
-                                <span>{detail.business_size_width} × {detail.business_size_length} m</span>
-                            </div>
-                            <div className="ns-detail-info-item">
-                                <i className="bi bi-calendar2-check"></i>
-                                <span>{detail.availability}</span>
-                            </div>
-                            <div className="ns-detail-info-item">
-                                <i className="bi bi-geo-alt"></i>
-                                <span>{locationText || 'Location on request'}</span>
-                            </div>
-                            <div className="ns-detail-info-item">
-                                <i className="bi bi-calendar3"></i>
-                                <span>{listedSince ? `Listed ${listedSince}` : 'Recently listed'}</span>
-                            </div>
-                            <div className="ns-detail-info-item">
-                                <i className="bi bi-bounding-box"></i>
-                                <span>{area ? `${area} m² in total` : 'Size on request'}</span>
-                            </div>
-                        </div>
-                        {detail.address && (
-                            <p className="ns-detail-address">
-                                <i className="bi bi-signpost"></i> {detail.address}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="ns-detail-card">
-                        <h3>Amenities</h3>
-                        {detail.service_names?.length > 0 ? (
-                            <ul className="ns-amenity-list">
-                                {detail.service_names.map((name) => (
-                                    <li key={name}>
-                                        <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i> {name}
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p className="ns-pay-muted mb-0">The owner hasn't listed amenities for this space.</p>
-                        )}
-                    </div>
-
-                    {isBusiness && (
-                        <div className="ns-detail-card">
-                            <h3>Property Owner</h3>
+    // ===================== Business view =====================
+    if (!isOwnerView) {
+        return (
+            <div className="ns-detail-page">
+                {header}
+                <div className="ns-pd-grid">
+                    <div className="ns-pd-main">
+                        <ListingContent detail={detail} />
+                        <section className="ns-pd-section">
+                            <h3>Owner</h3>
                             <div className="ns-detail-owner">
-                                <span className="ns-detail-owner-avatar">
-                                    {(ownerName[0] || 'O').toUpperCase()}
-                                </span>
+                                <span className="ns-detail-owner-avatar">{(ownerName[0] || 'O').toUpperCase()}</span>
                                 <div>
-                                    <div className="ns-detail-owner-name">{ownerName || 'Property owner'}</div>
-                                    <div className="ns-detail-owner-label">Gets your contract request through NextSpace</div>
+                                    <div className="ns-detail-owner-name">{ownerName}</div>
+                                    <div className="ns-detail-owner-label">
+                                        {listedAgo(detail.registration_date) || 'On NextSpace'} · answers requests in Contracts
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="ns-detail-side-col">
-                {isOwnerView && (
-                    <aside className="ns-detail-side ns-owner-panel">
-                        <h3 className="ns-detail-side-title">Your listing</h3>
-                        <span className={`ns-own-badge tone-${ownerStatus.tone} is-inline`}>
-                            <i className={`bi ${ownerStatus.icon}`}></i> {ownerStatus.label}
-                        </span>
-                        {activeLease ? (
-                            <p className="ns-owner-panel-line">
-                                Leased to <strong>{personName(activeLease.users)}</strong> until{' '}
-                                {formatDueDate(activeLease.end_date)}.
-                            </p>
-                        ) : offer ? (
-                            <p className="ns-owner-panel-line">
-                                Offer sent to <strong>{personName(offer.users)}</strong>, waiting for their signature.
-                            </p>
-                        ) : requests.length > 0 ? (
-                            <p className="ns-owner-panel-line">
-                                <strong>
-                                    {requests.length} {requests.length === 1 ? 'business wants' : 'businesses want'}
-                                </strong>{' '}
-                                to lease this space.
-                            </p>
-                        ) : (
-                            <p className="ns-owner-panel-line">
-                                {detail.availability === 'Reserved'
-                                    ? 'Paused: businesses can’t see or request it.'
-                                    : 'Listed and waiting for requests.'}
-                            </p>
-                        )}
-                        <div className="ns-owner-panel-actions">
-                            {(activeLease || offer || requests.length > 0) && onNavigate && (
-                                <button
-                                    type="button"
-                                    className="ns-filled-btn"
-                                    onClick={() =>
-                                        onNavigate('contracts', {
-                                            contractId: (activeLease || offer || (requests.length === 1 ? requests[0] : null))?.contract_id ?? null,
-                                        })
-                                    }
-                                >
-                                    <i className="bi bi-file-earmark-text"></i>{' '}
-                                    {activeLease ? 'Open contract' : offer ? 'Open offer' : 'Answer requests'}
-                                </button>
-                            )}
-                            {activeLease && onNavigate && (
-                                <button
-                                    type="button"
-                                    className="ns-outline-btn"
-                                    onClick={() => onNavigate('payments', { contractId: activeLease.contract_id })}
-                                >
-                                    <i className="bi bi-credit-card"></i> Rent in Payments
-                                </button>
-                            )}
-                        </div>
-                        <p className="ns-owner-panel-note">
-                            <i className="bi bi-eye"></i> The rest of this page is what businesses see
-                            {detail.monthly_rent != null ? ` at ${money(detail.monthly_rent)}/month` : ''}. Edit it from My
-                            Properties.
-                        </p>
-                    </aside>
-                )}
-                {isBusiness && (
-                <aside className="ns-detail-side">
-                    <h3 className="ns-detail-side-title">Rental Summary</h3>
-
-                    <div className="ns-detail-summary-row">
-                        <span>Monthly Rent</span>
-                        <strong>
-                            {detail.monthly_rent != null ? `$${Number(detail.monthly_rent).toLocaleString()}` : 'Contact for price'}
-                        </strong>
-                    </div>
-                    {insight && (
-                        <div className="ns-detail-price-insight">
-                            <span className={`ns-price-tag tone-${insight.tone}`}>{insight.label}</span>
-                            <small>
-                                {formatPpm(insight.ppm)} here vs {formatPpm(insight.median)} for {insight.scope}
-                            </small>
-                        </div>
-                    )}
-                    <div className="ns-detail-summary-row">
-                        <span>Property Type</span>
-                        <strong>{detail.property_type}</strong>
-                    </div>
-                    <div className="ns-detail-summary-row">
-                        <span>Availability</span>
-                        <strong>{detail.availability}</strong>
-                    </div>
-                    <div className="ns-detail-summary-row">
-                        <span>Size</span>
-                        <strong>{detail.business_size_width} × {detail.business_size_length} m</strong>
+                        </section>
                     </div>
 
-                    {isBusiness && (
-                        <>
+                    <aside className="ns-pd-side">
+                        <div className="ns-pd-card">
+                            <div className="ns-pd-price">
+                                {detail.monthly_rent != null ? (
+                                    <>
+                                        {money(detail.monthly_rent)}
+                                        <small>/month</small>
+                                    </>
+                                ) : (
+                                    'Price on request'
+                                )}
+                            </div>
+                            <PriceMarketBar insight={insight} />
+
                             {requestError && (
-                                <div className="alert alert-danger py-2 mt-3" role="alert">
+                                <div className="alert alert-danger py-2 mt-2 mb-0" role="alert">
                                     {requestError}
                                 </div>
                             )}
                             {requestSuccess && (
-                                <div className="alert alert-success py-2 mt-3" role="alert">
-                                    Your contract request was sent to the owner.
+                                <div className="alert alert-success py-2 mt-2 mb-0" role="status">
+                                    Request sent. The owner answers in Contracts.
                                 </div>
                             )}
 
-                            {detail.monthly_rent == null ? (
-                                <p className="ns-pay-muted mt-3 mb-0">
-                                    This property doesn't have a rent price set yet.
-                                </p>
-                            ) : openRequest === 'Offered' ? (
-                                <p className="ns-pay-muted mt-3 mb-0">
-                                    <i className="bi bi-pen"></i> The owner sent you a lease offer for this space. Review and
-                                    sign it in Contracts.
-                                </p>
-                            ) : openRequest ? (
-                                <button type="button" className="ns-submit-btn mt-3" disabled>
-                                    <i className="bi bi-file-earmark-check"></i> Request pending
+                            {openRequest === 'Active' ? (
+                                <button type="button" className="ns-submit-btn mt-3" onClick={() => onNavigate?.('contracts')}>
+                                    <i className="bi bi-key"></i> You lease this space
                                 </button>
-                            ) : detail.availability && detail.availability !== 'Available' ? (
-                                <p className="ns-pay-muted mt-3 mb-0">
-                                    This space is {detail.availability.toLowerCase()} right now, so it can't take new
-                                    contract requests.
-                                </p>
+                            ) : openRequest === 'Offered' ? (
+                                <button type="button" className="ns-submit-btn mt-3" onClick={() => onNavigate?.('contracts')}>
+                                    <i className="bi bi-pen"></i> Review the owner's offer
+                                </button>
+                            ) : openRequest === 'Pending' ? (
+                                <button type="button" className="ns-submit-btn mt-3" disabled>
+                                    <i className="bi bi-hourglass-split"></i> Request sent · waiting for the owner
+                                </button>
+                            ) : detail.availability !== 'Available' ? (
+                                <p className="ns-pay-muted mt-3 mb-0">This space isn't taking requests right now.</p>
+                            ) : detail.monthly_rent == null ? (
+                                <p className="ns-pay-muted mt-3 mb-0">This space has no rent set yet, so it can't be requested.</p>
                             ) : (
-                                <button
-                                    type="button" className="ns-submit-btn mt-3"
-                                    onClick={handleRequestContract} disabled={requesting || !tenantDui}
-                                >
-                                    <i className="bi bi-file-earmark-text"></i> {requesting ? 'Sending...' : 'Request Contract'}
+                                <button type="button" className="ns-submit-btn mt-3" onClick={handleRequestContract} disabled={requesting || !tenantDui}>
+                                    <i className="bi bi-file-earmark-text"></i> {requesting ? 'Sending...' : 'Request lease'}
                                 </button>
                             )}
 
-                            <p className="ns-detail-protect-note">
-                                <i className="bi bi-shield-check"></i> Contracts are managed and tracked digitally through
-                                NextSpace, so you and the owner always have a clear record.
+                            <div className="ns-pd-card-actions">
+                                <button type="button" className={saved ? 'is-on' : ''} onClick={toggleSave} aria-pressed={saved}>
+                                    <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i> {saved ? 'Saved' : 'Save'}
+                                </button>
+                                {onAskRony && (
+                                    <button type="button" onClick={() => askRony()}>
+                                        <i className="bi bi-stars"></i> Is it a fit? Ask Rony
+                                    </button>
+                                )}
+                            </div>
+                            <p className="ns-pd-note">
+                                <i className="bi bi-shield-check"></i> You sign the lease digitally and pay rent in NextSpace.
                             </p>
-                        </>
-                    )}
-
-                    {isBusiness && (
-                        <div className="ns-detail-actions-row">
-                            <button
-                                type="button"
-                                className={`ns-detail-action-link ${saved ? 'active' : ''}`}
-                                onClick={handleToggleSave}
-                                disabled={savingFavorite}
-                            >
-                                <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i> {saved ? 'Saved' : 'Save'}
-                            </button>
                         </div>
-                    )}
-                </aside>
+                    </aside>
+                </div>
+
+                {similar.length > 0 && (
+                    <section className="ns-similar">
+                        <h2>Similar spaces</h2>
+                        <div className="ns-mk-grid">
+                            {similar.map((p) => (
+                                <PropertyCard key={p.property_id} property={p} onOpen={onViewProperty} insight={priceInsight(p, marketStats)} />
+                            ))}
+                        </div>
+                    </section>
                 )}
+            </div>
+        )
+    }
 
-                {isBusiness && (
-                    <div className="ns-detail-ai-panel">
-                        <h4>
-                            <i className="bi bi-lightbulb"></i> Is this space for you?
-                        </h4>
-                        <p>Ask Rony, our AI advisor, whether this space fits what you're looking for.</p>
+    // ===================== Owner view =====================
+    const active = ownerContracts.find((c) => c.status === 'Active')
+    const offer = ownerContracts.find((c) => c.status === 'Offered')
+    const requests = ownerContracts.filter((c) => c.status === 'Pending')
+    const hasHistory = ownerContracts.length > 0
+    const lastClosed = ownerContracts.map((c) => c.closed_at).filter(Boolean).sort().pop()
+    const vacantDays = active ? null : daysSince(lastClosed || detail.registration_date)
+    const missed = !active && detail.monthly_rent != null && vacantDays > 0 ? Math.round((Number(detail.monthly_rent) / 30) * vacantDays) : 0
+    const checklist = listingChecklist(detail)
+    const score = listingScore(detail)
 
-                        <button type="button" className="ns-detail-ai-btn" onClick={handleAskRony}>
-                            <i className="bi bi-stars"></i> Analyze with Rony
+    return (
+        <div className="ns-detail-page">
+            {header}
+
+            {actionError && (
+                <div className="alert alert-danger d-flex justify-content-between align-items-center gap-2 py-2" role="alert">
+                    <span>{actionError}</span>
+                    <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setActionError('')} />
+                </div>
+            )}
+
+            <div className="ns-pd-owner-bar">
+                <div className="ns-pd-tabs" role="tablist" aria-label="Manage this space">
+                    {[
+                        { id: 'overview', label: 'Overview', icon: 'bi-house' },
+                        { id: 'performance', label: 'Performance', icon: 'bi-graph-up' },
+                        { id: 'listing', label: 'Listing', icon: 'bi-card-text', badge: score < 100 ? `${score}%` : null },
+                    ].map((t) => (
+                        <button type="button" key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
+                            <i className={`bi ${t.icon}`}></i> {t.label}
+                            {t.badge && <em>{t.badge}</em>}
                         </button>
-                    </div>
-                )}
+                    ))}
+                </div>
+                <div className="ns-pd-owner-actions">
+                    <button type="button" className="ns-filled-btn" onClick={() => setModal('edit')} disabled={!ownerDui}>
+                        <i className="bi bi-pencil"></i> Edit
+                    </button>
+                    <button type="button" className="ns-outline-btn" onClick={() => setModal('duplicate')} disabled={!ownerDui}>
+                        <i className="bi bi-copy"></i> Duplicate
+                    </button>
+                    {!active && (
+                        <button type="button" className="ns-outline-btn" onClick={togglePause} disabled={busy}>
+                            <i className={`bi ${detail.availability === 'Reserved' ? 'bi-play-circle' : 'bi-pause-circle'}`}></i>{' '}
+                            {detail.availability === 'Reserved' ? 'Resume' : 'Pause'}
+                        </button>
+                    )}
+                    {!hasHistory && (
+                        <button type="button" className="ns-outline-btn is-danger" onClick={() => setModal('delete')} aria-label="Delete listing" title="Delete listing">
+                            <i className="bi bi-trash"></i>
+                        </button>
+                    )}
                 </div>
             </div>
 
-            {isBusiness && similar.length > 0 && (
-                <section className="ns-similar">
-                    <h2>Similar spaces</h2>
-                    <div className="ns-mk-grid">
-                        {similar.map((p) => (
-                            <PropertyCard key={p.property_id} property={p} onOpen={onViewProperty} />
-                        ))}
+            {tab === 'overview' && (
+                <div className="ns-pd-panels">
+                    <section className="ns-pd-section">
+                        <h3>Right now</h3>
+                        {active ? (
+                            <div className="ns-pd-now tone-info">
+                                <i className="bi bi-key-fill"></i>
+                                <div>
+                                    <strong>Leased to {personName(active.users)}</strong>
+                                    <span>Until {formatDueDate(active.end_date)}</span>
+                                </div>
+                                <div className="ns-pd-now-actions">
+                                    <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('contracts', { contractId: active.contract_id })}>
+                                        Contract
+                                    </button>
+                                    <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('payments', { contractId: active.contract_id })}>
+                                        Rent
+                                    </button>
+                                </div>
+                            </div>
+                        ) : offer ? (
+                            <div className="ns-pd-now tone-warning">
+                                <i className="bi bi-pen-fill"></i>
+                                <div>
+                                    <strong>Offer sent to {personName(offer.users)}</strong>
+                                    <span>Waiting for their signature</span>
+                                </div>
+                                <div className="ns-pd-now-actions">
+                                    <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('contracts', { contractId: offer.contract_id })}>
+                                        Open offer
+                                    </button>
+                                </div>
+                            </div>
+                        ) : requests.length > 0 ? (
+                            <div className="ns-pd-now tone-hot">
+                                <i className="bi bi-inbox-fill"></i>
+                                <div>
+                                    <strong>
+                                        {requests.length} {requests.length === 1 ? 'business wants' : 'businesses want'} this space
+                                    </strong>
+                                    <span>{requests.map((r) => personName(r.users)).join(', ')}</span>
+                                </div>
+                                <div className="ns-pd-now-actions">
+                                    <button
+                                        type="button"
+                                        className="ns-filled-btn"
+                                        onClick={() => onNavigate?.('contracts', { contractId: requests.length === 1 ? requests[0].contract_id : null })}
+                                    >
+                                        Answer
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="ns-pd-now tone-neutral">
+                                <i className={`bi ${detail.availability === 'Reserved' ? 'bi-pause-circle-fill' : 'bi-broadcast'}`}></i>
+                                <div>
+                                    <strong>{detail.availability === 'Reserved' ? 'Paused' : 'Listed, waiting for requests'}</strong>
+                                    <span>
+                                        {detail.availability === 'Reserved'
+                                            ? 'Hidden from the Marketplace. Resume it to get requests.'
+                                            : `Vacant ${vacantDays === 0 ? 'since today' : `for ${vacantDays} days`}${missed ? ` · ${money(missed)} in rent missed` : ''}`}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </section>
+
+                    <section className="ns-pd-section">
+                        <h3>Interest</h3>
+                        <div className="ns-pd-mini">
+                            <div>
+                                <strong>{stats?.views_30d ?? 0}</strong>
+                                <small>views, last 30 days</small>
+                            </div>
+                            <div>
+                                <strong>{stats?.saves ?? 0}</strong>
+                                <small>saved it</small>
+                            </div>
+                            <div>
+                                <strong>{stats?.requests_total ?? 0}</strong>
+                                <small>requests, all time</small>
+                            </div>
+                        </div>
+                        <button type="button" className="ns-link-btn mt-2" onClick={() => setTab('performance')}>
+                            See performance <i className="bi bi-arrow-right"></i>
+                        </button>
+                    </section>
+                </div>
+            )}
+
+            {tab === 'performance' && (
+                <div className="ns-pd-panels">
+                    <section className="ns-pd-section">
+                        <h3>Views</h3>
+                        <ViewsChart days={viewDays} />
+                        <div className="ns-pd-mini mt-3">
+                            <div>
+                                <strong>{stats?.saves ?? 0}</strong>
+                                <small>businesses saved it</small>
+                            </div>
+                            <div>
+                                <strong>{stats?.requests_total ?? 0}</strong>
+                                <small>lease requests</small>
+                            </div>
+                            <div>
+                                <strong>{stats?.views_total ?? 0}</strong>
+                                <small>views, all time</small>
+                            </div>
+                        </div>
+                        <p className="ns-pd-hint">
+                            {(stats?.views_30d || 0) >= 10 && (stats?.requests_total || 0) === 0
+                                ? 'Businesses look but don’t request: check the price and add photos.'
+                                : (stats?.views_30d || 0) === 0 && !active
+                                  ? 'No views this month. Complete the listing so it shows up in more searches.'
+                                  : 'Each business counts once per day; who viewed stays private.'}
+                        </p>
+                    </section>
+
+                    <section className="ns-pd-section">
+                        <h3>Your price</h3>
+                        {insight ? (
+                            <PriceMarketBar insight={insight} />
+                        ) : (
+                            <p className="ns-pay-muted">Not enough similar spaces on NextSpace to compare yet.</p>
+                        )}
+                        {!active && missed > 0 && (
+                            <p className="ns-pd-missed">
+                                <i className="bi bi-hourglass-split"></i> Vacant {vacantDays} days: {money(missed)} in rent missed.
+                            </p>
+                        )}
+                        {onAskRony && detail.monthly_rent != null && (
+                            <button
+                                type="button"
+                                className="ns-rony-write mt-2"
+                                onClick={() =>
+                                    askRony(
+                                        `What rent should I ask for "${detail.property_name}" (${detail.property_type}, ${area || '?'} m² in ${locationOf(detail) || 'El Salvador'})? It's listed at ${money(detail.monthly_rent)}/month${insight ? ` (${formatPpm(insight.ppm)}; similar spaces go for about ${formatPpm(insight.median)})` : ''}. It had ${stats?.views_30d ?? 0} views this month and ${stats?.requests_total ?? 0} requests in total.`
+                                    )
+                                }
+                            >
+                                <i className="bi bi-stars"></i> Ask Rony for a price
+                            </button>
+                        )}
+                    </section>
+                </div>
+            )}
+
+            {tab === 'listing' && (
+                <div className="ns-pd-grid">
+                    <div className="ns-pd-main">
+                        <p className="ns-pd-preview-note">
+                            <i className="bi bi-eye"></i> This is what businesses read about your space.
+                        </p>
+                        <ListingContent detail={detail} />
                     </div>
-                </section>
+                    <aside className="ns-pd-side">
+                        <div className="ns-pd-card">
+                            <div className="ns-own-quality-head">
+                                <span>Listing quality</span>
+                                <strong className={score === 100 ? 'is-good' : score < 60 ? 'is-bad' : ''}>{score}%</strong>
+                            </div>
+                            <div className="ns-own-quality-track">
+                                <div style={{ width: `${score}%` }} className={score === 100 ? 'is-good' : score < 60 ? 'is-bad' : ''} />
+                            </div>
+                            <ul className="ns-pd-checklist">
+                                {checklist.map((item) => (
+                                    <li key={item.id} className={item.done ? 'is-done' : ''}>
+                                        <i className={`bi ${item.done ? 'bi-check-circle-fill' : 'bi-circle'}`}></i> {item.label}
+                                    </li>
+                                ))}
+                            </ul>
+                            {score < 100 && (
+                                <button type="button" className="ns-submit-btn" onClick={() => setModal('edit')} disabled={!ownerDui}>
+                                    Complete the listing
+                                </button>
+                            )}
+                        </div>
+                    </aside>
+                </div>
+            )}
+
+            {(modal === 'edit' || modal === 'duplicate') && ownerDui && (
+                <NewPropertyModal
+                    property={modal === 'edit' ? detail : null}
+                    template={modal === 'duplicate' ? detail : null}
+                    ownerDui={ownerDui}
+                    onClose={() => setModal(null)}
+                    onSaved={async (savedProperty) => {
+                        setModal(null)
+                        if (modal === 'duplicate' && savedProperty?.property_id) {
+                            onViewProperty?.({ property_id: savedProperty.property_id })
+                            return
+                        }
+                        await load()
+                        await loadOwnerData()
+                    }}
+                />
+            )}
+
+            {modal === 'delete' && (
+                <ConfirmDialog
+                    icon="bi-trash"
+                    title="Delete this property?"
+                    description={`"${detail.property_name}" will be permanently removed from your listings. This can't be undone.`}
+                    confirmLabel={busy ? 'Deleting...' : 'Delete'}
+                    cancelLabel="Cancel"
+                    onConfirm={handleDelete}
+                    onCancel={() => setModal(null)}
+                />
             )}
         </div>
     )
