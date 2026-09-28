@@ -86,6 +86,30 @@ export default function Dashboard() {
         if (user) loadUnreadCount()
     }, [user, section, loadUnreadCount])
 
+    // Red dots in the menu: rent overdue, and lease steps waiting on this
+    // user (an offer to sign for a business, new requests for an owner).
+    // RLS already limits both queries to the user's own leases.
+    const [attention, setAttention] = useState({})
+    const [attentionTick, setAttentionTick] = useState(0)
+    useEffect(() => {
+        if (!user) return undefined
+        let cancelled = false
+        const isOwner = user.user_metadata?.account_type === 'property-owner'
+        Promise.all([
+            supabase.from('payment').select('payment_id', { count: 'exact', head: true }).eq('status', 'Late'),
+            supabase
+                .from('contract')
+                .select('contract_id', { count: 'exact', head: true })
+                .eq('status', isOwner ? 'Pending' : 'Offered'),
+        ]).then(([late, waiting]) => {
+            if (cancelled) return
+            setAttention({ payments: (late.count || 0) > 0, contracts: (waiting.count || 0) > 0 })
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [user, section, attentionTick])
+
     // Live notifications: Realtime only delivers rows this user may read
     // (RLS), so any insert/update here is theirs. Refresh the count and let
     // the open screens reload quietly.
@@ -97,6 +121,7 @@ export default function Dashboard() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, () => {
                 loadUnreadCount()
                 setLiveTick((t) => t + 1)
+                setAttentionTick((t) => t + 1)
             })
             .subscribe()
         return () => {
@@ -266,6 +291,7 @@ export default function Dashboard() {
             search={search}
             onSearchChange={setSearch}
             unreadCount={unreadCount}
+            attention={attention}
             liveTick={liveTick}
             onNotificationsRead={(n) => setUnreadCount((prev) => Math.max(0, prev - n))}
         >
