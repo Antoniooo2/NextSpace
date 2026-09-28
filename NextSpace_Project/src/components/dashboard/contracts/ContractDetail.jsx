@@ -36,6 +36,53 @@ function stamp(ts) {
     })
 }
 
+// The contract's path so far: requested → offer → signed → active → end,
+// with the date of each step reached and the current one highlighted.
+function contractSteps(contract, events, today) {
+    const firstOf = (kind) => events.filter((e) => e.kind === kind).map((e) => e.created_at).sort()[0]
+    const invited = contract.origin === 'invite' || Boolean(firstOf('invited'))
+    const day = (ts) => (ts ? formatDueDate(String(ts).slice(0, 10)) : null)
+    const steps = [
+        { id: 'requested', label: invited ? 'Invited' : 'Requested', date: day(firstOf('invited') || contract.requested_at || firstOf('requested')) },
+        { id: 'offer', label: 'Offer signed by owner', date: day(contract.owner_signed_at || contract.offered_at) },
+        { id: 'signed', label: 'Signed by business', date: day(contract.tenant_signed_at) },
+        {
+            id: 'active',
+            label: contract.start_date && contract.start_date > today ? 'Starts' : 'Active',
+            date: contract.tenant_signed_at ? day(contract.start_date) : null,
+        },
+        {
+            id: 'end',
+            label:
+                contract.status === 'Expired' || contract.status === 'Cancelled'
+                    ? contract.end_reason === 'terminated'
+                        ? 'Ended early'
+                        : 'Ended'
+                    : contract.renewal_count > 0
+                      ? 'Renewed · ends'
+                      : 'Ends',
+            date: contract.tenant_signed_at ? day(contract.end_date) : null,
+        },
+    ]
+
+    if (contract.status === 'Declined' || contract.status === 'Withdrawn') {
+        const reached = contract.offered_at || contract.owner_signed_at ? 2 : 1
+        return [
+            ...steps.slice(0, reached).map((st) => ({ ...st, state: 'done' })),
+            { id: 'stop', label: contract.status === 'Declined' ? 'Declined' : 'Withdrawn', date: day(contract.closed_at), state: 'stopped' },
+        ]
+    }
+
+    const current = {
+        Pending: 1,
+        Offered: 2,
+        Active: contract.start_date && contract.start_date > today ? 3 : 4,
+        Expired: 5,
+        Cancelled: 5,
+    }[contract.status] ?? 0
+    return steps.map((st, i) => ({ ...st, state: i < current ? 'done' : i === current ? 'current' : 'todo' }))
+}
+
 // One lease, shown as the actual contract: status and next step at the top,
 // then parties, key terms, clauses, signatures and history. The buttons shown
 // depend on the status and on who is looking.
@@ -187,78 +234,127 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
         }
     }
 
+    const [openClauses, setOpenClauses] = useState(() => new Set())
+    const steps = contractSteps(contract, events, today)
+    const clauses = hasTerms ? standardClauses(contract) : []
+    // The decision(s) this person has to make are buttons; everything else is a
+    // quiet link next to the "next step" note.
+    const decisions = actions.filter((a) => a.id !== 'terminate')
+    const quiet = [
+        ...(contract.status === 'Active' && onOpenPayments
+            ? [{ id: 'payments', label: 'Rent in Payments', icon: 'bi-credit-card', onClick: () => onOpenPayments(contract.contract_id) }]
+            : []),
+        ...((signed || contract.status === 'Offered') && hasTerms
+            ? [{ id: 'pdf', label: pdfBusy ? 'Preparing...' : 'Download PDF', icon: 'bi-file-earmark-pdf', onClick: downloadPdf, disabled: pdfBusy }]
+            : []),
+        ...(actions.some((a) => a.id === 'terminate')
+            ? [{ id: 'terminate', label: 'Ask to end early', icon: 'bi-box-arrow-right', onClick: () => runAction('terminate') }]
+            : []),
+    ]
     const history = [...events].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
 
     return (
         <>
-            <button type="button" className="ns-detail-back" onClick={onBack}>
-                <i className="bi bi-arrow-left"></i> All contracts
-            </button>
+            <nav className="ns-breadcrumb" aria-label="Breadcrumb">
+                <button type="button" onClick={onBack}>
+                    <i className="bi bi-arrow-left"></i> Contracts
+                </button>
+                <i className="bi bi-chevron-right"></i>
+                <strong>{property.property_name || 'Property'}</strong>
+            </nav>
 
-            <section className="ns-contract-hero">
-                <div className="ns-contract-hero-photo">
-                    {property.photo_url ? <img src={property.photo_url} alt="" /> : <i className="bi bi-shop"></i>}
-                </div>
-                <div className="ns-contract-hero-info">
-                    <div className="ns-contract-hero-title">
-                        <h1>{property.property_name || 'Property'}</h1>
-                        <span className={`ns-contract-status tone-${meta.tone}`}>
-                            <i className={`bi ${meta.icon}`}></i> {meta.label}
-                        </span>
+            <section className="ns-contract-hero ns-contract-hero-v2">
+                <div className="ns-contract-hero-main">
+                    <div className="ns-contract-hero-photo">
+                        {property.photo_url ? <img src={property.photo_url} alt="" /> : <i className="bi bi-shop"></i>}
                     </div>
-                    <p>
-                        Contract #{contract.contract_id}
-                        <span className="ns-pay-dot">•</span>
-                        {isOwner ? `Tenant: ${personName(tenant)}` : `Owner: ${personName(owner)}`}
-                        {hasTerms && (
-                            <>
-                                <span className="ns-pay-dot">•</span>
-                                {money(contract.monthly_rent)}/month
-                            </>
-                        )}
-                    </p>
-                    {contract.status === 'Active' && hasTerms && (
-                        <div className="ns-lease-time">
-                            <div className="ns-pay-progress-track">
-                                <div
-                                    className="ns-pay-progress-fill ns-fill-navy"
-                                    style={{ width: `${Math.round(leaseTimeProgress(contract, today) * 100)}%` }}
-                                />
+                    <div className="ns-contract-hero-info">
+                        <div className="ns-contract-hero-title">
+                            <h1>{property.property_name || 'Property'}</h1>
+                            <span className={`ns-contract-status tone-${meta.tone}`}>
+                                <i className={`bi ${meta.icon}`}></i> {meta.label}
+                            </span>
+                        </div>
+                        <p>
+                            Contract #{contract.contract_id}
+                            <span className="ns-pay-dot">•</span>
+                            {isOwner ? `Tenant: ${personName(tenant)}` : `Owner: ${personName(owner)}`}
+                            {hasTerms && (
+                                <>
+                                    <span className="ns-pay-dot">•</span>
+                                    {money(contract.monthly_rent)}/month
+                                </>
+                            )}
+                        </p>
+                        {contract.status === 'Active' && hasTerms && (
+                            <div className="ns-lease-time">
+                                <div className="ns-pay-progress-track">
+                                    <div
+                                        className="ns-pay-progress-fill ns-fill-navy"
+                                        style={{ width: `${Math.round(leaseTimeProgress(contract, today) * 100)}%` }}
+                                    />
+                                </div>
+                                <span>{left != null && left >= 0 ? `${left} days left` : 'Ending'}</span>
                             </div>
-                            <span>{left != null && left >= 0 ? `${left} days left` : 'Ending'}</span>
+                        )}
+                    </div>
+                    {decisions.length > 0 && (
+                        <div className="ns-contract-hero-actions">
+                            {decisions.map((a) => (
+                                <button
+                                    type="button"
+                                    key={a.id}
+                                    className={a.primary ? 'ns-filled-btn' : 'ns-outline-btn'}
+                                    onClick={() => runAction(a.id)}
+                                >
+                                    <i className={`bi ${a.icon}`}></i> {a.label}
+                                </button>
+                            ))}
                         </div>
                     )}
                 </div>
-                <div className="ns-contract-hero-actions">
-                    {actions.map((a) => (
-                        <button
-                            type="button"
-                            key={a.id}
-                            className={a.primary ? 'ns-filled-btn' : 'ns-outline-btn'}
-                            onClick={() => runAction(a.id)}
-                        >
-                            <i className={`bi ${a.icon}`}></i> {a.label}
-                        </button>
+
+                <ol className="ns-contract-steps" aria-label="Contract progress">
+                    {steps.map((st) => (
+                        <li key={st.id} className={`is-${st.state}`} aria-current={st.state === 'current' ? 'step' : undefined}>
+                            <span className="ns-contract-step-dot">
+                                {st.state === 'done' ? (
+                                    <i className="bi bi-check-lg"></i>
+                                ) : st.state === 'stopped' ? (
+                                    <i className="bi bi-x-lg"></i>
+                                ) : null}
+                            </span>
+                            <strong>{st.label}</strong>
+                            <small>{st.date || (st.state === 'current' ? 'Next step' : '—')}</small>
+                        </li>
                     ))}
-                    {contract.status === 'Active' && onOpenPayments && (
-                        <button type="button" className="ns-outline-btn" onClick={() => onOpenPayments(contract.contract_id)}>
-                            <i className="bi bi-credit-card"></i> Rent in Payments
-                        </button>
-                    )}
-                    {(signed || contract.status === 'Offered') && hasTerms && (
-                        <button type="button" className="ns-outline-btn" onClick={downloadPdf} disabled={pdfBusy}>
-                            <i className="bi bi-file-earmark-pdf"></i> {pdfBusy ? 'Preparing...' : 'Download PDF'}
-                        </button>
-                    )}
-                </div>
+                </ol>
+
+                {(banner || quiet.length > 0) && (
+                    <div className="ns-contract-hero-foot">
+                        {banner ? (
+                            <div className={`ns-contract-banner tone-${banner.tone}`} role="status">
+                                <i
+                                    className={`bi ${banner.tone === 'danger' ? 'bi-exclamation-octagon' : banner.tone === 'warning' ? 'bi-hourglass-split' : 'bi-info-circle'}`}
+                                ></i>
+                                <span>{banner.text}</span>
+                            </div>
+                        ) : (
+                            <span />
+                        )}
+                        {quiet.length > 0 && (
+                            <div className="ns-quiet-actions">
+                                {quiet.map((q) => (
+                                    <button type="button" key={q.id} onClick={q.onClick} disabled={q.disabled}>
+                                        <i className={`bi ${q.icon}`}></i> {q.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
             </section>
 
-            {banner && (
-                <div className={`ns-contract-banner tone-${banner.tone}`} role="status">
-                    <i className={`bi ${banner.tone === 'danger' ? 'bi-exclamation-octagon' : banner.tone === 'warning' ? 'bi-hourglass-split' : 'bi-info-circle'}`}></i>
-                    <span>{banner.text}</span>
-                </div>
-            )}
             {notice && (
                 <div className="alert alert-success d-flex align-items-center justify-content-between gap-2 py-2" role="status">
                     <span>{notice}</span>
@@ -337,13 +433,46 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
 
                     {hasTerms && (
                         <section>
-                            <h4>Clauses</h4>
-                            <ol className="ns-contract-clauses">
-                                {standardClauses(contract).map((c) => (
-                                    <li key={c.title}>
-                                        <strong>{c.title}.</strong> {c.body}
-                                    </li>
-                                ))}
+                            <div className="ns-contract-clauses-head">
+                                <h4>Clauses</h4>
+                                <button
+                                    type="button"
+                                    className="ns-link-btn"
+                                    onClick={() =>
+                                        setOpenClauses((prev) =>
+                                            prev.size === clauses.length ? new Set() : new Set(clauses.map((_, i) => i))
+                                        )
+                                    }
+                                >
+                                    {openClauses.size === clauses.length ? 'Collapse all' : 'Expand all'}
+                                </button>
+                            </div>
+                            <ol className="ns-contract-clauses ns-contract-clauses-accordion">
+                                {clauses.map((c, i) => {
+                                    const open = openClauses.has(i)
+                                    return (
+                                        <li key={c.title} className={open ? 'is-open' : ''}>
+                                            <button
+                                                type="button"
+                                                aria-expanded={open}
+                                                onClick={() =>
+                                                    setOpenClauses((prev) => {
+                                                        const next = new Set(prev)
+                                                        if (next.has(i)) next.delete(i)
+                                                        else next.add(i)
+                                                        return next
+                                                    })
+                                                }
+                                            >
+                                                <span>
+                                                    {i + 1}. {c.title}
+                                                </span>
+                                                <i className={`bi ${open ? 'bi-chevron-up' : 'bi-chevron-down'}`}></i>
+                                            </button>
+                                            {open && <p>{c.body}</p>}
+                                        </li>
+                                    )
+                                })}
                             </ol>
                             {contract.special_clauses && (
                                 <div className="ns-contract-special">

@@ -110,9 +110,13 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
 
     return (
         <>
-            <button type="button" className="ns-detail-back" onClick={onBack} ref={topRef}>
-                <i className="bi bi-arrow-left"></i> All properties
-            </button>
+            <nav className="ns-breadcrumb" aria-label="Breadcrumb">
+                <button type="button" onClick={onBack} ref={topRef}>
+                    <i className="bi bi-arrow-left"></i> Payments
+                </button>
+                <i className="bi bi-chevron-right"></i>
+                <strong>{property.property_name || 'Property'}</strong>
+            </nav>
 
             <section className="ns-lease-hero">
                 <div className="ns-lease-hero-photo">
@@ -149,19 +153,9 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
                             <i className="bi bi-bell"></i> Send reminder
                         </button>
                     )}
-                    {canOfferRenewal && (
-                        <button
-                            type="button"
-                            className={renewal === 'requested' ? 'ns-filled-btn' : 'ns-outline-btn'}
-                            onClick={() => onOpenContract(contract.contract_id)}
-                        >
-                            <i className="bi bi-arrow-repeat"></i>{' '}
-                            {renewal === 'requested' ? 'Answer renewal request' : renewal === 'offered' ? 'Renewal offered' : 'Offer renewal'}
-                        </button>
-                    )}
-                    {onAskRony && (
-                        <button type="button" className="ns-outline-btn" onClick={askRony}>
-                            <i className="bi bi-stars"></i> Ask Rony
+                    {canOfferRenewal && renewal === 'requested' && (
+                        <button type="button" className="ns-filled-btn" onClick={() => onOpenContract(contract.contract_id)}>
+                            <i className="bi bi-arrow-repeat"></i> Answer renewal request
                         </button>
                     )}
                     <ExportMenu
@@ -183,6 +177,23 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
                             },
                         ]}
                     />
+                    <div className="ns-quiet-actions">
+                        {canOfferRenewal && renewal !== 'requested' && (
+                            <button type="button" onClick={() => onOpenContract(contract.contract_id)}>
+                                <i className="bi bi-arrow-repeat"></i> {renewal === 'offered' ? 'Renewal offered' : 'Offer renewal'}
+                            </button>
+                        )}
+                        {onOpenContract && (
+                            <button type="button" onClick={() => onOpenContract(contract.contract_id)}>
+                                <i className="bi bi-file-earmark-text"></i> View contract
+                            </button>
+                        )}
+                        {onAskRony && (
+                            <button type="button" onClick={askRony}>
+                                <i className="bi bi-stars"></i> Ask Rony
+                            </button>
+                        )}
+                    </div>
                 </div>
             </section>
 

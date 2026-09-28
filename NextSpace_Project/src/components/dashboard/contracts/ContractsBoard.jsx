@@ -112,7 +112,7 @@ function boardInsights({ contracts, records, viewer, today }) {
                 label: 'Answer',
             })
         }
-                if (renewal === 'requested' && isOwner) {
+        if (renewal === 'requested' && isOwner) {
             items.push({ tone: 'success', icon: 'bi-arrow-repeat', text: `${personName(c.users)} wants to renew ${name} for ${c.renewal_request_months} more months.`, contractId: c.contract_id, label: 'Answer' })
         }
         if (renewal === 'offered' && !isOwner) {
@@ -154,6 +154,56 @@ function ownerRonyQuestion(requests, records) {
         }`
     })
     return `These businesses requested my spaces. Who should I accept for each space, and why?\n${lines.join('\n')}`
+}
+
+// The lease lifecycle as a strip of steps with how many contracts sit in
+// each, so the flow reads at a glance. Tapping a step scrolls to its list.
+const FLOW_STEPS = {
+    owner: [
+        { id: 'requests', label: 'Requests', icon: 'bi-inbox', hint: 'Answer with an offer' },
+        { id: 'offers', label: 'Awaiting signature', icon: 'bi-pen', hint: 'The business signs' },
+        { id: 'active', label: 'Active', icon: 'bi-check-circle', hint: 'Rent in Payments' },
+        { id: 'ending', label: 'Ending soon', icon: 'bi-arrow-repeat', hint: 'Renew or let it end' },
+        { id: 'closed', label: 'Closed', icon: 'bi-archive', hint: 'History' },
+    ],
+    tenant: [
+        { id: 'requests', label: 'My requests', icon: 'bi-inbox', hint: 'The owner answers' },
+        { id: 'offers', label: 'Offers to sign', icon: 'bi-pen', hint: 'Review and sign' },
+        { id: 'active', label: 'Active', icon: 'bi-check-circle', hint: 'Pay in Payments' },
+        { id: 'ending', label: 'Ending soon', icon: 'bi-arrow-repeat', hint: 'Ask to renew' },
+        { id: 'closed', label: 'Closed', icon: 'bi-archive', hint: 'History' },
+    ],
+}
+
+function ContractFlow({ viewer, grouped, onJump }) {
+    return (
+        <ol className="ns-contract-flow" aria-label="Lease steps">
+            {FLOW_STEPS[viewer].map((step) => {
+                const count = grouped[step.id].length
+                const hot = count > 0 && (step.id === (viewer === 'owner' ? 'requests' : 'offers') || step.id === 'ending')
+                return (
+                    <li key={step.id}>
+                        <button
+                            type="button"
+                            className={`${count === 0 ? 'is-empty' : ''} ${hot ? 'is-hot' : ''}`}
+                            onClick={() => count > 0 && onJump(step.id)}
+                            disabled={count === 0}
+                        >
+                            <span className="ns-contract-flow-icon">
+                                <i className={`bi ${step.icon}`}></i>
+                            </span>
+                            <span className="ns-contract-flow-text">
+                                <strong>
+                                    {step.label} <em>{count}</em>
+                                </strong>
+                                <small>{step.hint}</small>
+                            </span>
+                        </button>
+                    </li>
+                )
+            })}
+        </ol>
+    )
 }
 
 function ContractCard({ contract, viewer, record, onOpen }) {
@@ -388,6 +438,35 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                 </div>
             )}
 
+            {contracts.length > 0 && (
+                <ContractFlow
+                    viewer={viewer}
+                    grouped={grouped}
+                    onJump={(id) => {
+                        if (id === 'closed') setShowClosed(true)
+                        document.getElementById(`ct-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }}
+                />
+            )}
+
+            {contracts.length > 0 && (
+                <RonyInsightCard
+                    title="Rony’s take on your contracts"
+                    insights={insights}
+                    onAction={(action) => setSelectedId(action.contractId)}
+                    onAskRony={
+                        onAskRony
+                            ? () =>
+                                  onAskRony({
+                                      text: isOwner
+                                          ? ownerRonyQuestion(grouped.requests, records)
+                                          : 'Look at my leases and offers: what should I do next?',
+                                  })
+                            : undefined
+                    }
+                />
+            )}
+
             <div className="ns-contract-kpis">
                 <div className={kpis.waiting > 0 ? 'is-hot' : ''}>
                     <small>Waiting for you</small>
@@ -423,24 +502,6 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                 )}
             </div>
 
-            {contracts.length > 0 && (
-                <RonyInsightCard
-                    title="Rony’s take on your contracts"
-                    insights={insights}
-                    onAction={(action) => setSelectedId(action.contractId)}
-                    onAskRony={
-                        onAskRony
-                            ? () =>
-                                  onAskRony({
-                                      text: isOwner
-                                          ? ownerRonyQuestion(grouped.requests, records)
-                                          : 'Look at my leases and offers: what should I do next?',
-                                  })
-                            : undefined
-                    }
-                />
-            )}
-
             {contracts.length === 0 ? (
                 <div className="ns-panel ns-contract-empty">
                     <i className="bi bi-file-earmark-text"></i>
@@ -457,7 +518,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                         const list = grouped[section.id]
                         if (list.length === 0 && (section.id !== 'active' || grouped.ending.length > 0)) return null
                         return (
-                            <section key={section.id} className="ns-contract-section">
+                            <section key={section.id} id={`ct-${section.id}`} className="ns-contract-section">
                                 <h2>
                                     <i className={`bi ${section.icon}`}></i> {section.title}
                                     <span className="ns-contract-count">{list.length}</span>
@@ -482,7 +543,7 @@ export default function ContractsBoard({ user, viewer, initialContractId, onAskR
                     })}
 
                     {grouped.closed.length > 0 && (
-                        <section className="ns-contract-section">
+                        <section id="ct-closed" className="ns-contract-section">
                             <button type="button" className="ns-contract-closed-toggle" onClick={() => setShowClosed((v) => !v)}>
                                 <i className={`bi ${showClosed ? 'bi-chevron-down' : 'bi-chevron-right'}`}></i> Closed
                                 <span className="ns-contract-count">{grouped.closed.length}</span>

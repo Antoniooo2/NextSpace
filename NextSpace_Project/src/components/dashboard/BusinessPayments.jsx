@@ -30,6 +30,7 @@ import ProgressRing from './payments/ProgressRing'
 import { RenewalRequestModal } from './contracts/RenewalModals'
 import { renewalOpen, renewalState } from '../../lib/contracts'
 import RonyInsightCard from './payments/RonyInsightCard'
+import { PageGroup, SectionNav } from './common/PageSections'
 import './payments/payments.css'
 
 const CONTRACT_EMBED = `*, add_business!contract_property_id_fkey(property_name, owner_id, ${PROPERTY_PHOTO_EMBED}, users!add_business_owner_id_fkey(first_name,last_name))`
@@ -468,16 +469,6 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                 </div>
             )}
 
-            <RonyInsightCard
-                insights={insights}
-                onAction={handleInsightAction}
-                onAskRony={
-                    onAskRony
-                        ? () => onAskRony({ text: 'How much do I still owe this year, and when is my next payment due?' })
-                        : undefined
-                }
-            />
-
             {leaseTabs.length > 1 && (
                 <div className="ns-pay-lease-tabs" role="tablist" aria-label="Your leases">
                     {leaseTabs.map(({ contract: c, tone, label }) => (
@@ -510,69 +501,21 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                 </div>
             )}
 
-            <div className="ns-pay-top-grid ns-pay-top-grid-v2">
-                <div className="ns-pay-lease-card ns-pay-lease-card-compact">
-                    <div className="ns-pay-lease-head">
-                        <div className="ns-pay-lease-thumb">
-                            {property?.photo_url ? (
-                                <img src={property.photo_url} alt={property.property_name} />
-                            ) : (
-                                <i className="bi bi-shop"></i>
-                            )}
-                        </div>
-                        <div className="ns-pay-lease-head-info">
-                            <div className="ns-pay-lease-head-title">
-                                <h2>{property?.property_name || 'Property'}</h2>
-                                <span className="ns-pay-tag tag-active">{contract.status}</span>
-                            </div>
-                            <p className="ns-pay-lease-meta">
-                                Owner: <strong>{owner ? `${owner.first_name} ${owner.last_name}` : '—'}</strong>
-                                <span className="ns-pay-dot">•</span>
-                                {formatDueDate(contract.start_date)} → {formatDueDate(contract.end_date)}
-                            </p>
-                        </div>
-                        <div className="ns-pay-rent">
-                            {money(contract.monthly_rent)}
-                            <small>/mo</small>
-                        </div>
-                    </div>
+            <SectionNav
+                label="Payments sections"
+                sections={[
+                    { id: 'pay-lease', label: leases.length > 1 ? 'This lease' : 'Your lease', icon: 'bi-shop' },
+                    { id: 'pay-coming', label: 'Next 6 months', icon: 'bi-graph-up' },
+                    { id: 'pay-history', label: 'History', icon: 'bi-clock-history' },
+                ]}
+            />
 
-                    <div className="ns-pay-progress">
-                        <div className="ns-pay-progress-labels">
-                            <span>
-                                <strong>{stats.monthsPaid}</strong> of {stats.monthsTotal} months paid
-                            </span>
-                            <span>
-                                {daysToEnd == null ? '' : daysToEnd >= 0 ? `${daysToEnd} days left on the lease` : 'Lease ended'}
-                            </span>
-                        </div>
-                        <div className="ns-pay-progress-track" role="progressbar" aria-valuenow={Math.round(timeProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
-                            <div className="ns-pay-progress-fill ns-fill-navy" style={{ width: `${Math.round(timeProgress * 100)}%` }} />
-                        </div>
-                    </div>
-
-                    <div className="ns-pay-lease-footer">
-                        <span className="ns-pay-contract-id">Contract #{contract.contract_id}</span>
-                        {canAskRenewal ? (
-                            <button type="button" className="ns-link-btn" onClick={() => setRenewalFor(contract.contract_id)}>
-                                <i className="bi bi-arrow-repeat"></i> Ask to renew
-                            </button>
-                        ) : renewal === 'offered' ? (
-                            <button
-                                type="button"
-                                className="ns-link-btn"
-                                onClick={() => onNavigate('contracts', { contractId: contract.contract_id })}
-                            >
-                                <i className="bi bi-pen"></i> Review renewal offer
-                            </button>
-                        ) : (
-                            <button type="button" className="ns-link-btn" onClick={() => onNavigate('contracts')}>
-                                View contract <i className="bi bi-box-arrow-up-right"></i>
-                            </button>
-                        )}
-                    </div>
-                </div>
-
+            <PageGroup
+                id="pay-lease"
+                title={leases.length > 1 ? 'This lease' : 'Your lease'}
+                hint={`${property?.property_name || 'Property'} · what to pay and how you're doing`}
+            >
+                <div className="ns-pay-top-grid ns-pay-top-grid-v2 ns-pay-top-grid-v3">
                 <div className="ns-pay-due-card ns-pay-due-card-v2">
                     {nextToPay ? (
                         <>
@@ -666,106 +609,186 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                         </>
                     )}
                 </div>
-            </div>
 
-            {payError?.notConfigured && (
-                <div className="alert alert-warning d-flex align-items-start gap-2 py-2" role="alert">
-                    <i className="bi bi-plug"></i>
-                    <span>
-                        Online payments aren't set up on this site yet, so the payment wasn't started and nothing was
-                        charged. Please try again later.
-                    </span>
-                </div>
-            )}
-            {payError?.text && (
-                <div className="alert alert-danger py-2" role="alert">
-                    {payError.text}
-                </div>
-            )}
+                <div className="ns-pay-lease-card ns-pay-lease-card-compact">
+                    <div className="ns-pay-lease-head">
+                        <div className="ns-pay-lease-thumb">
+                            {property?.photo_url ? (
+                                <img src={property.photo_url} alt={property.property_name} />
+                            ) : (
+                                <i className="bi bi-shop"></i>
+                            )}
+                        </div>
+                        <div className="ns-pay-lease-head-info">
+                            <div className="ns-pay-lease-head-title">
+                                <h2>{property?.property_name || 'Property'}</h2>
+                                <span className="ns-pay-tag tag-active">{contract.status}</span>
+                            </div>
+                            <p className="ns-pay-lease-meta">
+                                Owner: <strong>{owner ? `${owner.first_name} ${owner.last_name}` : '—'}</strong>
+                                <span className="ns-pay-dot">•</span>
+                                {formatDueDate(contract.start_date)} → {formatDueDate(contract.end_date)}
+                            </p>
+                        </div>
+                        <div className="ns-pay-rent">
+                            {money(contract.monthly_rent)}
+                            <small>/mo</small>
+                        </div>
+                    </div>
 
-            <div className="ns-lease-kpis">
-                <div className="ns-lease-kpi">
-                    <ProgressRing
-                        value={stats.monthsDue > 0 ? stats.paidOnTime / stats.monthsDue : 0}
-                        tone={onTimePct == null || onTimePct >= 85 ? 'success' : 'warning'}
-                        label={`${stats.paidOnTime} of ${stats.monthsDue} months on time`}
-                    >
-                        <strong>{stats.paidOnTime}</strong>
-                        <small>/{stats.monthsDue}</small>
-                    </ProgressRing>
-                    <div>
-                        <span className="ns-lease-kpi-value">On-time record</span>
-                        <span className="ns-lease-kpi-label">
-                            {stats.monthsDue === 0
-                                ? 'Nothing due yet'
-                                : onTimePct === 100
-                                  ? 'Every month on time'
-                                  : `${onTimePct}% of months on time`}
+                    <div className="ns-pay-progress">
+                        <div className="ns-pay-progress-labels">
+                            <span>
+                                <strong>{stats.monthsPaid}</strong> of {stats.monthsTotal} months paid
+                            </span>
+                            <span>
+                                {daysToEnd == null ? '' : daysToEnd >= 0 ? `${daysToEnd} days left on the lease` : 'Lease ended'}
+                            </span>
+                        </div>
+                        <div className="ns-pay-progress-track" role="progressbar" aria-valuenow={Math.round(timeProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+                            <div className="ns-pay-progress-fill ns-fill-navy" style={{ width: `${Math.round(timeProgress * 100)}%` }} />
+                        </div>
+                    </div>
+
+                    <div className="ns-pay-lease-footer">
+                        <span className="ns-pay-contract-id">Contract #{contract.contract_id}</span>
+                        {canAskRenewal ? (
+                            <button type="button" className="ns-link-btn" onClick={() => setRenewalFor(contract.contract_id)}>
+                                <i className="bi bi-arrow-repeat"></i> Ask to renew
+                            </button>
+                        ) : renewal === 'offered' ? (
+                            <button
+                                type="button"
+                                className="ns-link-btn"
+                                onClick={() => onNavigate('contracts', { contractId: contract.contract_id })}
+                            >
+                                <i className="bi bi-pen"></i> Review renewal offer
+                            </button>
+                        ) : (
+                            <button type="button" className="ns-link-btn" onClick={() => onNavigate('contracts')}>
+                                View contract <i className="bi bi-box-arrow-up-right"></i>
+                            </button>
+                        )}
+                    </div>
+                </div>
+                </div>
+
+                {payError?.notConfigured && (
+                    <div className="alert alert-warning d-flex align-items-start gap-2 py-2" role="alert">
+                        <i className="bi bi-plug"></i>
+                        <span>
+                            Online payments aren't set up on this site yet, so the payment wasn't started and nothing was
+                            charged. Please try again later.
                         </span>
                     </div>
-                </div>
-                <div className="ns-lease-kpi">
-                    <span className="ns-lease-kpi-big">{money(stats.collectedTotal)}</span>
-                    <div>
-                        <span className="ns-lease-kpi-value">Paid so far</span>
-                        <span className="ns-lease-kpi-label">of {money(stats.leaseTotal)} on this lease</span>
+                )}
+                {payError?.text && (
+                    <div className="alert alert-danger py-2" role="alert">
+                        {payError.text}
                     </div>
-                </div>
-                <div className="ns-lease-kpi">
-                    <span className="ns-lease-kpi-big">{money(leftThisYear)}</span>
-                    <div>
-                        <span className="ns-lease-kpi-value">Left this year</span>
-                        <span className="ns-lease-kpi-label">through Dec 31, this lease</span>
-                    </div>
-                </div>
-                <div className="ns-lease-kpi">
-                    <span className={`ns-lease-kpi-big ${stats.lateMonths > 0 ? 'is-bad' : ''}`}>{money(stats.owedNow)}</span>
-                    <div>
-                        <span className="ns-lease-kpi-value">Owed now</span>
-                        <span className="ns-lease-kpi-label">
-                            {stats.lateMonths > 0
-                                ? `${stats.lateMonths} ${stats.lateMonths === 1 ? 'month' : 'months'} late`
-                                : stats.owedNow > 0
-                                  ? 'Due this week'
-                                  : 'Nothing due right now'}
-                        </span>
-                    </div>
-                </div>
-            </div>
+                )}
 
-            <section className="ns-panel">
-                <div className="ns-panel-head">
-                    <h3>Rent timeline</h3>
-                    <span>Tap a month for details and receipts</span>
-                </div>
-                <LeaseTimeline installments={installments} today={today} onSelect={(p) => setDetailPaymentId(p.payment_id)} />
-            </section>
-
-            <section className="ns-panel">
-                <div className="ns-panel-head">
-                    <h3>Your rent, next 6 months</h3>
-                    <span>{leases.length > 1 ? 'All your leases together' : 'From your rent schedule'}</span>
-                </div>
-                <IncomeProjectionChart
-                    projection={projection}
-                    label="Rent you'll pay over the next six months"
-                    endingNote={(e) => `you stop paying ${money(e.monthlyRent)}/month after that unless you renew.`}
+                <RonyInsightCard
+                    insights={insights}
+                    onAction={handleInsightAction}
+                    onAskRony={
+                        onAskRony
+                            ? () => onAskRony({ text: 'How much do I still owe this year, and when is my next payment due?' })
+                            : undefined
+                    }
                 />
-            </section>
 
-            <section className="ns-panel">
-                <div className="ns-panel-head">
-                    <h3>Payment history</h3>
-                    <span>{leases.length > 1 ? 'All your leases' : 'Every month that has come due'}</span>
+                <div className="ns-lease-kpis">
+                    <div className="ns-lease-kpi">
+                        <ProgressRing
+                            value={stats.monthsDue > 0 ? stats.paidOnTime / stats.monthsDue : 0}
+                            tone={onTimePct == null || onTimePct >= 85 ? 'success' : 'warning'}
+                            label={`${stats.paidOnTime} of ${stats.monthsDue} months on time`}
+                        >
+                            <strong>{stats.paidOnTime}</strong>
+                            <small>/{stats.monthsDue}</small>
+                        </ProgressRing>
+                        <div>
+                            <span className="ns-lease-kpi-value">On-time record</span>
+                            <span className="ns-lease-kpi-label">
+                                {stats.monthsDue === 0
+                                    ? 'Nothing due yet'
+                                    : onTimePct === 100
+                                      ? 'Every month on time'
+                                      : `${onTimePct}% of months on time`}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="ns-lease-kpi">
+                        <span className="ns-lease-kpi-big">{money(stats.collectedTotal)}</span>
+                        <div>
+                            <span className="ns-lease-kpi-value">Paid so far</span>
+                            <span className="ns-lease-kpi-label">of {money(stats.leaseTotal)} on this lease</span>
+                        </div>
+                    </div>
+                    <div className="ns-lease-kpi">
+                        <span className="ns-lease-kpi-big">{money(leftThisYear)}</span>
+                        <div>
+                            <span className="ns-lease-kpi-value">Left this year</span>
+                            <span className="ns-lease-kpi-label">through Dec 31, this lease</span>
+                        </div>
+                    </div>
+                    <div className="ns-lease-kpi">
+                        <span className={`ns-lease-kpi-big ${stats.lateMonths > 0 ? 'is-bad' : ''}`}>{money(stats.owedNow)}</span>
+                        <div>
+                            <span className="ns-lease-kpi-value">Owed now</span>
+                            <span className="ns-lease-kpi-label">
+                                {stats.lateMonths > 0
+                                    ? `${stats.lateMonths} ${stats.lateMonths === 1 ? 'month' : 'months'} late`
+                                    : stats.owedNow > 0
+                                      ? 'Due this week'
+                                      : 'Nothing due right now'}
+                            </span>
+                        </div>
+                    </div>
                 </div>
-                <PaymentHistory
-                    rows={allRows}
-                    viewer="tenant"
-                    onOpen={(p) => setDetailPaymentId(p.payment_id)}
-                    onReceipt={handleReceipt}
-                    receiptBusyId={receiptBusyId}
-                />
-            </section>
+
+                <section className="ns-panel">
+                    <div className="ns-panel-head">
+                        <h3>Rent timeline</h3>
+                        <span>Tap a month for details and receipts</span>
+                    </div>
+                    <LeaseTimeline installments={installments} today={today} onSelect={(p) => setDetailPaymentId(p.payment_id)} />
+                </section>
+            </PageGroup>
+
+            <PageGroup
+                id="pay-coming"
+                title="Next 6 months"
+                hint={leases.length > 1 ? 'All your leases together' : 'From your rent schedule'}
+            >
+                <section className="ns-panel">
+                    <div className="ns-panel-head">
+                        <h3>Rent by month</h3>
+                    </div>
+                    <IncomeProjectionChart
+                        projection={projection}
+                        label="Rent you'll pay over the next six months"
+                        endingNote={(e) => `you stop paying ${money(e.monthlyRent)}/month after that unless you renew.`}
+                    />
+                </section>
+            </PageGroup>
+
+            <PageGroup id="pay-history" title="History">
+                <section className="ns-panel">
+                    <div className="ns-panel-head">
+                        <h3>Payment history</h3>
+                        <span>{leases.length > 1 ? 'All your leases' : 'Every month that has come due'}</span>
+                    </div>
+                    <PaymentHistory
+                        rows={allRows}
+                        viewer="tenant"
+                        onOpen={(p) => setDetailPaymentId(p.payment_id)}
+                        onReceipt={handleReceipt}
+                        receiptBusyId={receiptBusyId}
+                    />
+                </section>
+            </PageGroup>
 
             {detailPayment && (
                 <PaymentDetailModal

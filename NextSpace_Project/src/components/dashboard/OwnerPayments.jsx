@@ -33,6 +33,7 @@ import OwnerLeaseDetail from './payments/OwnerLeaseDetail'
 import ProgressRing from './payments/ProgressRing'
 import RiskBadge from './payments/RiskBadge'
 import RonyInsightCard from './payments/RonyInsightCard'
+import { PageGroup, SectionNav } from './common/PageSections'
 import './payments/payments.css'
 
 const CONTRACT_EMBED = `*, add_business!contract_property_id_fkey(property_name, monthly_rent, ${PROPERTY_PHOTO_EMBED}), users!contract_tenant_dui_fkey(first_name,last_name)`
@@ -280,46 +281,191 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 </div>
             )}
 
-            <RonyInsightCard
-                insights={insights}
-                onAction={handleInsightAction}
-                onAskRony={
-                    onAskRony
-                        ? () => onAskRony({ text: 'Summarize my rent collections this month and tell me what I should do first.' })
-                        : undefined
-                }
+            <SectionNav
+                label="Payments sections"
+                sections={[
+                    { id: 'pay-today', label: 'Today', icon: 'bi-sun' },
+                    { id: 'pay-properties', label: 'Your properties', icon: 'bi-shop', count: leases.length },
+                    { id: 'pay-analysis', label: 'Analysis', icon: 'bi-graph-up' },
+                    { id: 'pay-history', label: 'History', icon: 'bi-clock-history' },
+                ]}
             />
 
-            <div className="ns-kpi-row">
-                <div className="ns-kpi">
-                    <span className="ns-kpi-label">Collected in {monthLabel(monthKey, 'long')}</span>
-                    <span className="ns-kpi-value">{money(thisMonth.collected)}</span>
-                    <Trend current={thisMonth.collected} previous={lastMonth.collected} />
-                </div>
-                <div className="ns-kpi">
-                    <span className="ns-kpi-label">Expected this month</span>
-                    <span className="ns-kpi-value">{money(thisMonth.expected)}</span>
-                    <Trend current={thisMonth.expected} previous={lastMonth.expected} />
-                </div>
-                <div className="ns-kpi">
-                    <span className="ns-kpi-label">Collection rate</span>
-                    <span className="ns-kpi-value">{rate(thisMonth) == null ? '—' : `${rate(thisMonth)}%`}</span>
-                    {rate(thisMonth) != null && rate(lastMonth) != null ? (
-                        <Trend current={rate(thisMonth)} previous={rate(lastMonth)} points />
-                    ) : (
-                        <span className="ns-trend">of rent due this month</span>
-                    )}
-                </div>
-                <div className={`ns-kpi ${late.length > 0 ? 'is-alert' : ''}`}>
-                    <span className="ns-kpi-label">Overdue</span>
-                    <span className="ns-kpi-value">{money(sumAmount(late))}</span>
-                    <span className="ns-trend">
-                        {lateTenants === 0 ? 'Nobody is late' : `${lateTenants} ${lateTenants === 1 ? 'tenant' : 'tenants'} late`}
-                    </span>
-                </div>
-            </div>
+            <PageGroup id="pay-today" title="Today" hint="What needs you and how this month is going">
+                <RonyInsightCard
+                    insights={insights}
+                    onAction={handleInsightAction}
+                    onAskRony={
+                        onAskRony
+                            ? () => onAskRony({ text: 'Summarize my rent collections this month and tell me what I should do first.' })
+                            : undefined
+                    }
+                />
 
-            <div className="ns-pay-grid-2">
+                <div className="ns-kpi-row">
+                    <div className="ns-kpi">
+                        <span className="ns-kpi-label">Collected in {monthLabel(monthKey, 'long')}</span>
+                        <span className="ns-kpi-value">{money(thisMonth.collected)}</span>
+                        <Trend current={thisMonth.collected} previous={lastMonth.collected} />
+                    </div>
+                    <div className="ns-kpi">
+                        <span className="ns-kpi-label">Expected this month</span>
+                        <span className="ns-kpi-value">{money(thisMonth.expected)}</span>
+                        <Trend current={thisMonth.expected} previous={lastMonth.expected} />
+                    </div>
+                    <div className="ns-kpi">
+                        <span className="ns-kpi-label">Collection rate</span>
+                        <span className="ns-kpi-value">{rate(thisMonth) == null ? '—' : `${rate(thisMonth)}%`}</span>
+                        {rate(thisMonth) != null && rate(lastMonth) != null ? (
+                            <Trend current={rate(thisMonth)} previous={rate(lastMonth)} points />
+                        ) : (
+                            <span className="ns-trend">of rent due this month</span>
+                        )}
+                    </div>
+                    <div className={`ns-kpi ${late.length > 0 ? 'is-alert' : ''}`}>
+                        <span className="ns-kpi-label">Overdue</span>
+                        <span className="ns-kpi-value">{money(sumAmount(late))}</span>
+                        <span className="ns-trend">
+                            {lateTenants === 0 ? 'Nobody is late' : `${lateTenants} ${lateTenants === 1 ? 'tenant' : 'tenants'} late`}
+                        </span>
+                    </div>
+                </div>
+
+                <section className="ns-panel">
+                    <div className="ns-panel-head">
+                        <h3>Next 30 days</h3>
+                        <span>{money(upcomingTotal)} coming in</span>
+                    </div>
+                    {upcoming.length === 0 ? (
+                        <p className="ns-pay-muted mb-0">No rent is due in the next 30 days.</p>
+                    ) : (
+                        <ul className="ns-upcoming ns-upcoming-wide">
+                            {upcoming.slice(0, 8).map(({ contract, p }) => {
+                                const cd = dueCountdown(p.payment_date, today)
+                                return (
+                                    <li key={p.payment_id}>
+                                        <button type="button" onClick={() => setSelectedId(contract.contract_id)}>
+                                            <span className="ns-upcoming-date">
+                                                <small>{formatDueDate(p.payment_date, { month: 'short' }).toUpperCase()}</small>
+                                                <strong>{formatDueDate(p.payment_date, { day: 'numeric' })}</strong>
+                                            </span>
+                                            <span className="ns-upcoming-info">
+                                                <strong>{tenantName(contract.users)}</strong>
+                                                <small>
+                                                    {contract.add_business?.property_name} · {cd.text}
+                                                </small>
+                                            </span>
+                                            <span className="ns-upcoming-amount">{money(p.amount)}</span>
+                                        </button>
+                                    </li>
+                                )
+                            })}
+                            {upcoming.length > 8 && <li className="ns-pay-muted">+{upcoming.length - 8} more</li>}
+                        </ul>
+                    )}
+                </section>
+            </PageGroup>
+
+            <PageGroup
+                id="pay-properties"
+                title="Your properties"
+                hint={`${leases.length} active ${leases.length === 1 ? 'lease' : 'leases'} · tap one for its details`}
+            >
+                {leases.length === 0 ? (
+                    <p className="ns-pay-muted mb-4">
+                        You don't have any active leases yet. Accept a contract request from the Contracts section.
+                    </p>
+                ) : (
+                    <div className="ns-lease-grid">
+                        {leases.map(({ contract, stats, risk }) => {
+                            const next = stats.nextUnpaid
+                            const status =
+                                stats.lateMonths > 0 ? 'late' : stats.owedNow > 0 ? 'due' : next ? 'ok' : 'done'
+                            return (
+                                <article
+                                    key={contract.contract_id}
+                                    className={`ns-lease-card status-${status}`}
+                                    onClick={() => setSelectedId(contract.contract_id)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') setSelectedId(contract.contract_id)
+                                    }}
+                                    tabIndex={0}
+                                    role="button"
+                                    aria-label={`Open ${contract.add_business?.property_name || 'lease'}`}
+                                >
+                                    <div className="ns-lease-card-photo">
+                                        {contract.add_business?.photo_url ? (
+                                            <img src={contract.add_business.photo_url} alt="" />
+                                        ) : (
+                                            <i className="bi bi-shop"></i>
+                                        )}
+                                        <span className={`ns-lease-card-status status-${status}`}>
+                                            {status === 'late'
+                                                ? `${stats.oldestLateDays} days late`
+                                                : status === 'due'
+                                                  ? 'Due now'
+                                                  : status === 'done'
+                                                    ? 'Fully paid'
+                                                    : 'Up to date'}
+                                        </span>
+                                    </div>
+                                    <div className="ns-lease-card-body">
+                                        <div className="ns-lease-card-top">
+                                            <div>
+                                                <h4>{contract.add_business?.property_name || 'Property'}</h4>
+                                                <span>{tenantName(contract.users)}</span>
+                                            </div>
+                                            <ProgressRing
+                                                size={48}
+                                                stroke={5}
+                                                value={stats.monthsTotal > 0 ? stats.monthsPaid / stats.monthsTotal : 0}
+                                                label={`${stats.monthsPaid} of ${stats.monthsTotal} months paid`}
+                                            >
+                                                <small>
+                                                    {stats.monthsPaid}/{stats.monthsTotal}
+                                                </small>
+                                            </ProgressRing>
+                                        </div>
+                                        <div className="ns-lease-card-facts">
+                                            <div>
+                                                <small>Owed now</small>
+                                                <strong className={stats.lateMonths > 0 ? 'is-bad' : ''}>{money(stats.owedNow)}</strong>
+                                            </div>
+                                            <div>
+                                                <small>{stats.lateMonths > 0 ? 'Late since' : 'Next due'}</small>
+                                                <strong>{next ? formatDueDate(next.payment_date, { month: 'short', day: 'numeric' }) : '—'}</strong>
+                                            </div>
+                                            <div>
+                                                <small>Rent</small>
+                                                <strong>{money(contract.monthly_rent)}</strong>
+                                            </div>
+                                        </div>
+                                        <div className="ns-lease-card-foot">
+                                            <RiskBadge
+                                                risk={risk}
+                                                onAskRony={
+                                                    onAskRony
+                                                        ? () =>
+                                                              onAskRony({
+                                                                  text: `How is ${tenantName(contract.users)} doing with rent on ${contract.add_business?.property_name}? What should I do next?`,
+                                                              })
+                                                        : undefined
+                                                }
+                                            />
+                                            <span className="ns-link-btn">
+                                                Details <i className="bi bi-arrow-right"></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </article>
+                            )
+                        })}
+                    </div>
+                )}
+            </PageGroup>
+
+            <PageGroup id="pay-analysis" title="Analysis" hint="How rent has come in, and what to expect">
+                <div className="ns-pay-grid-2 ns-pay-grid-even">
                 <section className="ns-panel">
                     <div className="ns-panel-head">
                         <h3>Rent expected vs collected</h3>
@@ -347,162 +493,33 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
 
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Next 30 days</h3>
-                        <span>{money(upcomingTotal)} coming in</span>
+                        <h3>Expected income, next 6 months</h3>
+                        <span>From your active leases</span>
                     </div>
-                    {upcoming.length === 0 ? (
-                        <p className="ns-pay-muted mb-0">No rent is due in the next 30 days.</p>
+                    {leases.length === 0 ? (
+                        <p className="ns-pay-muted mb-0">No active leases yet.</p>
                     ) : (
-                        <ul className="ns-upcoming">
-                            {upcoming.slice(0, 6).map(({ contract, p }) => {
-                                const cd = dueCountdown(p.payment_date, today)
-                                return (
-                                    <li key={p.payment_id}>
-                                        <button type="button" onClick={() => setSelectedId(contract.contract_id)}>
-                                            <span className="ns-upcoming-date">
-                                                <small>{formatDueDate(p.payment_date, { month: 'short' }).toUpperCase()}</small>
-                                                <strong>{formatDueDate(p.payment_date, { day: 'numeric' })}</strong>
-                                            </span>
-                                            <span className="ns-upcoming-info">
-                                                <strong>{tenantName(contract.users)}</strong>
-                                                <small>
-                                                    {contract.add_business?.property_name} · {cd.text}
-                                                </small>
-                                            </span>
-                                            <span className="ns-upcoming-amount">{money(p.amount)}</span>
-                                        </button>
-                                    </li>
-                                )
-                            })}
-                            {upcoming.length > 6 && <li className="ns-pay-muted">+{upcoming.length - 6} more</li>}
-                        </ul>
+                        <IncomeProjectionChart projection={projection} />
                     )}
                 </section>
-            </div>
-
-            <section className="ns-panel">
-                <div className="ns-panel-head">
-                    <h3>Expected income, next 6 months</h3>
-                    <span>From your active leases</span>
                 </div>
-                {leases.length === 0 ? (
-                    <p className="ns-pay-muted mb-0">No active leases yet.</p>
-                ) : (
-                    <IncomeProjectionChart projection={projection} />
-                )}
-            </section>
+            </PageGroup>
 
-            <div className="ns-section-head">
-                <h3 className="ns-pay-section-title mb-0">Your rented properties</h3>
-                <span className="ns-pay-muted">
-                    {leases.length} active {leases.length === 1 ? 'lease' : 'leases'} · tap one for its details
-                </span>
-            </div>
-            {leases.length === 0 ? (
-                <p className="ns-pay-muted mb-4">
-                    You don't have any active leases yet. Accept a contract request from the Contracts section.
-                </p>
-            ) : (
-                <div className="ns-lease-grid">
-                    {leases.map(({ contract, stats, risk }) => {
-                        const next = stats.nextUnpaid
-                        const status =
-                            stats.lateMonths > 0 ? 'late' : stats.owedNow > 0 ? 'due' : next ? 'ok' : 'done'
-                        return (
-                            <article
-                                key={contract.contract_id}
-                                className={`ns-lease-card status-${status}`}
-                                onClick={() => setSelectedId(contract.contract_id)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') setSelectedId(contract.contract_id)
-                                }}
-                                tabIndex={0}
-                                role="button"
-                                aria-label={`Open ${contract.add_business?.property_name || 'lease'}`}
-                            >
-                                <div className="ns-lease-card-photo">
-                                    {contract.add_business?.photo_url ? (
-                                        <img src={contract.add_business.photo_url} alt="" />
-                                    ) : (
-                                        <i className="bi bi-shop"></i>
-                                    )}
-                                    <span className={`ns-lease-card-status status-${status}`}>
-                                        {status === 'late'
-                                            ? `${stats.oldestLateDays} days late`
-                                            : status === 'due'
-                                              ? 'Due now'
-                                              : status === 'done'
-                                                ? 'Fully paid'
-                                                : 'Up to date'}
-                                    </span>
-                                </div>
-                                <div className="ns-lease-card-body">
-                                    <div className="ns-lease-card-top">
-                                        <div>
-                                            <h4>{contract.add_business?.property_name || 'Property'}</h4>
-                                            <span>{tenantName(contract.users)}</span>
-                                        </div>
-                                        <ProgressRing
-                                            size={48}
-                                            stroke={5}
-                                            value={stats.monthsTotal > 0 ? stats.monthsPaid / stats.monthsTotal : 0}
-                                            label={`${stats.monthsPaid} of ${stats.monthsTotal} months paid`}
-                                        >
-                                            <small>
-                                                {stats.monthsPaid}/{stats.monthsTotal}
-                                            </small>
-                                        </ProgressRing>
-                                    </div>
-                                    <div className="ns-lease-card-facts">
-                                        <div>
-                                            <small>Owed now</small>
-                                            <strong className={stats.lateMonths > 0 ? 'is-bad' : ''}>{money(stats.owedNow)}</strong>
-                                        </div>
-                                        <div>
-                                            <small>{stats.lateMonths > 0 ? 'Late since' : 'Next due'}</small>
-                                            <strong>{next ? formatDueDate(next.payment_date, { month: 'short', day: 'numeric' }) : '—'}</strong>
-                                        </div>
-                                        <div>
-                                            <small>Rent</small>
-                                            <strong>{money(contract.monthly_rent)}</strong>
-                                        </div>
-                                    </div>
-                                    <div className="ns-lease-card-foot">
-                                        <RiskBadge
-                                            risk={risk}
-                                            onAskRony={
-                                                onAskRony
-                                                    ? () =>
-                                                          onAskRony({
-                                                              text: `How is ${tenantName(contract.users)} doing with rent on ${contract.add_business?.property_name}? What should I do next?`,
-                                                          })
-                                                    : undefined
-                                            }
-                                        />
-                                        <span className="ns-link-btn">
-                                            Details <i className="bi bi-arrow-right"></i>
-                                        </span>
-                                    </div>
-                                </div>
-                            </article>
-                        )
-                    })}
-                </div>
-            )}
-
-            <section className="ns-panel">
-                <div className="ns-panel-head">
-                    <h3>Payment history</h3>
-                    <span>Every month that has come due, newest first</span>
-                </div>
-                <PaymentHistory
-                    rows={allRows}
-                    viewer="owner"
-                    onOpen={(p) => setHistoryDetailId(p.payment_id)}
-                    onReceipt={handleReceipt}
-                    receiptBusyId={receiptBusyId}
-                />
-            </section>
+            <PageGroup id="pay-history" title="History">
+                <section className="ns-panel">
+                    <div className="ns-panel-head">
+                        <h3>Payment history</h3>
+                        <span>Every month that has come due, newest first</span>
+                    </div>
+                    <PaymentHistory
+                        rows={allRows}
+                        viewer="owner"
+                        onOpen={(p) => setHistoryDetailId(p.payment_id)}
+                        onReceipt={handleReceipt}
+                        receiptBusyId={receiptBusyId}
+                    />
+                </section>
+            </PageGroup>
 
             {reportOpen && (
                 <MonthlyReportModal

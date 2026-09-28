@@ -1315,3 +1315,158 @@
   font-size: 12px;
   color: var(--ns-text-muted);
 }
+
+/* ---------------------------------------------------------------------------
+   Page structure shared by Payments and Contracts: sticky section nav and
+   titled groups, so both screens read top to bottom in the same order.
+   --------------------------------------------------------------------------- */
+.ns-section-nav {
+  position: sticky;
+  top: 71px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--ns-page-bg);
+  padding: 10px 0;
+  margin: -6px 0 18px;
+  border-bottom: 1px solid var(--ns-border);
+}
+
+.ns-section-nav::-webkit-scrollbar { display: none; }
+
+.ns-section-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #4a5263;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ns-section-nav button:hover { background: #fff; border-color: var(--ns-border); }
+
+.ns-section-nav button.active {
+  background: var(--ns-navy);
+  border-color: var(--ns-navy);
+  color: #fff;
+}
+
+.ns-section-nav-count {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(15, 28, 63, 0.08);
+  border-radius: 999px;
+  padding: 0 7px;
+}
+
+.ns-section-nav button.active .ns-section-nav-count { background: rgba(255, 255, 255, 0.2); }
+
+.ns-page-group {
+  scroll-margin-top: 136px;
+  margin-bottom: 30px;
+}
+
+.ns-page-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ns-border);
+}
+
+.ns-page-group-head h2 {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ns-blue-accent);
+  margin: 0;
+}
+
+.ns-page-group-head > span {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-page-group-action { margin-left: auto; }
+
+.ns-page-group > :last-child { margin-bottom: 0; }
+
+/* Next 30 days as a two-column list when it has the full width. */
+.ns-upcoming-wide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+}
+
+@media (max-width: 767px) {
+  .ns-upcoming-wide { grid-template-columns: minmax(0, 1fr); }
+  .ns-section-nav { top: 64px; }
+}
+
+/* Business: the pay card leads, the lease info sits beside it. */
+.ns-pay-top-grid-v3 {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+/* Breadcrumb on detail pages */
+.ns-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ns-text-muted);
+  margin-bottom: 14px;
+}
+
+.ns-breadcrumb button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--ns-blue-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ns-breadcrumb strong { color: #1a1f2b; font-weight: 600; }
+
+/* Secondary actions shown as quiet links next to the main decision. */
+.ns-quiet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: center;
+}
+
+.ns-quiet-actions button {
+  border: none;
+  background: none;
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5263;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.ns-quiet-actions button:hover { color: var(--ns-blue-accent); }
+.ns-quiet-actions button:disabled { opacity: 0.6; cursor: progress; }
+
+.ns-pay-grid-even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ns-pay-grid-even > .ns-panel { margin-bottom: 0; }
+@media (max-width: 991px) { .ns-pay-grid-even { grid-template-columns: minmax(0, 1fr); } }
+
+.ns-lease-hero-actions { align-items: flex-end; }
+@media (max-width: 767px) { .ns-lease-hero-actions { align-items: flex-start; } }

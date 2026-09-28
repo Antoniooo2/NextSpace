@@ -663,3 +663,247 @@
 @media (max-width: 575px) {
   .ns-contract-kpis:has(> div:nth-child(3):last-child) { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Lease lifecycle strip on the board */
+.ns-contract-flow {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ns-contract-flow li { position: relative; min-width: 0; }
+
+.ns-contract-flow li + li::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-top: 1px solid var(--ns-border);
+  border-right: 1px solid var(--ns-border);
+  transform: translateY(-50%) rotate(45deg);
+  z-index: 1;
+}
+
+.ns-contract-flow button {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 12px 14px 12px 18px;
+  cursor: pointer;
+}
+
+.ns-contract-flow li + li button { border-left: 1px solid var(--ns-border); }
+.ns-contract-flow button:hover:not(:disabled) { background: #f7f9fe; }
+.ns-contract-flow button:disabled { cursor: default; }
+
+.ns-contract-flow-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef3fd;
+  color: var(--ns-blue-accent);
+}
+
+.ns-contract-flow button.is-hot .ns-contract-flow-icon { background: #fff4e0; color: #a86400; }
+.ns-contract-flow button.is-empty .ns-contract-flow-icon { background: #f3f4f6; color: #a0a7b4; }
+
+.ns-contract-flow-text { display: flex; flex-direction: column; min-width: 0; }
+
+.ns-contract-flow-text strong {
+  font-size: 13px;
+  color: #1a1f2b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns-contract-flow-text strong em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--ns-navy);
+  margin-left: 2px;
+}
+
+.ns-contract-flow button.is-hot strong em { color: #a86400; }
+.ns-contract-flow button.is-empty strong { color: #8a93a3; }
+.ns-contract-flow-text small { font-size: 11.5px; color: var(--ns-text-muted); }
+
+.ns-contract-section { scroll-margin-top: 90px; }
+
+@media (max-width: 991px) {
+  .ns-contract-flow { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .ns-contract-flow li { flex: 0 0 190px; }
+}
+
+/* Contract detail: hero with the decision, the step line and the next step */
+.ns-contract-hero-v2 {
+  display: block;
+  padding: 18px 20px 16px;
+}
+
+.ns-contract-hero-main {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ns-contract-hero-v2 .ns-contract-hero-actions { margin-left: auto; }
+
+.ns-contract-steps {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--ns-border);
+  display: flex;
+}
+
+.ns-contract-steps li {
+  flex: 1 1 0;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
+  padding: 0 4px;
+}
+
+.ns-contract-steps li + li::before {
+  content: '';
+  position: absolute;
+  top: 11px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--ns-border);
+  z-index: 0;
+}
+
+.ns-contract-steps li.is-done + li::before,
+.ns-contract-steps li.is-done + li.is-current::before,
+.ns-contract-steps li.is-done + li.is-stopped::before { background: var(--ns-navy); }
+
+.ns-contract-step-dot {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: #fff;
+  border: 2px solid #c6ccd8;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.ns-contract-steps li.is-done .ns-contract-step-dot { background: var(--ns-navy); border-color: var(--ns-navy); }
+.ns-contract-steps li.is-current .ns-contract-step-dot {
+  border-color: var(--ns-blue-accent);
+  box-shadow: 0 0 0 4px #e3eafc;
+}
+.ns-contract-steps li.is-current .ns-contract-step-dot::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ns-blue-accent);
+}
+.ns-contract-steps li.is-stopped .ns-contract-step-dot { background: #8a93a3; border-color: #8a93a3; }
+
+.ns-contract-steps strong {
+  font-size: 12px;
+  color: #1a1f2b;
+  line-height: 1.25;
+}
+
+.ns-contract-steps li.is-todo strong { color: #8a93a3; font-weight: 600; }
+.ns-contract-steps li.is-current strong { color: var(--ns-blue-accent); }
+.ns-contract-steps small { font-size: 11px; color: var(--ns-text-muted); }
+
+.ns-contract-hero-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.ns-contract-hero-foot .ns-contract-banner {
+  margin: 0;
+  flex: 1 1 360px;
+}
+
+/* Clauses as an accordion */
+.ns-contract-clauses-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.ns-contract-clauses-accordion {
+  list-style: none;
+  padding: 0;
+  border: 1px solid var(--ns-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.ns-contract-clauses-accordion li + li { margin-top: 0; border-top: 1px solid var(--ns-border); }
+
+.ns-contract-clauses-accordion button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: none;
+  background: #fff;
+  padding: 9px 14px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1a1f2b;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-contract-clauses-accordion button:hover { background: #f7f9fe; }
+.ns-contract-clauses-accordion button i { color: var(--ns-text-muted); font-size: 12px; }
+.ns-contract-clauses-accordion li.is-open button { background: #f7f9fe; }
+
+.ns-contract-clauses-accordion p {
+  margin: 0;
+  padding: 4px 14px 12px;
+  background: #f7f9fe;
+}
+
+@media (max-width: 767px) {
+  .ns-contract-hero-v2 .ns-contract-hero-actions { margin-left: 0; width: 100%; }
+  .ns-contract-steps { overflow-x: auto; }
+  .ns-contract-steps li { flex: 0 0 96px; }
+}
