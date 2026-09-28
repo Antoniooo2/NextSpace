@@ -10,6 +10,7 @@ import { SERVICE_ICON, areaOf } from '../../lib/listings'
 import { formatDueDate } from '../../lib/rentSchedule'
 import { money, personName } from '../../lib/contracts'
 import PropertyCard from './PropertyCard'
+import { formatPpm, loadMarketStats, priceInsight } from '../../lib/market'
 import './listings.css'
 
 function toAdvisorPropertyCard(detail) {
@@ -54,6 +55,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     const [photoIndex, setPhotoIndex] = useState(0)
     const [similar, setSimilar] = useState([])
     const [ownerContracts, setOwnerContracts] = useState([])
+    const [marketStats, setMarketStats] = useState(null)
 
     useEffect(() => {
         let cancelled = false
@@ -160,6 +162,23 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         setPhotoIndex(0)
         window.scrollTo({ top: 0 })
     }, [detail?.property_id])
+
+    // Count a business's visit (once a day; owners see only totals) and load
+    // the price comparison.
+    useEffect(() => {
+        if (!isBusiness || !detail?.property_id) return
+        supabase.rpc('record_property_view', { p_property_id: detail.property_id }).then(() => {})
+    }, [isBusiness, detail?.property_id])
+
+    useEffect(() => {
+        let cancelled = false
+        loadMarketStats().then((stats) => {
+            if (!cancelled) setMarketStats(stats)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
     // Other listed spaces of the same type or in the same municipality.
     useEffect(() => {
@@ -312,6 +331,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     const ownerName = [detail.users?.first_name, detail.users?.last_name].filter(Boolean).join(' ')
     const photos = detail.photos || (detail.photo_url ? [{ photo_url: detail.photo_url }] : [])
     const area = areaOf(detail)
+    const insight = priceInsight(detail, marketStats)
     const ownerStatus = LISTING_STATUS[detail.availability] || LISTING_STATUS.Available
     const activeLease = ownerContracts.find((c) => c.status === 'Active')
     const offer = ownerContracts.find((c) => c.status === 'Offered')
@@ -530,6 +550,14 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                             {detail.monthly_rent != null ? `$${Number(detail.monthly_rent).toLocaleString()}` : 'Contact for price'}
                         </strong>
                     </div>
+                    {insight && (
+                        <div className="ns-detail-price-insight">
+                            <span className={`ns-price-tag tone-${insight.tone}`}>{insight.label}</span>
+                            <small>
+                                {formatPpm(insight.ppm)} here vs {formatPpm(insight.median)} for {insight.scope}
+                            </small>
+                        </div>
+                    )}
                     <div className="ns-detail-summary-row">
                         <span>Property Type</span>
                         <strong>{detail.property_type}</strong>

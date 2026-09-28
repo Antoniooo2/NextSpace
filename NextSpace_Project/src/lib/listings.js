@@ -11,6 +11,19 @@ export const SERVICE_ICON = {
     Others: 'bi-plus-circle',
 }
 
+// Placeholder look for spaces without photos, one colour per type.
+export const TYPE_COLOR = {
+    'Café/Restaurant': ['#fff1e6', '#c2410c'],
+    'Store/Boutique': ['#eef3fd', '#2f5fe0'],
+    'Beauty Salon': ['#fdf0f7', '#be185d'],
+    'Pharmacy/Healthcare': ['#e9f8f0', '#15803d'],
+    Other: ['#f1f2f6', '#475569'],
+}
+
+export function typeColors(type) {
+    return TYPE_COLOR[type] || TYPE_COLOR.Other
+}
+
 export function typeIcon(type) {
     return TYPE_ICON[type] || 'bi-building'
 }

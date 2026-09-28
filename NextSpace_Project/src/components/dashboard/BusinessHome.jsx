@@ -7,6 +7,9 @@ import { PROPERTY_SERVICES_FULL_EMBED, withServices } from '../../lib/propertySe
 import { EL_SALVADOR_DEPARTMENTS, EL_SALVADOR_DEPARTMENT_NAMES } from '../../lib/elSalvadorLocations'
 import { SERVICE_ICON, areaOf, typeIcon } from '../../lib/listings'
 import { loadSavedIds, setSaved } from '../../lib/savedProperties'
+import { loadMarketStats, priceInsight } from '../../lib/market'
+import { createSavedSearch, deleteSavedSearch, describeSearch, loadSavedSearches } from '../../lib/savedSearches'
+import CompareModal from './CompareModal'
 import './listings.css'
 
 const PAGE_SIZE = 9
@@ -29,7 +32,7 @@ function matchesText(property, query) {
 
 // Marketplace: every listed space, with location/price/size/amenity filters,
 // sorting, and the active filters as chips you can remove one by one.
-export default function BusinessHome({ user, search, onViewProperty, onAskRony }) {
+export default function BusinessHome({ user, search, onSearchChange, onViewProperty, onAskRony, onNavigate }) {
     const [properties, setProperties] = useState([])
     const [serviceCatalog, setServiceCatalog] = useState([])
     const [savedIds, setSavedIds] = useState(() => new Set())
@@ -40,6 +43,13 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
     const [sort, setSort] = useState('newest')
     const [showFilters, setShowFilters] = useState(false)
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+    const [marketStats, setMarketStats] = useState(() => new Map())
+    const [myRequests, setMyRequests] = useState(() => new Map())
+    const [savedSearches, setSavedSearches] = useState([])
+    const [alertsOpen, setAlertsOpen] = useState(false)
+    const [notice, setNotice] = useState('')
+    const [compareIds, setCompareIds] = useState([])
+    const [compareOpen, setCompareOpen] = useState(false)
 
     useEffect(() => {
         let cancelled = false
@@ -48,7 +58,7 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
             setLoading(true)
             setLoadError('')
 
-            const [{ data, error }, { data: services }, saved] = await Promise.all([
+            const [{ data, error }, { data: services }, saved, stats, { data: mine }, searches] = await Promise.all([
                 supabase
                     .from('add_business')
                     .select(`*, ${PROPERTY_PHOTO_EMBED}, ${PROPERTY_SERVICES_FULL_EMBED}`)
@@ -56,6 +66,9 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
                     .order('registration_date', { ascending: false }),
                 supabase.from('services').select('service_id, service_name').order('service_id'),
                 loadSavedIds(user?.id),
+                loadMarketStats(),
+                supabase.from('contract').select('property_id, status').in('status', ['Pending', 'Offered', 'Active']),
+                loadSavedSearches(),
             ])
 
             if (cancelled) return
@@ -74,6 +87,15 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
             setProperties((data || []).map((row) => withServices(withCoverPhoto(row))))
             setServiceCatalog(services || [])
             setSavedIds(saved)
+            setMarketStats(stats)
+            // Your own open requests/offers/leases, to label those cards.
+            const rank = { Active: 3, Offered: 2, Pending: 1 }
+            const byProperty = new Map()
+            for (const c of mine || []) {
+                if ((rank[c.status] || 0) > (rank[byProperty.get(c.property_id)] || 0)) byProperty.set(c.property_id, c.status)
+            }
+            setMyRequests(byProperty)
+            setSavedSearches(searches)
             setLoading(false)
         }
 
@@ -182,12 +204,87 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
         setVisibleCount(PAGE_SIZE)
     }
 
+    const currentSearch = {
+        ...filters,
+        category: category === 'all' ? '' : category,
+        query: search.trim(),
+    }
+    const hasCriteria = Boolean(
+        currentSearch.category ||
+            currentSearch.query ||
+            filters.department ||
+            filters.minPrice ||
+            filters.maxPrice ||
+            filters.minArea ||
+            filters.maxArea ||
+            filters.services.length
+    )
+    const serviceNames = Object.fromEntries(serviceCatalog.map((sv) => [sv.service_id, sv.service_name]))
+    const sameSearch = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+    const alreadySaved = savedSearches.some((sv) => sameSearch(sv.filters, currentSearch))
+
+    const saveCurrentSearch = async () => {
+        try {
+            const created = await createSavedSearch(describeSearch(currentSearch, serviceNames), currentSearch)
+            setSavedSearches((prev) => [created, ...prev])
+            setNotice("Search saved. We'll notify you when a new space matches it.")
+        } catch (err) {
+            setNotice(err.message)
+        }
+    }
+
+    const applySearch = (sv) => {
+        const f = sv.filters || {}
+        setFilters({
+            department: f.department || '',
+            municipality: f.municipality || '',
+            minPrice: f.minPrice || '',
+            maxPrice: f.maxPrice || '',
+            minArea: f.minArea || '',
+            maxArea: f.maxArea || '',
+            services: f.services || [],
+        })
+        setCategory(f.category || 'all')
+        onSearchChange?.(f.query || '')
+        setAlertsOpen(false)
+        setVisibleCount(PAGE_SIZE)
+    }
+
+    const removeSearch = async (sv) => {
+        setSavedSearches((prev) => prev.filter((x) => x.search_id !== sv.search_id))
+        await deleteSavedSearch(sv.search_id)
+    }
+
+    const toggleCompare = (property) =>
+        setCompareIds((prev) =>
+            prev.includes(property.property_id)
+                ? prev.filter((id) => id !== property.property_id)
+                : prev.length >= 3
+                  ? prev
+                  : [...prev, property.property_id]
+        )
+    const compared = compareIds.map((id) => properties.find((p) => p.property_id === id)).filter(Boolean)
+
     if (loading) {
         return (
-            <div className="ns-dash-loading">
-                <div className="ns-dash-spinner" />
-                <p>Loading properties...</p>
-            </div>
+            <>
+                <div className="ns-dash-header">
+                    <div>
+                        <h1>Marketplace</h1>
+                        <p>Commercial spaces for rent across El Salvador.</p>
+                    </div>
+                </div>
+                <div className="ns-mk-grid" aria-busy="true" aria-label="Loading spaces">
+                    {Array.from({ length: 6 }, (_, i) => (
+                        <div key={i} className="ns-mk-skeleton">
+                            <div className="ns-sk-media" />
+                            <div className="ns-sk-line w40" />
+                            <div className="ns-sk-line w70" />
+                            <div className="ns-sk-line w55" />
+                        </div>
+                    ))}
+                </div>
+            </>
         )
     }
 
@@ -202,6 +299,41 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
                     <p>Commercial spaces for rent across El Salvador. Request a lease and the owner answers in Contracts.</p>
                 </div>
                 <div className="ns-dash-header-actions">
+                    <div className="ns-mk-alerts">
+                        <button
+                            type="button"
+                            className="ns-outline-btn"
+                            onClick={() => setAlertsOpen((v) => !v)}
+                            aria-expanded={alertsOpen}
+                        >
+                            <i className="bi bi-bell"></i> Alerts
+                            {savedSearches.length > 0 && <span className="ns-filter-badge">{savedSearches.length}</span>}
+                        </button>
+                        {alertsOpen && (
+                            <div className="ns-mk-alerts-panel">
+                                <strong>Saved searches</strong>
+                                <p>You get a notification when a new space matches one of these.</p>
+                                {savedSearches.length === 0 ? (
+                                    <p className="ns-pay-muted mb-0">
+                                        None yet. Set filters or a category and tap <em>Notify me</em>.
+                                    </p>
+                                ) : (
+                                    <ul>
+                                        {savedSearches.map((sv) => (
+                                            <li key={sv.search_id}>
+                                                <button type="button" className="ns-mk-alert-apply" onClick={() => applySearch(sv)}>
+                                                    <i className="bi bi-search"></i> {sv.label}
+                                                </button>
+                                                <button type="button" className="ns-mk-alert-del" aria-label="Delete saved search" onClick={() => removeSearch(sv)}>
+                                                    <i className="bi bi-trash"></i>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        )}
+                    </div>
                     <button
                         type="button"
                         className={`ns-outline-btn ${showFilters || chips.length > 0 ? 'active' : ''}`}
@@ -217,6 +349,13 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
             {loadError && (
                 <div className="alert alert-danger py-2" role="alert">
                     {loadError}
+                </div>
+            )}
+
+            {notice && (
+                <div className="alert alert-success d-flex justify-content-between align-items-center gap-2 py-2" role="status">
+                    <span>{notice}</span>
+                    <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setNotice('')} />
                 </div>
             )}
 
@@ -361,6 +500,16 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
                             Clear all
                         </button>
                     )}
+                    {hasCriteria &&
+                        (alreadySaved ? (
+                            <span className="ns-mk-notify is-on">
+                                <i className="bi bi-bell-fill"></i> Alert on
+                            </span>
+                        ) : (
+                            <button type="button" className="ns-mk-notify" onClick={saveCurrentSearch}>
+                                <i className="bi bi-bell"></i> Notify me of new matches
+                            </button>
+                        ))}
                 </div>
                 <label className="ns-mk-sort">
                     <span>Sort</span>
@@ -405,6 +554,12 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
                             onOpen={onViewProperty}
                             saved={savedIds.has(property.property_id)}
                             onToggleSave={user?.id ? toggleSave : undefined}
+                            insight={priceInsight(property, marketStats)}
+                            requestStatus={myRequests.get(property.property_id)}
+                            onOpenRequest={() => onNavigate?.('contracts')}
+                            comparing={compareIds.includes(property.property_id)}
+                            onToggleCompare={toggleCompare}
+                            compareFull={compareIds.length >= 3}
                         />
                     ))}
                 </div>
@@ -419,6 +574,46 @@ export default function BusinessHome({ user, search, onViewProperty, onAskRony }
                         Showing {visible.length} of {results.length}
                     </span>
                 </div>
+            )}
+
+            {compared.length > 0 && (
+                <div className="ns-cmp-tray" role="region" aria-label="Spaces to compare">
+                    <div className="ns-cmp-tray-items">
+                        {compared.map((p) => (
+                            <span key={p.property_id}>
+                                {p.property_name}
+                                <button type="button" aria-label={`Remove ${p.property_name}`} onClick={() => toggleCompare(p)}>
+                                    <i className="bi bi-x"></i>
+                                </button>
+                            </span>
+                        ))}
+                        {compared.length < 2 && <em>Add one more to compare</em>}
+                    </div>
+                    <div className="ns-cmp-tray-actions">
+                        <button type="button" className="ns-link-btn" onClick={() => setCompareIds([])}>
+                            Clear
+                        </button>
+                        <button type="button" className="ns-filled-btn" disabled={compared.length < 2} onClick={() => setCompareOpen(true)}>
+                            Compare {compared.length}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {compareOpen && compared.length > 0 && (
+                <CompareModal
+                    properties={compared}
+                    services={serviceCatalog.filter((sv) => sv.service_name !== 'Others')}
+                    onClose={() => setCompareOpen(false)}
+                    onOpen={(p) => {
+                        setCompareOpen(false)
+                        onViewProperty(p)
+                    }}
+                    onRemove={(p) => {
+                        toggleCompare(p)
+                        if (compared.length <= 1) setCompareOpen(false)
+                    }}
+                />
             )}
         </>
     )

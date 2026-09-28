@@ -18,6 +18,7 @@ const FILTERS = [
     { id: 'action', label: 'Needs action' },
     { id: 'Contracts', label: 'Contracts' },
     { id: 'Payments', label: 'Payments' },
+    { id: 'Marketplace', label: 'Space alerts' },
 ]
 
 const GROUP_ORDER = ['Today', 'Yesterday', 'This week', 'Earlier']
@@ -79,6 +80,7 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
             action: rows.filter((r) => r.action && r.action !== 'done').length,
             Contracts: rows.filter((r) => r.n.process === 'Contracts').length,
             Payments: rows.filter((r) => r.n.process === 'Payments').length,
+            Marketplace: rows.filter((r) => r.n.process === 'Marketplace').length,
         }),
         [rows]
     )
@@ -109,7 +111,7 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
     const open = (n, section) => {
         markRead([n.notification_id])
         const target = notificationTarget(n)
-        onNavigate?.(section || target.section, { contractId: target.contractId })
+        onNavigate?.(section || target.section, { contractId: target.contractId, propertyId: target.propertyId })
     }
 
     if (loading) {
@@ -152,7 +154,7 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
 
             {notifications.length > 0 && (
                 <div className="ns-nt-filters" role="tablist" aria-label="Filter notifications">
-                    {FILTERS.map((f) => (
+                    {FILTERS.filter((f) => f.id !== 'Marketplace' || counts.Marketplace > 0).map((f) => (
                         <button
                             type="button"
                             key={f.id}

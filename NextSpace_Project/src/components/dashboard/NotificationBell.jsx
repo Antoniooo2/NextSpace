@@ -51,7 +51,7 @@ export default function NotificationBell({ unreadCount, liveTick, onNavigate, on
         }
         setOpen(false)
         const target = notificationTarget(n)
-        onNavigate(target.section, { contractId: target.contractId })
+        onNavigate(target.section, { contractId: target.contractId, propertyId: target.propertyId })
     }
 
     return (

@@ -1,22 +1,44 @@
-import { SERVICE_ICON, areaOf, isNewListing, locationOf, typeIcon } from '../../lib/listings'
+import { SERVICE_ICON, areaOf, isNewListing, locationOf, typeColors, typeIcon } from '../../lib/listings'
+import { formatPpm } from '../../lib/market'
 
-// A space in the Marketplace: photo, price, where it is, how big, and the
-// amenities at a glance. The heart saves it (same list as Profile › Saved).
-export default function PropertyCard({ property, onOpen, saved = false, onToggleSave }) {
+const REQUEST_BADGE = {
+    Pending: { label: 'Requested', icon: 'bi-inbox', tone: 'info' },
+    Offered: { label: 'Offer waiting', icon: 'bi-pen', tone: 'warning' },
+    Active: { label: 'Your lease', icon: 'bi-key', tone: 'success' },
+}
+
+// A space in the Marketplace: photo, price (and how it compares), where it is,
+// how big, and the amenities at a glance. The heart saves it (same list as
+// Profile › Saved); "Compare" adds it to the side-by-side view.
+export default function PropertyCard({
+    property,
+    onOpen,
+    saved = false,
+    onToggleSave,
+    insight,
+    requestStatus,
+    onOpenRequest,
+    comparing = false,
+    onToggleCompare,
+    compareFull = false,
+}) {
     const icon = typeIcon(property.property_type)
+    const [bg, fg] = typeColors(property.property_type)
     const rent = property.monthly_rent
     const area = areaOf(property)
     const location = locationOf(property)
     const services = property.service_names || []
+    const badge = requestStatus ? REQUEST_BADGE[requestStatus] : null
 
     return (
-        <article className="ns-mk-card">
+        <article className={`ns-mk-card ${comparing ? 'is-comparing' : ''}`}>
             <button type="button" className="ns-mk-card-media" onClick={() => onOpen?.(property)} aria-label={`Open ${property.property_name}`}>
                 {property.photo_url ? (
                     <img src={property.photo_url} alt="" loading="lazy" />
                 ) : (
-                    <span className="ns-mk-card-placeholder">
+                    <span className="ns-mk-card-placeholder" style={{ background: bg, color: fg }}>
                         <i className={`bi ${icon}`}></i>
+                        <small>{property.property_type}</small>
                     </span>
                 )}
                 {isNewListing(property) && <span className="ns-mk-badge-new">New</span>}
@@ -40,6 +62,12 @@ export default function PropertyCard({ property, onOpen, saved = false, onToggle
                 </button>
             )}
 
+            {badge && (
+                <button type="button" className={`ns-mk-mine tone-${badge.tone}`} onClick={() => onOpenRequest?.(property)}>
+                    <i className={`bi ${badge.icon}`}></i> {badge.label}
+                </button>
+            )}
+
             <button type="button" className="ns-mk-card-body" onClick={() => onOpen?.(property)}>
                 <div className="ns-mk-card-price">
                     {rent != null ? (
@@ -51,6 +79,11 @@ export default function PropertyCard({ property, onOpen, saved = false, onToggle
                         <span className="ns-mk-card-noprice">Price on request</span>
                     )}
                 </div>
+                {insight && (
+                    <span className={`ns-price-tag tone-${insight.tone}`} title={`${formatPpm(insight.ppm)} vs ${formatPpm(insight.median)} for ${insight.scope}`}>
+                        {insight.label} · {formatPpm(insight.ppm)}
+                    </span>
+                )}
                 <h3>{property.property_name}</h3>
                 <p className="ns-mk-card-loc">
                     <i className="bi bi-geo-alt"></i> {location || 'Location not listed'}
@@ -76,6 +109,18 @@ export default function PropertyCard({ property, onOpen, saved = false, onToggle
                     </div>
                 )}
             </button>
+
+            {onToggleCompare && (
+                <label className={`ns-mk-compare ${comparing ? 'is-on' : ''} ${compareFull && !comparing ? 'is-disabled' : ''}`}>
+                    <input
+                        type="checkbox"
+                        checked={comparing}
+                        disabled={compareFull && !comparing}
+                        onChange={() => onToggleCompare(property)}
+                    />
+                    <span>{comparing ? 'Comparing' : compareFull ? 'Compare (3 max)' : 'Compare'}</span>
+                </label>
+            )}
         </article>
     )
 }

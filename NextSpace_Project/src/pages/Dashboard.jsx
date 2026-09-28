@@ -94,6 +94,11 @@ export default function Dashboard() {
         setRonyPanel({ open: false, seed: null })
         setPaymentsContractId(options.contractId ?? null)
         setSection(nextSection)
+        // A "new space for your search" notification opens that space.
+        if (options.propertyId) {
+            setViewingFrom('home')
+            setViewingProperty({ property_id: options.propertyId })
+        }
     }
 
     // Remembers where the property was opened from, so the detail page's back
@@ -214,13 +219,16 @@ export default function Dashboard() {
                         search={search}
                         onViewProperty={openProperty('home')}
                         onNavigate={handleSectionChange}
+                        onAskRony={handleAskRony}
                     />
                 ) : (
                     <BusinessHome
                         user={user}
                         search={search}
+                        onSearchChange={setSearch}
                         onViewProperty={openProperty('home')}
                         onAskRony={handleAskRony}
+                        onNavigate={handleSectionChange}
                     />
                 )
         }

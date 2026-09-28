@@ -8,6 +8,7 @@ import { LISTING_STATUS } from '../../lib/propertyTypes'
 import { formatDueDate } from '../../lib/rentSchedule'
 import { areaOf, daysSince, listingChecklist, listingScore, locationOf, typeIcon } from '../../lib/listings'
 import { money, offerExpiresIn, personName } from '../../lib/contracts'
+import { formatPpm, loadMarketStats, priceInsight } from '../../lib/market'
 import './listings.css'
 
 const TABS = [
@@ -96,17 +97,20 @@ function StatusLine({ property, status, onOpenContracts }) {
             </p>
         )
     }
+    // What the empty days have cost, at the listed rent.
+    const missed = property.monthly_rent != null && status.vacantDays > 0 ? (Number(property.monthly_rent) / 30) * status.vacantDays : 0
     return (
-        <p className="ns-own-status tone-neutral">
+        <p className={`ns-own-status ${status.vacantDays >= 30 ? 'tone-warning' : 'tone-neutral'}`}>
             <i className="bi bi-hourglass"></i>
             <span>
                 Listed · vacant {status.vacantDays === 0 ? 'since today' : `for ${status.vacantDays} ${status.vacantDays === 1 ? 'day' : 'days'}`}
+                {missed >= 1 && <em> · {money(Math.round(missed))} in rent missed</em>}
             </span>
         </p>
     )
 }
 
-function OwnerListingCard({ property, status, onOpen, onEdit, onTogglePause, onDelete, onOpenContracts, busy }) {
+function OwnerListingCard({ property, status, stats, insight, onOpen, onEdit, onDuplicate, onTogglePause, onDelete, onOpenContracts, onAskRony, busy }) {
     const meta = LISTING_STATUS[property.availability] || LISTING_STATUS.Available
     const area = areaOf(property)
     const score = listingScore(property)
@@ -149,6 +153,43 @@ function OwnerListingCard({ property, status, onOpen, onEdit, onTogglePause, onD
 
                 <StatusLine property={property} status={status} onOpenContracts={onOpenContracts} />
 
+                {stats && (
+                    <div className="ns-own-interest" aria-label="Interest in this listing">
+                        <span title="Businesses that opened this listing in the last 30 days">
+                            <i className="bi bi-eye"></i> <strong>{stats.views_30d}</strong> views
+                        </span>
+                        <span title="Businesses that saved it">
+                            <i className="bi bi-heart"></i> <strong>{stats.saves}</strong> saved
+                        </span>
+                        <span title="Lease requests received, all time">
+                            <i className="bi bi-inbox"></i> <strong>{stats.requests_total}</strong> requests
+                        </span>
+                    </div>
+                )}
+
+                {!leased && insight && (
+                    <div className={`ns-own-price tone-${insight.tone}`}>
+                        <span>
+                            {formatPpm(insight.ppm)} · <strong>{insight.label.toLowerCase()}</strong>{' '}
+                            <small>
+                                ({formatPpm(insight.median)} {insight.scope})
+                            </small>
+                        </span>
+                        {onAskRony && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onAskRony({
+                                        text: `What rent should I ask for "${property.property_name}" (${property.property_type}, ${areaOf(property) || '?'} m² in ${locationOf(property) || 'El Salvador'})? It's listed at ${money(property.monthly_rent)}/month (${formatPpm(insight.ppm)}); similar spaces go for about ${formatPpm(insight.median)}.${stats ? ` It had ${stats.views_30d} views and ${stats.requests_total} requests.` : ''}`,
+                                    })
+                                }
+                            >
+                                <i className="bi bi-stars"></i> Ask Rony for a price
+                            </button>
+                        )}
+                    </div>
+                )}
+
                 {!leased && (
                     <div className="ns-own-quality" title={missing.length ? `Missing: ${missing.map((m) => m.label).join(', ')}` : 'Complete'}>
                         <div className="ns-own-quality-head">
@@ -171,6 +212,9 @@ function OwnerListingCard({ property, status, onOpen, onEdit, onTogglePause, onD
                     <button type="button" onClick={() => onEdit(property)}>
                         <i className="bi bi-pencil"></i> Edit
                     </button>
+                    <button type="button" onClick={() => onDuplicate(property)} title="Publish a similar space">
+                        <i className="bi bi-copy"></i> Duplicate
+                    </button>
                     {!leased && (
                         <button type="button" onClick={() => onTogglePause(property)} disabled={busy}>
                             <i className={`bi ${property.availability === 'Reserved' ? 'bi-play-circle' : 'bi-pause-circle'}`}></i>{' '}
@@ -188,7 +232,7 @@ function OwnerListingCard({ property, status, onOpen, onEdit, onTogglePause, onD
     )
 }
 
-export default function OwnerHome({ user, firstName, search, onViewProperty, onNavigate }) {
+export default function OwnerHome({ user, firstName, search, onViewProperty, onNavigate, onAskRony }) {
     const { ownerDui, properties, setProperties, loading, error: loadError, reload } = useOwnerProperties(user)
     const [contracts, setContracts] = useState([])
     const [tab, setTab] = useState('all')
@@ -198,6 +242,9 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
     const [deleting, setDeleting] = useState(false)
     const [actionError, setActionError] = useState('')
     const [busyId, setBusyId] = useState(null)
+    const [templateProperty, setTemplateProperty] = useState(null)
+    const [listingStats, setListingStats] = useState(() => new Map())
+    const [marketStats, setMarketStats] = useState(() => new Map())
 
     const loadContracts = useCallback(async () => {
         const { data } = await supabase
@@ -210,6 +257,10 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
 
     useEffect(() => {
         loadContracts()
+        supabase.rpc('owner_listing_stats').then(({ data }) => {
+            setListingStats(new Map((data || []).map((r) => [r.property_id, r])))
+        })
+        loadMarketStats().then(setMarketStats)
     }, [loadContracts])
 
     const rows = useMemo(
@@ -252,17 +303,27 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
 
     const openCreateModal = () => {
         setEditingProperty(null)
+        setTemplateProperty(null)
         setShowFormModal(true)
     }
 
     const openEditModal = (property) => {
+        setTemplateProperty(null)
         setEditingProperty(property)
+        setShowFormModal(true)
+    }
+
+    // New listing prefilled from an existing one (not its photos).
+    const openDuplicate = (property) => {
+        setEditingProperty(null)
+        setTemplateProperty(property)
         setShowFormModal(true)
     }
 
     const handleSaved = async () => {
         setShowFormModal(false)
         setEditingProperty(null)
+        setTemplateProperty(null)
         await reload()
     }
 
@@ -426,6 +487,10 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
                             status={status}
                             onOpen={onViewProperty}
                             onEdit={openEditModal}
+                            onDuplicate={openDuplicate}
+                            stats={listingStats.get(property.property_id)}
+                            insight={priceInsight(property, marketStats)}
+                            onAskRony={onAskRony}
                             onTogglePause={togglePause}
                             onDelete={(p) => {
                                 setActionError('')
@@ -441,10 +506,12 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
             {showFormModal && (
                 <NewPropertyModal
                     property={editingProperty}
+                    template={templateProperty}
                     ownerDui={ownerDui}
                     onClose={() => {
                         setShowFormModal(false)
                         setEditingProperty(null)
+                        setTemplateProperty(null)
                     }}
                     onSaved={handleSaved}
                 />

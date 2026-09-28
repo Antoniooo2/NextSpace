@@ -26,6 +26,7 @@ const KINDS = [
     { kind: 'rent-due', test: /^(Rent due|Rent reminder from your owner)/, icon: 'bi-calendar-event', tone: 'warning' },
     { kind: 'paid', test: /^Payment (received|confirmed|recorded)/, icon: 'bi-check-circle-fill', tone: 'success' },
     { kind: 'rony', test: /^Heads up from Rony/, icon: 'bi-stars', tone: 'rony' },
+    { kind: 'match', test: /^New space for your search/, icon: 'bi-search-heart', tone: 'info' },
 ]
 
 export function notificationKind(n) {
@@ -39,6 +40,9 @@ export function notificationKind(n) {
 // Where tapping a notification goes.
 export function notificationTarget(n) {
     const { kind } = notificationKind(n)
+    if (n.property_id && (kind === 'match' || n.process === 'Marketplace')) {
+        return { section: 'home', contractId: null, propertyId: n.property_id }
+    }
     const paymentsKinds = ['rent-late', 'rent-due', 'paid', 'rony']
     return {
         section: paymentsKinds.includes(kind) || (n.process === 'Payments' && kind !== 'lease-ending') ? 'payments' : 'contracts',

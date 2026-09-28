@@ -9,28 +9,30 @@ const MAX_PHOTO_BYTES = 5 * 1024 * 1024
 const PHOTO_URL_MARKER = '/property-photos/'
 const MAX_PHOTOS = 6
 
-export default function NewPropertyModal({ property, ownerDui, onClose, onSaved }) {
+export default function NewPropertyModal({ property, template, ownerDui, onClose, onSaved }) {
+    // "Duplicate" starts a new listing from another one's details (no photos).
+    const base = property || template || null
     const isEditMode = Boolean(property)
 
-    const [propertyName, setPropertyName] = useState(property?.property_name || '')
-    const [propertyType, setPropertyType] = useState(property?.property_type || PROPERTY_TYPES[0])
+    const [propertyName, setPropertyName] = useState(template && !property ? `${template.property_name} (copy)` : property?.property_name || '')
+    const [propertyType, setPropertyType] = useState(base?.property_type || PROPERTY_TYPES[0])
     const [monthlyRent, setMonthlyRent] = useState(
-        property?.monthly_rent != null ? String(property.monthly_rent) : ''
+        base?.monthly_rent != null ? String(base.monthly_rent) : ''
     )
     const [width, setWidth] = useState(
-        property?.business_size_width != null ? String(property.business_size_width) : ''
+        base?.business_size_width != null ? String(base.business_size_width) : ''
     )
     const [length, setLength] = useState(
-        property?.business_size_length != null ? String(property.business_size_length) : ''
+        base?.business_size_length != null ? String(base.business_size_length) : ''
     )
     // Occupied is set by the lease flow; owners only choose listed or paused.
     const isLeased = property?.availability === 'Occupied'
     const [listed, setListed] = useState(property?.availability !== 'Reserved')
-    const [phoneNumber, setPhoneNumber] = useState(property?.phone_number || '')
-    const [description, setDescription] = useState(property?.description || '')
-    const [department, setDepartment] = useState(property?.department || '')
-    const [municipality, setMunicipality] = useState(property?.municipality || '')
-    const [address, setAddress] = useState(property?.address || '')
+    const [phoneNumber, setPhoneNumber] = useState(base?.phone_number || '')
+    const [description, setDescription] = useState(base?.description || '')
+    const [department, setDepartment] = useState(base?.department || '')
+    const [municipality, setMunicipality] = useState(base?.municipality || '')
+    const [address, setAddress] = useState(base?.address || '')
     // Up to 6 photos; the first one is the cover. Existing photos keep their
     // row id, new ones carry the file to upload.
     const [photoItems, setPhotoItems] = useState(() =>
@@ -44,7 +46,7 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
     const [removedPhotos, setRemovedPhotos] = useState([])
     const [photoError, setPhotoError] = useState('')
     const [servicesList, setServicesList] = useState([])
-    const [selectedServiceIds, setSelectedServiceIds] = useState(property?.service_ids || [])
+    const [selectedServiceIds, setSelectedServiceIds] = useState(base?.service_ids || [])
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
 
@@ -255,6 +257,11 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
         const servicesIssue = await syncServices(savedProperty.business_id)
         if (servicesIssue) issues.push(`amenities (${servicesIssue})`)
 
+        // Amenities are saved now, so alert businesses whose saved search matches.
+        if (!isLeased && listed) {
+            await supabase.rpc('notify_saved_searches', { p_property_id: savedProperty.property_id })
+        }
+
         setSaving(false)
 
         if (issues.length > 0) {
@@ -274,7 +281,7 @@ export default function NewPropertyModal({ property, ownerDui, onClose, onSaved 
                 </button>
 
                 <div className="ns-modal-body">
-                    <h2 className="ns-modal-form-title">{isEditMode ? 'Edit space' : 'Publish a new space'}</h2>
+                    <h2 className="ns-modal-form-title">{isEditMode ? 'Edit space' : template ? 'Publish a similar space' : 'Publish a new space'}</h2>
                     <p className="ns-modal-form-subtitle">
                         {isEditMode
                             ? 'Update the details of this listing.'
