@@ -1,4 +1,7 @@
 import logo from '../assets/logo_ns_right.png'
+import usePlatformFee from '../hooks/usePlatformFee'
+import { feeSplit, formatRate } from '../lib/platformFee'
+import { money } from '../lib/money'
 
 const STATS = [
     { value: '500+', label: 'Active Spaces' },
@@ -18,17 +21,20 @@ const STEPS = [
         icon: 'bi-file-earmark-text',
         title: '2. Digital Contract',
         description:
-            "Forget paperwork and endless waiting. Manage contracts and deposits digitally, with a process that's 100% online and legally valid in El Salvador.",
+            "Forget paperwork and endless waiting. Request a space, receive the owner's offer and sign it in the app. Your lease, its clauses and every change stay in one place.",
     },
     {
         icon: 'bi-shield-check',
         title: '3. Secure Payment',
         description:
-            'Fast and protected transactions with escrow. Your investment is backed by our advanced security technology.',
+            'Pay your rent each month by card through Wompi and get your receipt instantly. NextSpace collects it on the owner’s behalf and reminds you before it’s due.',
     },
 ]
 
 export default function LandingPage({ onLogin, onSignup }) {
+    const feeRate = usePlatformFee()
+    const example = feeSplit(1000, feeRate)
+
     return (
         <div className="ns-landing">
             <header className="ns-navbar">
@@ -140,6 +146,58 @@ export default function LandingPage({ onLogin, onSignup }) {
                                 <p className="ns-step-desc">{step.description}</p>
                             </div>
                         ))}
+                    </div>
+                </section>
+
+                <section className="ns-pricing" aria-labelledby="ns-pricing-title">
+                    <h2 className="ns-steps-title" id="ns-pricing-title">
+                        How NextSpace earns: {formatRate(feeRate)} of each rent, and only when it's paid
+                    </h2>
+                    <div className="ns-pricing-grid">
+                        <div className="ns-pricing-card">
+                            <span className="ns-pricing-tag">For businesses</span>
+                            <div className="ns-pricing-price">Free</div>
+                            <p className="ns-pricing-sub">You pay exactly the rent in your lease. No fees on top.</p>
+                            <ul>
+                                <li><i className="bi bi-check2"></i> Search, compare and save spaces</li>
+                                <li><i className="bi bi-check2"></i> Ask Rony, our AI advisor</li>
+                                <li><i className="bi bi-check2"></i> Sign your lease and pay rent online</li>
+                                <li><i className="bi bi-check2"></i> Receipts and statements for every month</li>
+                            </ul>
+                        </div>
+                        <div className="ns-pricing-card is-featured">
+                            <span className="ns-pricing-tag">For property owners</span>
+                            <div className="ns-pricing-price">
+                                {formatRate(feeRate)} <small>of each rent payment</small>
+                            </div>
+                            <p className="ns-pricing-sub">Listing is free. We only earn when your tenant pays.</p>
+                            <ul>
+                                <li><i className="bi bi-check2"></i> Tenants found and screened for you</li>
+                                <li><i className="bi bi-check2"></i> Online contracts, renewals and reminders</li>
+                                <li><i className="bi bi-check2"></i> Rent collected and sent to your bank account</li>
+                                <li><i className="bi bi-check2"></i> Reports, exports and Rony’s insights</li>
+                            </ul>
+                        </div>
+                        <div className="ns-pricing-card ns-pricing-example">
+                            <span className="ns-pricing-tag">Example</span>
+                            <dl>
+                                <div>
+                                    <dt>Your tenant pays</dt>
+                                    <dd>{money(example.gross)}</dd>
+                                </div>
+                                <div>
+                                    <dt>NextSpace fee ({formatRate(feeRate)})</dt>
+                                    <dd>−{money(example.fee)}</dd>
+                                </div>
+                                <div className="is-net">
+                                    <dt>You receive</dt>
+                                    <dd>{money(example.net)}</dd>
+                                </div>
+                            </dl>
+                            <p className="ns-pricing-sub mb-0">
+                                Deposits carry no fee. No monthly plans, no listing costs.
+                            </p>
+                        </div>
                     </div>
                 </section>
             </main>

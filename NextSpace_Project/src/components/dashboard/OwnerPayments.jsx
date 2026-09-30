@@ -22,6 +22,9 @@ import {
     tenantName,
 } from '../../lib/leaseInsights'
 import { downloadReceiptPdf } from '../../lib/paymentDocuments'
+import { contractRate, formatRate, paymentSplit } from '../../lib/platformFee'
+import { loadPayoutAccount, loadPayouts } from '../../lib/payouts'
+import usePlatformFee from '../../hooks/usePlatformFee'
 import { downloadOwnerWorkbook } from '../../lib/paymentReports'
 import ExportMenu from './payments/ExportMenu'
 import MonthlyReportModal from './payments/MonthlyReportModal'
@@ -30,6 +33,8 @@ import PaymentHistory from './payments/PaymentHistory'
 import CollectionsChart from './CollectionsChart'
 import IncomeProjectionChart from './payments/IncomeProjectionChart'
 import OwnerLeaseDetail from './payments/OwnerLeaseDetail'
+import OwnerTransfers from './payments/OwnerTransfers'
+import PayoutAccountModal from './payments/PayoutAccountModal'
 import ProgressRing from './payments/ProgressRing'
 import RiskBadge from './payments/RiskBadge'
 import RonyInsightCard from './payments/RonyInsightCard'
@@ -44,6 +49,11 @@ function paidMonthKey(p) {
 
 function sumAmount(rows) {
     return rows.reduce((total, p) => total + Number(p.amount || 0), 0)
+}
+
+// What the owner keeps from these rows after the NextSpace fee.
+function sumNet(rows, rate) {
+    return rows.reduce((total, p) => total + paymentSplit(p, contractRate(p.contract, rate)).net, 0)
 }
 
 // "▲ 12% vs Aug" style change between two values.
@@ -72,6 +82,11 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
     const [historyDetailId, setHistoryDetailId] = useState(null)
     const [receiptBusyId, setReceiptBusyId] = useState(null)
     const [reportOpen, setReportOpen] = useState(false)
+    const [payouts, setPayouts] = useState([])
+    const [payoutAccount, setPayoutAccount] = useState(null)
+    const [payoutError, setPayoutError] = useState('')
+    const [accountOpen, setAccountOpen] = useState(false)
+    const feeRate = usePlatformFee()
 
     const ownerFirstName = user.user_metadata?.first_name || ''
 
@@ -94,6 +109,15 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
         }))
         setContracts(withPhotos)
         setPayments(paymentRows || [])
+
+        try {
+            const [payoutRows, account] = await Promise.all([loadPayouts(), loadPayoutAccount()])
+            setPayouts(payoutRows)
+            setPayoutAccount(account)
+            setPayoutError('')
+        } catch (err) {
+            setPayoutError(`Transfers couldn't be loaded: ${err.message}`)
+        }
 
         const ids = withPhotos.map((c) => c.contract_id)
         if (ids.length > 0) {
@@ -175,6 +199,8 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 events={events.filter((e) => e.contract_id === selectedLease.contract.contract_id)}
                 ownerFirstName={ownerFirstName}
                 ownerName={[user.user_metadata?.first_name, user.user_metadata?.last_name].filter(Boolean).join(' ')}
+                feeRate={feeRate}
+                payouts={payouts}
                 onBack={() => setSelectedId(null)}
                 onAskRony={onAskRony}
                 onNoticeSent={loadData}
@@ -205,6 +231,13 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
     const hasChartData = chartMonths.some((m) => m.expected > 0 || m.collected > 0)
     const projection = incomeProjection(leases, today, 6)
     const insights = ownerInsights({ leases, thisMonth, projection, today })
+    const projectionKeys = new Set(projection.months.map((m) => m.key))
+    const projectedNet = sumNet(
+        leases.flatMap(({ contract, installments }) =>
+            installments.filter((p) => projectionKeys.has(p.payment_date.slice(0, 7))).map((p) => ({ ...p, contract }))
+        ),
+        feeRate
+    )
 
     const upcoming = leases
         .flatMap(({ contract, installments }) =>
@@ -218,6 +251,9 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
         )
         .sort((a, b) => a.p.payment_date.localeCompare(b.p.payment_date))
     const upcomingTotal = sumAmount(upcoming.map((u) => u.p))
+    const upcomingNet = sumNet(upcoming.map((u) => ({ ...u.p, contract: u.contract })), feeRate)
+    const collectedNet = sumNet(allRows.filter((p) => p.status === 'Paid' && paidMonthKey(p) === monthKey), feeRate)
+    const exampleRent = leases[0]?.contract.monthly_rent || allRows.find((p) => p.status === 'Paid')?.amount || 1000
 
     const historyDetail = allRows.find((p) => p.payment_id === historyDetailId) || null
     const tenantOf = (contract) => ({
@@ -249,7 +285,10 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
             <div className="ns-dash-header">
                 <div>
                     <h1>Payments</h1>
-                    <p>Rent across all your properties. Tenants pay online with Wompi; you follow along here.</p>
+                    <p>
+                        Rent across all your properties. Tenants pay online with Wompi; NextSpace keeps its {formatRate(feeRate)}{' '}
+                        fee and transfers the rest to you.
+                    </p>
                 </div>
                 {allRows.length > 0 && (
                     <div className="ns-dash-header-actions">
@@ -267,7 +306,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                     icon: 'bi-file-earmark-spreadsheet',
                                     label: 'Excel workbook (.xlsx)',
                                     description: 'Summary per property, every payment, 6-month projection',
-                                    onSelect: () => downloadOwnerWorkbook({ leases, allRows, projection }),
+                                    onSelect: () => downloadOwnerWorkbook({ leases, allRows, projection, feeRate }),
                                 },
                             ]}
                         />
@@ -286,6 +325,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 sections={[
                     { id: 'pay-today', label: 'Today', icon: 'bi-sun' },
                     { id: 'pay-properties', label: 'Your properties', icon: 'bi-shop', count: leases.length },
+                    { id: 'pay-transfers', label: 'Transfers', icon: 'bi-bank' },
                     { id: 'pay-analysis', label: 'Analysis', icon: 'bi-graph-up' },
                     { id: 'pay-history', label: 'History', icon: 'bi-clock-history' },
                 ]}
@@ -306,6 +346,9 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                     <div className="ns-kpi">
                         <span className="ns-kpi-label">Collected in {monthLabel(monthKey, 'long')}</span>
                         <span className="ns-kpi-value">{money(thisMonth.collected)}</span>
+                        {thisMonth.collected > 0 && (
+                            <span className="ns-kpi-sub">{money(collectedNet)} to you after the NextSpace fee</span>
+                        )}
                         <Trend current={thisMonth.collected} previous={lastMonth.collected} />
                     </div>
                     <div className="ns-kpi">
@@ -334,7 +377,9 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 <section className="ns-panel">
                     <div className="ns-panel-head">
                         <h3>Next 30 days</h3>
-                        <span>{money(upcomingTotal)} coming in</span>
+                        <span>
+                            {money(upcomingTotal)} coming in{upcomingTotal > 0 ? ` · ${money(upcomingNet)} to you` : ''}
+                        </span>
                     </div>
                     {upcoming.length === 0 ? (
                         <p className="ns-pay-muted mb-0">No rent is due in the next 30 days.</p>
@@ -464,6 +509,23 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 )}
             </PageGroup>
 
+ 
+            <PageGroup
+                id="pay-transfers"
+                title="Transfers"
+                hint={`Your rent minus the ${formatRate(feeRate)} NextSpace fee, sent to your bank account`}
+            >
+                <OwnerTransfers
+                    rows={allRows}
+                    payouts={payouts}
+                    account={payoutAccount}
+                    rate={feeRate}
+                    exampleRent={exampleRent}
+                    loadError={payoutError}
+                    onEditAccount={() => setAccountOpen(true)}
+                />
+            </PageGroup>
+
             <PageGroup id="pay-analysis" title="Analysis" hint="How rent has come in, and what to expect">
                 <div className="ns-pay-grid-2 ns-pay-grid-even">
                 <section className="ns-panel">
@@ -499,7 +561,14 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                     {leases.length === 0 ? (
                         <p className="ns-pay-muted mb-0">No active leases yet.</p>
                     ) : (
-                        <IncomeProjectionChart projection={projection} />
+                        <>
+                            <IncomeProjectionChart projection={projection} />
+                            <p className="ns-pay-muted mt-2 mb-0">
+                                Rent your tenants will pay. You receive it minus the {formatRate(feeRate)} NextSpace fee (about{' '}
+                                {money(projectedNet)}{' '}
+                                over these six months).
+                            </p>
+                        </>
                     )}
                 </section>
                 </div>
@@ -517,6 +586,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                         onOpen={(p) => setHistoryDetailId(p.payment_id)}
                         onReceipt={handleReceipt}
                         receiptBusyId={receiptBusyId}
+                        feeRate={feeRate}
                     />
                 </section>
             </PageGroup>
@@ -526,7 +596,21 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                     leases={leases}
                     allRows={allRows}
                     ownerName={[user.user_metadata?.first_name, user.user_metadata?.last_name].filter(Boolean).join(' ')}
+                    feeRate={feeRate}
                     onClose={() => setReportOpen(false)}
+                />
+            )}
+
+            {accountOpen && (
+                <PayoutAccountModal
+                    ownerDui={user.user_metadata?.dui}
+                    account={payoutAccount}
+                    defaultHolder={[user.user_metadata?.first_name, user.user_metadata?.last_name].filter(Boolean).join(' ')}
+                    onSaved={(saved) => {
+                        setPayoutAccount(saved)
+                        setAccountOpen(false)
+                    }}
+                    onClose={() => setAccountOpen(false)}
                 />
             )}
 
@@ -536,6 +620,8 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                     contract={historyDetail.contract}
                     tenant={tenantOf(historyDetail.contract)}
                     viewer="owner"
+                    feeRate={feeRate}
+                    payout={payouts.find((t) => t.payout_id === historyDetail.payout_id)}
                     onClose={() => setHistoryDetailId(null)}
                 />
             )}

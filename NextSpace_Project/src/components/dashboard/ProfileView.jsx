@@ -5,6 +5,10 @@ import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import { clearHistory } from './advisor/chatBlocks'
 import ChangePasswordModal from './ChangePasswordModal'
+import PayoutAccountModal from './payments/PayoutAccountModal'
+import { formatRate, sumSplit } from '../../lib/platformFee'
+import { loadPayoutAccount, maskAccountNumber } from '../../lib/payouts'
+import usePlatformFee from '../../hooks/usePlatformFee'
 import ConfirmDialog from './ConfirmDialog'
 import EditProfileModal from './EditProfileModal'
 import './profile.css'
@@ -107,6 +111,7 @@ function TenantRecordCard({ record, loading }) {
 function OwnerSummary({ properties, loadingProperties }) {
     const [activeLeases, setActiveLeases] = useState(null)
     const [collected, setCollected] = useState(null)
+    const feeRate = usePlatformFee()
     const year = new Date().getFullYear()
 
     useEffect(() => {
@@ -115,7 +120,7 @@ function OwnerSummary({ properties, loadingProperties }) {
         const ids = properties.map((p) => p.property_id)
         if (ids.length === 0) {
             setActiveLeases([])
-            setCollected(0)
+            setCollected({ gross: 0, fee: 0, net: 0 })
             return undefined
         }
         ;(async () => {
@@ -125,15 +130,15 @@ function OwnerSummary({ properties, loadingProperties }) {
                 .in('property_id', ids)
             const all = contracts || []
             const contractIds = all.map((c) => c.contract_id)
-            let total = 0
+            let total = { gross: 0, fee: 0, net: 0 }
             if (contractIds.length > 0) {
                 const { data: paid } = await supabase
                     .from('payment')
-                    .select('amount')
+                    .select('amount, commission_rate, commission_amount, owner_amount')
                     .in('contract_id', contractIds)
                     .eq('status', 'Paid')
                     .gte('paid_at', `${year}-01-01`)
-                total = (paid || []).reduce((sum, p) => sum + Number(p.amount || 0), 0)
+                total = sumSplit(paid || [], feeRate)
             }
             if (cancelled) return
             setActiveLeases(all.filter((c) => c.status === 'Active'))
@@ -142,7 +147,7 @@ function OwnerSummary({ properties, loadingProperties }) {
         return () => {
             cancelled = true
         }
-    }, [properties, loadingProperties, year])
+    }, [properties, loadingProperties, year, feeRate])
 
     const leasedIds = new Set((activeLeases || []).map((c) => c.property_id))
     const leased = properties.filter((p) => leasedIds.has(p.property_id)).length
@@ -154,7 +159,12 @@ function OwnerSummary({ properties, loadingProperties }) {
             sub: activeLeases ? `${leased} leased · ${properties.length - leased} free` : '',
         },
         { icon: 'bi-file-earmark-check', value: activeLeases ? activeLeases.length : '—', label: 'Active leases', sub: 'Tenants paying rent' },
-        { icon: 'bi-cash-coin', value: collected != null ? money(collected) : '—', label: `Collected in ${year}`, sub: 'Paid through Wompi' },
+        {
+            icon: 'bi-cash-coin',
+            value: collected != null ? money(collected.net) : '—',
+            label: `Yours in ${year}`,
+            sub: collected ? `${money(collected.gross)} collected − ${formatRate(feeRate)} NextSpace fee` : '',
+        },
     ]
 
     return (
@@ -187,6 +197,8 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
     const [loadingSaved, setLoadingSaved] = useState(true)
     const [showAll, setShowAll] = useState(false)
     const [removingId, setRemovingId] = useState(null)
+    const [payoutAccount, setPayoutAccount] = useState(null)
+    const [showPayoutModal, setShowPayoutModal] = useState(false)
 
     const meta = user.user_metadata || {}
     const firstName = meta.first_name || ''
@@ -197,6 +209,19 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
 
     const isOwner = accountType === 'property-owner'
     const { properties: ownProperties, loading: loadingProperties } = useOwnerProperties(isOwner ? user : null)
+
+    useEffect(() => {
+        if (!isOwner) return undefined
+        let cancelled = false
+        loadPayoutAccount()
+            .then((account) => {
+                if (!cancelled) setPayoutAccount(account)
+            })
+            .catch(() => {})
+        return () => {
+            cancelled = true
+        }
+    }, [isOwner, user.id])
 
     useEffect(() => {
         if (isOwner) return undefined
@@ -257,6 +282,14 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
     const visibleSaved = showAll ? savedProperties : savedProperties.slice(0, PREVIEW_COUNT)
 
     const settings = [
+        isOwner && {
+            icon: 'bi-bank',
+            title: payoutAccount ? 'Bank account for transfers' : 'Add your bank account',
+            text: payoutAccount
+                ? `${payoutAccount.bank_name} ${maskAccountNumber(payoutAccount.account_number)} · where NextSpace sends your rent`
+                : 'Where NextSpace sends your rent, minus its fee',
+            onClick: () => setShowPayoutModal(true),
+        },
         {
             icon: 'bi-key',
             title: 'Change password',
@@ -451,6 +484,21 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
             )}
 
             {showChangePasswordModal && <ChangePasswordModal onClose={() => setShowChangePasswordModal(false)} />}
+
+            {showPayoutModal && (
+                <PayoutAccountModal
+                    ownerDui={meta.dui}
+                    account={payoutAccount}
+                    defaultHolder={fullName}
+                    onSaved={(saved) => {
+                        setPayoutAccount(saved)
+                        setShowPayoutModal(false)
+                        setNotice('Bank account saved.')
+                        setTimeout(() => setNotice(''), 3500)
+                    }}
+                    onClose={() => setShowPayoutModal(false)}
+                />
+            )}
 
             {confirm === 'chat' && (
                 <ConfirmDialog

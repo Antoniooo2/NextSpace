@@ -6,7 +6,7 @@ import { downloadOwnerMonthlyReportPdf } from '../../../lib/paymentReports'
 
 // Owner picks a month and whether Rony should write the analysis paragraph,
 // then downloads the monthly rent report PDF.
-export default function MonthlyReportModal({ leases, allRows, ownerName, onClose }) {
+export default function MonthlyReportModal({ leases, allRows, ownerName, feeRate, onClose }) {
     const current = todayInElSalvador().slice(0, 7)
     const months = Array.from({ length: 12 }, (_, i) => monthKeyShift(current, -i))
     const [monthKey, setMonthKey] = useState(current)
@@ -42,7 +42,7 @@ export default function MonthlyReportModal({ leases, allRows, ownerName, onClose
         }
         setBusy('Building the PDF...')
         try {
-            await downloadOwnerMonthlyReportPdf({ monthKey, leases, allRows, ownerName, summary })
+            await downloadOwnerMonthlyReportPdf({ monthKey, leases, allRows, ownerName, summary, feeRate })
             if (withRony && !summary) {
                 setNote("Rony wasn't available, so the report was created without the analysis paragraph.")
                 setBusy('')

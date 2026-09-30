@@ -1500,3 +1500,238 @@
 
 .ns-lease-hero-actions { align-items: flex-end; }
 @media (max-width: 767px) { .ns-lease-hero-actions { align-items: flex-start; } }
+
+/* NextSpace fee and transfers to owners */
+.ns-fee-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.ns-fee-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f5f6f8;
+  min-width: 0;
+}
+
+.ns-fee-step > i {
+  font-size: 18px;
+  color: var(--ns-navy);
+}
+
+.ns-fee-step span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.ns-fee-step small {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-fee-step strong {
+  font-size: 16px;
+  color: var(--ns-navy);
+}
+
+.ns-fee-step.is-fee strong {
+  color: #6b4bd6;
+}
+
+.ns-fee-step.is-net {
+  background: #e8f6ee;
+}
+
+.ns-fee-step.is-net strong,
+.ns-fee-step.is-net > i {
+  color: #1a8a4a;
+}
+
+.ns-fee-arrow {
+  color: var(--ns-text-muted);
+}
+
+.ns-fee-flow-note {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-kpi.is-highlight {
+  border-color: #b9e2c9;
+  background: #f4fbf7;
+}
+
+.ns-kpi.is-highlight .ns-kpi-value {
+  color: #1a8a4a;
+}
+
+.ns-kpi-sub {
+  font-size: 12px;
+  color: #1a8a4a;
+  font-weight: 600;
+}
+
+.ns-transfer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ns-transfer-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--ns-border);
+}
+
+.ns-transfer-list li:first-child {
+  border-top: none;
+}
+
+.ns-transfer-list.is-compact li {
+  padding: 8px 0;
+}
+
+.ns-transfer-icon {
+  flex: 0 0 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e8f6ee;
+  color: #1a8a4a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ns-transfer-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-transfer-main strong {
+  font-size: 13.5px;
+  color: #1a1f2b;
+}
+
+.ns-transfer-main small {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.ns-transfer-amount {
+  font-weight: 700;
+  color: #1a8a4a;
+  white-space: nowrap;
+}
+
+.ns-transfer-subhead {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 18px 0 4px;
+  color: #1a1f2b;
+}
+
+.ns-payout-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ns-payout-account > i {
+  font-size: 22px;
+  color: var(--ns-navy);
+}
+
+.ns-payout-account span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ns-payout-account small {
+  color: var(--ns-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.ns-payout-account.is-missing {
+  display: block;
+  background: #fff8ec;
+  border: 1px solid #f3dcae;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.ns-payout-account.is-missing i {
+  color: #b7791f;
+}
+
+.ns-fee-breakdown {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f5f6f8;
+  font-size: 13px;
+}
+
+.ns-fee-breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.ns-fee-breakdown dt {
+  font-weight: 400;
+  color: #4a5263;
+}
+
+.ns-fee-breakdown dd {
+  margin: 0;
+  font-weight: 600;
+  color: #1a1f2b;
+}
+
+.ns-fee-breakdown .is-net {
+  border-top: 1px solid var(--ns-border);
+  margin-top: 4px;
+  padding-top: 7px;
+}
+
+.ns-fee-breakdown .is-net dd {
+  color: #1a8a4a;
+}
+
+.ns-fee-breakdown .ns-fee-breakdown-note {
+  display: block;
+  color: var(--ns-text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+@media (max-width: 575px) {
+  .ns-fee-arrow {
+    display: none;
+  }
+
+  .ns-fee-step {
+    flex: 1 1 100%;
+  }
+}

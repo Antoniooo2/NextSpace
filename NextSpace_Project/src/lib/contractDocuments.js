@@ -2,6 +2,7 @@
 // clauses, both signatures with their timestamps, and the verification code.
 import { formatDueDate } from './rentSchedule'
 import { dueDayLabel, money, personName, standardClauses, statusMeta } from './contracts'
+import { contractRate, formatRate } from './platformFee'
 import { ensureSpace, facts, footer, header, newDoc, paragraph, sectionTitle } from './paymentReports'
 
 const TEXT = [26, 31, 43]
@@ -50,6 +51,7 @@ export async function downloadContractPdf(contract) {
         ['End', formatDueDate(contract.end_date, { month: 'long', day: 'numeric', year: 'numeric' })],
         ['Length', contract.duration_months ? `${contract.duration_months} months` : '—'],
         ['Deposit', Number(contract.deposit || 0) > 0 ? money(contract.deposit) : 'None'],
+        ['NextSpace fee', `${formatRate(contractRate(contract))} of each rent, paid by owner`],
     ])
 
     y = sectionTitle(ctx, y, 'Clauses')

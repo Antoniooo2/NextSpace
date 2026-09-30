@@ -876,3 +876,39 @@
     margin-left: auto;
   }
 }
+
+/* NextSpace fee: what the owner receives, and the one-time acceptance */
+.ns-lf-fee {
+  margin-top: 14px;
+}
+
+.ns-lf-fee-accept {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--ns-border);
+  border-radius: 10px;
+  background: #f8f9fc;
+  font-size: 13px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.ns-lf-fee-accept input {
+  margin-top: 3px;
+  flex: 0 0 auto;
+}
+
+.ns-lf-fee-accept em {
+  display: block;
+  font-style: normal;
+  color: #c9292f;
+  margin-top: 4px;
+}
+
+.ns-lf-fee-accept.is-invalid {
+  border-color: #e5a3a6;
+  background: #fff6f6;
+}

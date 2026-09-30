@@ -7,6 +7,9 @@ import { PROPERTY_TYPES, TYPE_ICON } from '../../lib/propertyTypes'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 import PropertyCard from './PropertyCard'
 import PriceMarketBar from './property/PriceMarketBar'
+import FeeBreakdown from './payments/FeeBreakdown'
+import { formatRate } from '../../lib/platformFee'
+import usePlatformFee from '../../hooks/usePlatformFee'
 import './listings.css'
 import './property/property.css'
 import './listingForm.css'
@@ -73,6 +76,12 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
     const [previewOpen, setPreviewOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const [errorMsg, setErrorMsg] = useState('')
+    // Owners accept the NextSpace fee once, before their first new listing.
+    // null while unknown; edits never ask.
+    const [feeAccepted, setFeeAccepted] = useState(isEditMode ? true : null)
+    const [feeChecked, setFeeChecked] = useState(false)
+    const [feeError, setFeeError] = useState(false)
+    const feeRate = usePlatformFee()
     const bodyRef = useRef(null)
 
     useEffect(() => {
@@ -92,6 +101,21 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
             cancelled = true
         }
     }, [])
+
+    useEffect(() => {
+        if (isEditMode) return undefined
+        let cancelled = false
+        supabase
+            .from('platform_fee_acceptance')
+            .select('accepted_at')
+            .maybeSingle()
+            .then(({ data, error }) => {
+                if (!cancelled) setFeeAccepted(error ? false : Boolean(data))
+            })
+        return () => {
+            cancelled = true
+        }
+    }, [isEditMode])
 
     useEffect(() => {
         const onKey = (e) => {
@@ -302,7 +326,24 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
             return
         }
 
+        const needsFeeAcceptance = !isEditMode && !feeAccepted
+        if (needsFeeAcceptance && !feeChecked) {
+            setFeeError(true)
+            return
+        }
+
         setSaving(true)
+
+        if (needsFeeAcceptance) {
+            const { error: acceptError } = await supabase.rpc('accept_platform_fee')
+            if (acceptError) {
+                console.error('Listing: accepting the fee failed', acceptError)
+                setSaving(false)
+                setErrorMsg(describeSupabaseError(acceptError))
+                return
+            }
+            setFeeAccepted(true)
+        }
 
         const payload = {
             property_name: propertyName.trim(),
@@ -580,6 +621,18 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                         Without a rent the space shows "Price on request" and gets fewer requests.
                                     </small>
                                 )}
+                                {positive(monthlyRent) && (
+                                    <div className="ns-lf-fee">
+                                        <FeeBreakdown
+                                            amount={Number(monthlyRent)}
+                                            rate={feeRate}
+                                            grossLabel="Your tenant pays"
+                                            netLabel="You receive"
+                                            suffix="/month"
+                                            note={`Listing is free. NextSpace only keeps ${formatRate(feeRate)} of each rent payment, when it's paid, and transfers the rest to your bank account. Deposits carry no fee.`}
+                                        />
+                                    </div>
+                                )}
 
                                 {suggestion ? (
                                     <div className="ns-lf-suggest">
@@ -736,6 +789,24 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                             </span>
                                         </button>
                                     </div>
+                                )}
+
+                                {feeAccepted !== true && (
+                                    <label className={`ns-lf-fee-accept ${feeError && !feeChecked ? 'is-invalid' : ''}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={feeChecked}
+                                            onChange={(e) => {
+                                                setFeeChecked(e.target.checked)
+                                                setFeeError(false)
+                                            }}
+                                        />
+                                        <span>
+                                            I agree that NextSpace keeps <strong>{formatRate(feeRate)} of each monthly rent</strong> my
+                                            tenants pay through the app, and transfers the rest to my bank account. Publishing is free.
+                                            {feeError && !feeChecked && <em>Accept the NextSpace fee to publish your first space.</em>}
+                                        </span>
+                                    </label>
                                 )}
                             </section>
                         )}

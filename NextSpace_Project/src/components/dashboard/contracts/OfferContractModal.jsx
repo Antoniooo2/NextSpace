@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { formatDueDate, todayInElSalvador } from '../../../lib/rentSchedule'
 import { addDays, addMonths, contractActions, dueDayLabel, money, personName } from '../../../lib/contracts'
+import { contractRate, feeSplit, formatRate } from '../../../lib/platformFee'
+import usePlatformFee from '../../../hooks/usePlatformFee'
+import FeeBreakdown from '../payments/FeeBreakdown'
 
 const DURATIONS = [3, 6, 12, 18, 24, 36]
 
@@ -28,6 +31,10 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
 
     const end = start && months ? addMonths(start, Number(months)) : null
     const total = Number(rent || 0) * Number(months || 0)
+    // An offer already sent keeps the rate it was sent with.
+    const currentRate = usePlatformFee()
+    const feeRate = contractRate(contract, currentRate)
+    const monthlySplit = feeSplit(rent, feeRate)
     const tenant = contract ? personName(contract.users) : null
 
     const submit = async (e) => {
@@ -197,7 +204,7 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                         </div>
                     )}
 
-                    <div className="ns-offer-summary">
+                    <div className="ns-offer-summary ns-offer-summary-4">
                         <div>
                             <small>Lease</small>
                             <strong>
@@ -212,7 +219,21 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                             <small>Total over the lease</small>
                             <strong>{money(total)}</strong>
                         </div>
+                        <div>
+                            <small>You receive over the lease</small>
+                            <strong>{money(monthlySplit.net * Number(months || 0))}</strong>
+                        </div>
                     </div>
+
+                    {Number(rent) > 0 && (
+                        <FeeBreakdown
+                            amount={Number(rent)}
+                            rate={feeRate}
+                            grossLabel="Tenant pays each month"
+                            netLabel="You receive each month"
+                            note={`The deposit${Number(deposit) > 0 ? ` (${money(deposit)})` : ''} carries no fee.`}
+                        />
+                    )}
 
                     <div className="ns-signature-box">
                         <label className="ns-label" htmlFor="offerSignature">Sign with your full name</label>
@@ -227,8 +248,8 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                         <label className="ns-agree">
                             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                             <span>
-                                I agree to lease this space on these terms and the NextSpace standard clauses. The offer is valid for
-                                7 days.
+                                I agree to lease this space on these terms and the NextSpace standard clauses, including the{' '}
+                                {formatRate(feeRate)} NextSpace fee on each rent payment. The offer is valid for 7 days.
                             </span>
                         </label>
                     </div>
