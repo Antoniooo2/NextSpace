@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_TAG, dueCountdown, formatDueDate, isPayable } from '../../lib/rentSchedule'
 import { downloadReceiptPdf, receiptNumber } from '../../lib/paymentDocuments'
 import { moneyExact as money } from '../../lib/money'
+import { contractRate, paymentSplit } from '../../lib/platformFee'
+import FeeBreakdown from './payments/FeeBreakdown'
 
 export default function PaymentDetailModal({
     payment,
@@ -13,6 +15,8 @@ export default function PaymentDetailModal({
     onClose,
     onAskRony,
     viewer = 'tenant',
+    payout,
+    feeRate,
 }) {
     const [downloading, setDownloading] = useState(false)
     const [downloadError, setDownloadError] = useState('')
@@ -55,6 +59,17 @@ export default function PaymentDetailModal({
         ['Property', contract.add_business?.property_name || '—'],
         ['Contract', `#${contract.contract_id}`],
     ]
+    if (viewer === 'owner' && isPaid) {
+        rows.push([
+            'Transfer to you',
+            payout
+                ? `Sent ${new Date(payout.sent_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/El_Salvador' })} · Ref. ${payout.reference}`
+                : 'Goes out in your next transfer',
+        ])
+    }
+    if (viewer === 'tenant' && isPaid) {
+        rows.push(['Paid to', 'The owner, through NextSpace'])
+    }
 
     return (
         <div className="ns-modal-backdrop" onClick={onClose}>
@@ -80,6 +95,14 @@ export default function PaymentDetailModal({
                     <p className="ns-pay-muted mb-3">
                         Rent for {formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' })}
                     </p>
+
+                    {viewer === 'owner' && payment.status !== 'Cancelled' && (
+                        <FeeBreakdown
+                            split={paymentSplit(payment, contractRate(contract, feeRate))}
+                            grossLabel={isPaid ? 'Tenant paid' : 'Tenant pays'}
+                            netLabel={isPaid ? 'You receive' : 'You will receive'}
+                        />
+                    )}
 
                     <dl className="ns-pay-detail-list">
                         {rows.map(([label, value]) => (

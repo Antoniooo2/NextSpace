@@ -25,6 +25,7 @@ const KINDS = [
     { kind: 'rent-late', test: /^(Rent overdue|Rent \d+ days overdue|Late rent|Still unpaid)/, icon: 'bi-exclamation-octagon-fill', tone: 'danger' },
     { kind: 'rent-due', test: /^(Rent due|Rent reminder from your owner)/, icon: 'bi-calendar-event', tone: 'warning' },
     { kind: 'paid', test: /^Payment (received|confirmed|recorded)/, icon: 'bi-check-circle-fill', tone: 'success' },
+    { kind: 'transfer', test: /^Transfer sent/, icon: 'bi-bank', tone: 'success' },
     { kind: 'rony', test: /^Heads up from Rony/, icon: 'bi-stars', tone: 'rony' },
     { kind: 'match', test: /^New space for your search/, icon: 'bi-search-heart', tone: 'info' },
 ]
@@ -43,7 +44,7 @@ export function notificationTarget(n) {
     if (n.property_id && (kind === 'match' || n.process === 'Marketplace')) {
         return { section: 'home', contractId: null, propertyId: n.property_id }
     }
-    const paymentsKinds = ['rent-late', 'rent-due', 'paid', 'rony']
+    const paymentsKinds = ['rent-late', 'rent-due', 'paid', 'transfer', 'rony']
     return {
         section: paymentsKinds.includes(kind) || (n.process === 'Payments' && kind !== 'lease-ending') ? 'payments' : 'contracts',
         contractId: n.contract_id ?? null,

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { formatDueDate, todayInElSalvador } from '../../../lib/rentSchedule'
 import { daysLate, monthLabel, money, svDateOf, tenantName } from '../../../lib/leaseInsights'
+import { awaitingTransfer, contractRate, paymentSplit } from '../../../lib/platformFee'
 
 const STATUS_FILTERS = [
     { id: 'all', label: 'All' },
@@ -20,7 +21,7 @@ const STATUS_ICON = {
 // Rent history as a feed grouped by month (newest first) with search and
 // filters, instead of one long table. Only months that have come due or were
 // paid; future months live in the timeline. rows carry `.contract`.
-export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onReceipt, receiptBusyId }) {
+export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onReceipt, receiptBusyId, feeRate }) {
     const today = todayInElSalvador()
     const [query, setQuery] = useState('')
     const [status, setStatus] = useState('all')
@@ -75,9 +76,13 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
             key,
             items,
             paid: items.filter((p) => p.status === 'Paid').reduce((s, p) => s + Number(p.amount), 0),
+            // What the owner gets from the paid months, after the NextSpace fee.
+            paidNet: items
+                .filter((p) => p.status === 'Paid')
+                .reduce((s, p) => s + paymentSplit(p, contractRate(p.contract, feeRate)).net, 0),
             total: items.reduce((s, p) => s + Number(p.amount), 0),
         }))
-    }, [filtered])
+    }, [filtered, feeRate])
 
     const visible = groups.slice(0, pages * MONTHS_PAGE)
     const filtersActive = query || status !== 'all' || leaseId !== 'all' || year !== 'all'
@@ -183,6 +188,7 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                                 <h4>{monthLabel(group.key, 'long')}</h4>
                                 <span>
                                     {money(group.paid)} paid{group.paid < group.total ? ` of ${money(group.total)}` : ''}
+                                    {viewer === 'owner' && group.paid > 0 ? ` · ${money(group.paidNet)} to you` : ''}
                                 </span>
                             </header>
                             <ul>
@@ -206,7 +212,13 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                                                 </span>
                                                 <span className="ns-history-amount">
                                                     {money(p.amount)}
-                                                    <small>{p.status === 'Pending' ? 'Due' : p.status}</small>
+                                                    <small>
+                                                        {viewer === 'owner' && p.status === 'Paid'
+                                                            ? `${money(paymentSplit(p, contractRate(p.contract, feeRate)).net)} to you${awaitingTransfer(p) ? ' · pending transfer' : ''}`
+                                                            : p.status === 'Pending'
+                                                              ? 'Due'
+                                                              : p.status}
+                                                    </small>
                                                 </span>
                                             </button>
                                             {p.status === 'Paid' && onReceipt && (

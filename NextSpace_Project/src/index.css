@@ -656,12 +656,130 @@ body {
   margin: 0;
 }
 
+/* Pricing: how NextSpace earns */
+.ns-pricing {
+  padding: 0 32px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.ns-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  text-align: left;
+}
+
+.ns-pricing-card {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 0;
+}
+
+.ns-pricing-card.is-featured {
+  border-color: var(--ns-blue-accent);
+  box-shadow: 0 10px 30px rgba(47, 95, 224, 0.12);
+}
+
+.ns-pricing-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ns-blue-accent);
+  background: var(--ns-blue-bg);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+}
+
+.ns-pricing-price {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--ns-navy);
+  line-height: 1.1;
+}
+
+.ns-pricing-price small {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ns-text-muted);
+}
+
+.ns-pricing-sub {
+  font-size: 13.5px;
+  color: var(--ns-text-muted);
+  margin: 8px 0 16px;
+}
+
+.ns-pricing-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13.5px;
+  color: #1a1f2b;
+}
+
+.ns-pricing-card li {
+  display: flex;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.ns-pricing-card li i {
+  color: #1a8a4a;
+}
+
+.ns-pricing-example dl {
+  margin: 4px 0 12px;
+  font-size: 14px;
+}
+
+.ns-pricing-example dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.ns-pricing-example dt {
+  font-weight: 400;
+  color: #4a5263;
+}
+
+.ns-pricing-example dd {
+  margin: 0;
+  font-weight: 700;
+  color: var(--ns-navy);
+}
+
+.ns-pricing-example .is-net {
+  border-top: 1px solid var(--ns-border);
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+.ns-pricing-example .is-net dd {
+  color: #1a8a4a;
+  font-size: 18px;
+}
+
 @media (max-width: 900px) {
   .ns-hero-title {
     font-size: 32px;
   }
 
   .ns-steps-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ns-pricing {
+    padding: 0 16px 60px;
+  }
+
+  .ns-pricing-grid {
     grid-template-columns: 1fr;
   }
 

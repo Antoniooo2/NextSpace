@@ -9,6 +9,7 @@ import RiskBadge from './RiskBadge'
 import ExportMenu from './ExportMenu'
 import { downloadLeaseStatementPdf, downloadLeaseWorkbook } from '../../../lib/paymentReports'
 import { EVENT_META, renewalOpen, renewalState } from '../../../lib/contracts'
+import { contractRate, feeSplit, formatRate, sumSplit } from '../../../lib/platformFee'
 
 const ACTIVITY_PAGE = 8
 
@@ -75,7 +76,18 @@ function formatWhen(at) {
     })
 }
 
-export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerName, onBack, onAskRony, onNoticeSent, onOpenContract }) {
+export default function OwnerLeaseDetail({
+    lease,
+    events,
+    ownerFirstName,
+    ownerName,
+    feeRate,
+    payouts = [],
+    onBack,
+    onAskRony,
+    onNoticeSent,
+    onOpenContract,
+}) {
     const today = todayInElSalvador()
     const { contract, installments, stats, risk } = lease
     const property = contract.add_business || {}
@@ -102,6 +114,12 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
     const onTimePct = stats.onTimeRate == null ? null : Math.round(stats.onTimeRate * 100)
     const tenant = tenantName(contract.users)
     const tenantInfo = { first_name: contract.users?.first_name, last_name: contract.users?.last_name, dui: contract.tenant_dui }
+    const rate = contractRate(contract, feeRate)
+    const monthlyNet = feeSplit(contract.monthly_rent, rate).net
+    const collected = sumSplit(
+        installments.filter((p) => p.status === 'Paid'),
+        rate
+    )
 
     const askRony = () =>
         onAskRony?.({
@@ -130,7 +148,7 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
                     <p>
                         <i className="bi bi-person"></i> {tenant}
                         <span className="ns-pay-dot">•</span>
-                        {money(contract.monthly_rent)}/month
+                        {money(contract.monthly_rent)}/month ({money(monthlyNet)} to you after the {formatRate(rate)} fee)
                         <span className="ns-pay-dot">•</span>
                         {formatDueDate(contract.start_date)} → {formatDueDate(contract.end_date)}
                     </p>
@@ -219,6 +237,7 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
                         <span className="ns-lease-kpi-value">Months paid</span>
                         <span className="ns-lease-kpi-label">
                             {money(stats.collectedTotal)} of {money(stats.leaseTotal)}
+                            {collected.gross > 0 ? ` · ${money(collected.net)} to you` : ''}
                         </span>
                     </div>
                 </div>
@@ -307,6 +326,8 @@ export default function OwnerLeaseDetail({ lease, events, ownerFirstName, ownerN
                     contract={contract}
                     tenant={tenantInfo}
                     viewer="owner"
+                    feeRate={feeRate}
+                    payout={payouts.find((t) => t.payout_id === detailPayment.payout_id)}
                     onClose={() => setDetailId(null)}
                 />
             )}

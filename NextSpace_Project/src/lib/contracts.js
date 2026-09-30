@@ -4,6 +4,7 @@
 import { supabase } from './supabaseClient'
 import { daysUntil, formatDueDate, todayInElSalvador } from './rentSchedule'
 import { money } from './money'
+import { contractRate, feeSplit, formatRate } from './platformFee'
 
 export const CONTRACT_STATUS_META = {
     Pending: { label: 'Requested', tone: 'info', icon: 'bi-inbox' },
@@ -68,6 +69,7 @@ export function standardClauses(contract) {
     const rent = money(contract.monthly_rent)
     const months = contract.duration_months
     const deposit = Number(contract.deposit || 0)
+    const fee = feeSplit(contract.monthly_rent, contractRate(contract))
 
     return [
         {
@@ -84,7 +86,11 @@ export function standardClauses(contract) {
         },
         {
             title: 'Rent and payment',
-            body: `The monthly rent is ${rent}, due on the ${dueDayLabel(contract.start_date)} of each month starting on the start date. Rent is paid online through NextSpace (Wompi); it can be paid from 7 days before each due date and is applied to the oldest unpaid month first. Each payment produces a receipt.`,
+            body: `The monthly rent is ${rent}, due on the ${dueDayLabel(contract.start_date)} of each month starting on the start date. Rent is paid online through NextSpace (Wompi), which collects it on the owner's behalf; it can be paid from 7 days before each due date and is applied to the oldest unpaid month first. Each payment produces a receipt.`,
+        },
+        {
+            title: 'NextSpace service fee',
+            body: `NextSpace keeps ${formatRate(fee.rate)} of each monthly rent payment (${money(fee.fee)} of ${rent}) as its service fee and transfers the rest (${money(fee.net)}) to the owner's bank account. The fee comes out of the owner's rent: the tenant pays exactly the monthly rent above and nothing more. The deposit carries no fee.`,
         },
         {
             title: 'Deposit',

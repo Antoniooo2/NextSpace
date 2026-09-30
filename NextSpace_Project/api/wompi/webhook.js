@@ -66,6 +66,34 @@ export default async function handler(req, res) {
     const paymentId = Number(match[1])
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+    // The NextSpace fee and the owner's share are computed from payment.amount
+    // (see supabase/migrations/*_platform_fee_and_payouts.sql), so the money
+    // Wompi actually charged has to be that amount. Links are created
+    // server-side with it, so a mismatch means something is wrong: don't mark
+    // the month paid, log it for manual review, and still answer 200 so Wompi
+    // stops retrying.
+    const chargedAmount = Number(payload?.Monto ?? payload?.EnlacePago?.Monto)
+    if (Number.isFinite(chargedAmount)) {
+        const { data: expected, error: expectedError } = await admin
+            .from('payment')
+            .select('amount')
+            .eq('payment_id', paymentId)
+            .maybeSingle()
+
+        if (expectedError) {
+            res.status(500).json({ received: true, updated: false })
+            return
+        }
+        if (expected && Math.abs(Number(expected.amount) - chargedAmount) > 0.005) {
+            console.error(
+                `Wompi webhook: payment ${paymentId} expected $${expected.amount} but transaction ` +
+                    `${payload.IdTransaccion || '?'} charged $${chargedAmount}. Not marked paid -- investigate.`
+            )
+            res.status(200).json({ received: true, updated: false })
+            return
+        }
+    }
+
     const { data: updatedRows, error } = await admin
         .from('payment')
         .update({
