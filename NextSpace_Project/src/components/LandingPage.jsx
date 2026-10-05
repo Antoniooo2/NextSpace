@@ -1,61 +1,58 @@
+import { useTranslation } from 'react-i18next'
 import logo from '../assets/logo_ns_right.png'
 import usePlatformFee from '../hooks/usePlatformFee'
 import { feeSplit, formatRate } from '../lib/platformFee'
 import { money } from '../lib/money'
+import { ADVISOR_NAME, BRAND_NAME, PAYMENT_PROVIDER } from '../lib/brand'
+import LanguageSwitcher from './LanguageSwitcher.jsx'
 
 const STATS = [
-    { value: '500+', label: 'Active Spaces' },
-    { value: '1,200+', label: 'Businesses Boosted' },
-    { value: '300', label: 'Monthly Contracts' },
-    { value: '14', label: 'Departments' },
+    { value: '500+', labelKey: 'stats.activeSpaces' },
+    { value: '1,200+', labelKey: 'stats.businessesBoosted' },
+    { value: '300', labelKey: 'stats.monthlyContracts' },
+    { value: '14', labelKey: 'stats.departments' },
 ]
 
 const STEPS = [
-    {
-        icon: 'bi-search',
-        title: '1. Explore',
-        description:
-            'Filter by area, images, and property type. Our AI matches you with the best available spaces for your business needs.',
-    },
-    {
-        icon: 'bi-file-earmark-text',
-        title: '2. Digital Contract',
-        description:
-            "Forget paperwork and endless waiting. Request a space, receive the owner's offer and sign it in the app. Your lease, its clauses and every change stay in one place.",
-    },
-    {
-        icon: 'bi-shield-check',
-        title: '3. Secure Payment',
-        description:
-            'Pay your rent each month by card through Wompi and get your receipt instantly. NextSpace collects it on the owner’s behalf and reminds you before it’s due.',
-    },
+    { icon: 'bi-search', key: 'steps.explore' },
+    { icon: 'bi-file-earmark-text', key: 'steps.contract' },
+    { icon: 'bi-shield-check', key: 'steps.payment' },
 ]
 
+const BRAND_VALUES = {
+    brand: BRAND_NAME,
+    advisor: ADVISOR_NAME,
+    provider: PAYMENT_PROVIDER,
+}
+
 export default function LandingPage({ onLogin, onSignup }) {
+    const { t } = useTranslation()
     const feeRate = usePlatformFee()
     const example = feeSplit(1000, feeRate)
+    const rate = formatRate(feeRate)
 
     return (
         <div className="ns-landing">
             <header className="ns-navbar">
                 <div className="ns-navbar-inner">
                     <div className="ns-navbar-brand">
-                        <img src={logo} alt="NextSpace" className="ns-navbar-logo" />
+                        <img src={logo} alt={BRAND_NAME} className="ns-navbar-logo" />
                     </div>
                     <div className="ns-navbar-actions">
+                        <LanguageSwitcher />
                         <button
                             type="button"
                             className="ns-nav-btn ns-nav-btn-ghost"
                             onClick={onLogin}
                         >
-                            Log in
+                            {t('navbar.login')}
                         </button>
                         <button
                             type="button"
                             className="ns-nav-btn ns-nav-btn-filled"
                             onClick={onSignup}
                         >
-                            Create account
+                            {t('navbar.signup')}
                         </button>
                     </div>
                 </div>
@@ -66,15 +63,14 @@ export default function LandingPage({ onLogin, onSignup }) {
                     <div className="ns-hero-inner">
                         <div className="ns-hero-copy">
                             <span className="ns-hero-badge">
-                                Leader in Commercial Real Estate
+                                {t('hero.badge')}
                             </span>
                             <h1 className="ns-hero-title">
-                                Find the perfect space for your business,{' '}
-                                <span className="ns-hero-highlight">without complications</span>
+                                {t('hero.titleStart')}{' '}
+                                <span className="ns-hero-highlight">{t('hero.titleHighlight')}</span>
                             </h1>
                             <p className="ns-hero-subtitle">
-                                Our intelligent platform connects entrepreneurs with the best
-                                commercial spaces across San Salvador and the rest of El Salvador.
+                                {t('hero.subtitle')}
                             </p>
                             <div className="ns-hero-cta">
                                 <button
@@ -82,14 +78,14 @@ export default function LandingPage({ onLogin, onSignup }) {
                                     className="ns-hero-btn ns-hero-btn-filled"
                                     onClick={onLogin}
                                 >
-                                    Book a space
+                                    {t('hero.bookSpace')}
                                 </button>
                                 <button
                                     type="button"
                                     className="ns-hero-btn ns-hero-btn-filled"
                                     onClick={onSignup}
                                 >
-                                    List my space
+                                    {t('hero.listSpace')}
                                 </button>
                             </div>
                             <div className="ns-hero-rating">
@@ -99,7 +95,7 @@ export default function LandingPage({ onLogin, onSignup }) {
                                     <span className="ns-avatar">AC</span>
                                 </div>
                                 <span className="ns-rating-text">
-                                    <strong>4.9/5</strong> rating based on +500 reviews
+                                    <strong>4.9/5</strong> {t('hero.ratingText')}
                                 </span>
                             </div>
                         </div>
@@ -124,9 +120,9 @@ export default function LandingPage({ onLogin, onSignup }) {
                 <section className="ns-stats">
                     <div className="ns-stats-inner">
                         {STATS.map((stat) => (
-                            <div className="ns-stat" key={stat.label}>
+                            <div className="ns-stat" key={stat.labelKey}>
                                 <div className="ns-stat-value">{stat.value}</div>
-                                <div className="ns-stat-label">{stat.label}</div>
+                                <div className="ns-stat-label">{t(stat.labelKey)}</div>
                             </div>
                         ))}
                     </div>
@@ -134,16 +130,16 @@ export default function LandingPage({ onLogin, onSignup }) {
 
                 <section className="ns-steps">
                     <h2 className="ns-steps-title">
-                        Finding your perfect space is this simple
+                        {t('steps.title')}
                     </h2>
                     <div className="ns-steps-grid">
                         {STEPS.map((step) => (
-                            <div className="ns-step" key={step.title}>
+                            <div className="ns-step" key={step.key}>
                                 <div className="ns-step-icon">
                                     <i className={`bi ${step.icon}`}></i>
                                 </div>
-                                <h3 className="ns-step-title">{step.title}</h3>
-                                <p className="ns-step-desc">{step.description}</p>
+                                <h3 className="ns-step-title">{t(`${step.key}.title`)}</h3>
+                                <p className="ns-step-desc">{t(`${step.key}.description`, BRAND_VALUES)}</p>
                             </div>
                         ))}
                     </div>
@@ -151,51 +147,51 @@ export default function LandingPage({ onLogin, onSignup }) {
 
                 <section className="ns-pricing" aria-labelledby="ns-pricing-title">
                     <h2 className="ns-steps-title" id="ns-pricing-title">
-                        How NextSpace earns: {formatRate(feeRate)} of each rent, and only when it's paid
+                        {t('pricing.title', { ...BRAND_VALUES, rate })}
                     </h2>
                     <div className="ns-pricing-grid">
                         <div className="ns-pricing-card">
-                            <span className="ns-pricing-tag">For businesses</span>
-                            <div className="ns-pricing-price">Free</div>
-                            <p className="ns-pricing-sub">You pay exactly the rent in your lease. No fees on top.</p>
+                            <span className="ns-pricing-tag">{t('pricing.businesses.tag')}</span>
+                            <div className="ns-pricing-price">{t('pricing.businesses.price')}</div>
+                            <p className="ns-pricing-sub">{t('pricing.businesses.sub')}</p>
                             <ul>
-                                <li><i className="bi bi-check2"></i> Search, compare and save spaces</li>
-                                <li><i className="bi bi-check2"></i> Ask Rony, our AI advisor</li>
-                                <li><i className="bi bi-check2"></i> Sign your lease and pay rent online</li>
-                                <li><i className="bi bi-check2"></i> Receipts and statements for every month</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.businesses.features.search')}</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.businesses.features.advisor', BRAND_VALUES)}</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.businesses.features.lease')}</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.businesses.features.receipts')}</li>
                             </ul>
                         </div>
                         <div className="ns-pricing-card is-featured">
-                            <span className="ns-pricing-tag">For property owners</span>
+                            <span className="ns-pricing-tag">{t('pricing.owners.tag')}</span>
                             <div className="ns-pricing-price">
-                                {formatRate(feeRate)} <small>of each rent payment</small>
+                                {rate} <small>{t('pricing.owners.priceSuffix')}</small>
                             </div>
-                            <p className="ns-pricing-sub">Listing is free. We only earn when your tenant pays.</p>
+                            <p className="ns-pricing-sub">{t('pricing.owners.sub')}</p>
                             <ul>
-                                <li><i className="bi bi-check2"></i> Tenants found and screened for you</li>
-                                <li><i className="bi bi-check2"></i> Online contracts, renewals and reminders</li>
-                                <li><i className="bi bi-check2"></i> Rent collected and sent to your bank account</li>
-                                <li><i className="bi bi-check2"></i> Reports, exports and Rony’s insights</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.owners.features.tenants')}</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.owners.features.contracts')}</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.owners.features.collection')}</li>
+                                <li><i className="bi bi-check2"></i> {t('pricing.owners.features.reports', BRAND_VALUES)}</li>
                             </ul>
                         </div>
                         <div className="ns-pricing-card ns-pricing-example">
-                            <span className="ns-pricing-tag">Example</span>
+                            <span className="ns-pricing-tag">{t('pricing.example.tag')}</span>
                             <dl>
                                 <div>
-                                    <dt>Your tenant pays</dt>
+                                    <dt>{t('pricing.example.tenantPays')}</dt>
                                     <dd>{money(example.gross)}</dd>
                                 </div>
                                 <div>
-                                    <dt>NextSpace fee ({formatRate(feeRate)})</dt>
-                                    <dd>−{money(example.fee)}</dd>
+                                    <dt>{t('pricing.example.fee', { ...BRAND_VALUES, rate })}</dt>
+                                    <dd>{'\u2212'}{money(example.fee)}</dd>
                                 </div>
                                 <div className="is-net">
-                                    <dt>You receive</dt>
+                                    <dt>{t('pricing.example.youReceive')}</dt>
                                     <dd>{money(example.net)}</dd>
                                 </div>
                             </dl>
                             <p className="ns-pricing-sub mb-0">
-                                Deposits carry no fee. No monthly plans, no listing costs.
+                                {t('pricing.example.note')}
                             </p>
                         </div>
                     </div>

@@ -1,0 +1,73 @@
+{
+  "navbar": {
+    "login": "Iniciar sesión",
+    "signup": "Crear cuenta",
+    "languageLabel": "Idioma",
+    "switchTo": {
+      "en": "Cambiar a inglés",
+      "es": "Cambiar a español"
+    }
+  },
+  "hero": {
+    "badge": "Líder en bienes raíces comerciales",
+    "titleStart": "Encuentra el espacio perfecto para tu negocio,",
+    "titleHighlight": "sin complicaciones",
+    "subtitle": "Nuestra plataforma inteligente conecta a emprendedores con los mejores locales comerciales de San Salvador y del resto de El Salvador.",
+    "bookSpace": "Reservar un espacio",
+    "listSpace": "Publicar mi espacio",
+    "ratingText": "de calificación según más de 500 reseñas"
+  },
+  "stats": {
+    "activeSpaces": "Espacios activos",
+    "businessesBoosted": "Negocios impulsados",
+    "monthlyContracts": "Contratos mensuales",
+    "departments": "Departamentos"
+  },
+  "steps": {
+    "title": "Encontrar tu espacio ideal es así de sencillo",
+    "explore": {
+      "title": "1. Explora",
+      "description": "Filtra por zona, imágenes y tipo de propiedad. Nuestra IA te recomienda los mejores espacios disponibles según las necesidades de tu negocio."
+    },
+    "contract": {
+      "title": "2. Contrato digital",
+      "description": "Olvídate del papeleo y de las esperas interminables. Solicita un espacio, recibe la oferta del propietario y fírmala en la app. Tu contrato, sus cláusulas y cada cambio quedan en un solo lugar."
+    },
+    "payment": {
+      "title": "3. Pago seguro",
+      "description": "Paga tu alquiler cada mes con tarjeta a través de {{provider}} y recibe tu comprobante al instante. {{brand}} lo cobra en nombre del propietario y te avisa antes de que venza."
+    }
+  },
+  "pricing": {
+    "title": "Cómo gana {{brand}}: {{rate}} de cada alquiler, y solo cuando se paga",
+    "businesses": {
+      "tag": "Para negocios",
+      "price": "Gratis",
+      "sub": "Pagas exactamente el alquiler de tu contrato. Sin cargos adicionales.",
+      "features": {
+        "search": "Busca, compara y guarda espacios",
+        "advisor": "Pregúntale a {{advisor}}, nuestro asesor con IA",
+        "lease": "Firma tu contrato y paga el alquiler en línea",
+        "receipts": "Comprobantes y estados de cuenta de cada mes"
+      }
+    },
+    "owners": {
+      "tag": "Para propietarios",
+      "priceSuffix": "de cada pago de alquiler",
+      "sub": "Publicar es gratis. Solo ganamos cuando tu inquilino paga.",
+      "features": {
+        "tenants": "Encontramos y evaluamos inquilinos por ti",
+        "contracts": "Contratos, renovaciones y recordatorios en línea",
+        "collection": "Cobramos el alquiler y lo enviamos a tu cuenta bancaria",
+        "reports": "Reportes, exportaciones y análisis de {{advisor}}"
+      }
+    },
+    "example": {
+      "tag": "Ejemplo",
+      "tenantPays": "Tu inquilino paga",
+      "fee": "Comisión de {{brand}} ({{rate}})",
+      "youReceive": "Tú recibes",
+      "note": "Los depósitos no tienen comisión. Sin planes mensuales ni costos por publicar."
+    }
+  }
+}

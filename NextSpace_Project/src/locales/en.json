@@ -1,0 +1,73 @@
+{
+  "navbar": {
+    "login": "Log in",
+    "signup": "Create account",
+    "languageLabel": "Language",
+    "switchTo": {
+      "en": "Switch to English",
+      "es": "Switch to Spanish"
+    }
+  },
+  "hero": {
+    "badge": "Leader in Commercial Real Estate",
+    "titleStart": "Find the perfect space for your business,",
+    "titleHighlight": "without complications",
+    "subtitle": "Our intelligent platform connects entrepreneurs with the best commercial spaces across San Salvador and the rest of El Salvador.",
+    "bookSpace": "Book a space",
+    "listSpace": "List my space",
+    "ratingText": "rating based on +500 reviews"
+  },
+  "stats": {
+    "activeSpaces": "Active Spaces",
+    "businessesBoosted": "Businesses Boosted",
+    "monthlyContracts": "Monthly Contracts",
+    "departments": "Departments"
+  },
+  "steps": {
+    "title": "Finding your perfect space is this simple",
+    "explore": {
+      "title": "1. Explore",
+      "description": "Filter by area, images, and property type. Our AI matches you with the best available spaces for your business needs."
+    },
+    "contract": {
+      "title": "2. Digital Contract",
+      "description": "Forget paperwork and endless waiting. Request a space, receive the owner's offer and sign it in the app. Your lease, its clauses and every change stay in one place."
+    },
+    "payment": {
+      "title": "3. Secure Payment",
+      "description": "Pay your rent each month by card through {{provider}} and get your receipt instantly. {{brand}} collects it on the owner's behalf and reminds you before it's due."
+    }
+  },
+  "pricing": {
+    "title": "How {{brand}} earns: {{rate}} of each rent, and only when it's paid",
+    "businesses": {
+      "tag": "For businesses",
+      "price": "Free",
+      "sub": "You pay exactly the rent in your lease. No fees on top.",
+      "features": {
+        "search": "Search, compare and save spaces",
+        "advisor": "Ask {{advisor}}, our AI advisor",
+        "lease": "Sign your lease and pay rent online",
+        "receipts": "Receipts and statements for every month"
+      }
+    },
+    "owners": {
+      "tag": "For property owners",
+      "priceSuffix": "of each rent payment",
+      "sub": "Listing is free. We only earn when your tenant pays.",
+      "features": {
+        "tenants": "Tenants found and screened for you",
+        "contracts": "Online contracts, renewals and reminders",
+        "collection": "Rent collected and sent to your bank account",
+        "reports": "Reports, exports and {{advisor}}'s insights"
+      }
+    },
+    "example": {
+      "tag": "Example",
+      "tenantPays": "Your tenant pays",
+      "fee": "{{brand}} fee ({{rate}})",
+      "youReceive": "You receive",
+      "note": "Deposits carry no fee. No monthly plans, no listing costs."
+    }
+  }
+}
