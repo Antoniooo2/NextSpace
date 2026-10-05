@@ -8,6 +8,7 @@ import { ADVISOR_NAME, BRAND_NAME, PAYMENT_PROVIDER } from '../lib/brand'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
 import AccessibilityMenu from './AccessibilityMenu.jsx'
 import CountUp from './landing/CountUp.jsx'
+import MapSection from './landing/MapSection.jsx'
 import {
     buttonHover,
     buttonTap,
@@ -168,6 +169,8 @@ export default function LandingPage({ onLogin, onSignup }) {
                         ))}
                     </div>
                 </motion.section>
+
+                <MapSection animated={animated} />
 
                 <section className="ns-steps">
                     <motion.h2 className="ns-steps-title" {...revealProps(animated)}>

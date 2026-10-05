@@ -50,6 +50,15 @@
       "description": "Pay your rent each month by card through {{provider}} and get your receipt instantly. {{brand}} collects it on the owner's behalf and reminds you before it's due."
     }
   },
+  "map": {
+    "title": "Find spaces across El Salvador",
+    "subtitle": "From west to east, see where {{brand}} has commercial spaces available. Hover over or tap a pin to see the department.",
+    "ariaLabel": "Map of El Salvador and its 14 departments",
+    "spaces_one": "{{count}} space available",
+    "spaces_other": "{{count}} spaces available",
+    "noSpaces": "No spaces available yet",
+    "capital": "Capital: {{capital}}"
+  },
   "pricing": {
     "title": "How {{brand}} earns: {{rate}} of each rent, and only when it's paid",
     "businesses": {
