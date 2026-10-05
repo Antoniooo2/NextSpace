@@ -1,3 +1,6 @@
+import { useTranslation } from 'react-i18next'
+import { currentLocale } from '../../../i18n'
+import { availabilityLabel, paymentStatusLabel } from '../../../lib/displayValues'
 import AdvisorBarChart from './AdvisorBarChart'
 import CollectionsChart from '../CollectionsChart'
 
@@ -5,37 +8,38 @@ function monthLabels(monthKey) {
     const [y, m] = monthKey.split('-').map(Number)
     const date = new Date(Date.UTC(y, m - 1, 1))
     return {
-        label: date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }),
-        fullLabel: date.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }),
+        label: date.toLocaleDateString(currentLocale(), { month: 'short', timeZone: 'UTC' }),
+        fullLabel: date.toLocaleDateString(currentLocale(), { month: 'long', year: 'numeric', timeZone: 'UTC' }),
     }
 }
 
 const CHART_TITLES = {
-    occupancy: 'Portfolio occupancy',
-    payment_status: 'Payment status',
-    income_by_month: 'Income by month',
-    expected_vs_collected: 'Rent expected vs collected',
-    budget_fit: 'Rent comparison',
+    occupancy: 'advisor.charts.occupancy',
+    payment_status: 'advisor.charts.paymentStatus',
+    income_by_month: 'advisor.charts.incomeByMonth',
+    expected_vs_collected: 'ownerPayments.chart.title',
+    budget_fit: 'advisor.charts.rentComparison',
 }
 
 export default function OwnerChart({ chart, stats, simulation }) {
+    const { t } = useTranslation()
     if (!chart) return null
 
     if (chart === 'occupancy' && stats?.by_availability) {
-        const bars = Object.entries(stats.by_availability).map(([label, value]) => ({ label, value }))
+        const bars = Object.entries(stats.by_availability).map(([label, value]) => ({ label: availabilityLabel(label), value }))
         if (bars.length === 0) return null
-        return <AdvisorBarChart title={CHART_TITLES.occupancy} bars={bars} />
+        return <AdvisorBarChart title={t(CHART_TITLES.occupancy)} bars={bars} />
     }
 
     if (chart === 'payment_status' && stats?.by_payment_status) {
-        const bars = Object.entries(stats.by_payment_status).map(([label, value]) => ({ label, value }))
+        const bars = Object.entries(stats.by_payment_status).map(([label, value]) => ({ label: paymentStatusLabel(label), value }))
         if (bars.length === 0) return null
-        return <AdvisorBarChart title={CHART_TITLES.payment_status} bars={bars} />
+        return <AdvisorBarChart title={t(CHART_TITLES.payment_status)} bars={bars} />
     }
 
     if (chart === 'income_by_month' && stats?.income_by_month?.length > 0) {
         const bars = stats.income_by_month.map((m) => ({ label: m.month, value: m.amount, prefix: '$' }))
-        return <AdvisorBarChart title={CHART_TITLES.income_by_month} bars={bars} />
+        return <AdvisorBarChart title={t(CHART_TITLES.income_by_month)} bars={bars} />
     }
 
     if (chart === 'expected_vs_collected' && stats?.collections_last_6_months?.length > 0) {
@@ -47,7 +51,7 @@ export default function OwnerChart({ chart, stats, simulation }) {
         }))
         return (
             <div className="advisor-collect-chart">
-                <p className="advisor-collect-title">{CHART_TITLES.expected_vs_collected}</p>
+                <p className="advisor-collect-title">{t(CHART_TITLES.expected_vs_collected)}</p>
                 <CollectionsChart months={months} />
             </div>
         )
@@ -56,10 +60,10 @@ export default function OwnerChart({ chart, stats, simulation }) {
     if (chart === 'budget_fit' && simulation) {
         return (
             <AdvisorBarChart
-                title={CHART_TITLES.budget_fit}
+                title={t(CHART_TITLES.budget_fit)}
                 bars={[
-                    { label: 'Current', value: simulation.current_rent, prefix: '$' },
-                    { label: 'Proposed', value: simulation.new_rent, prefix: '$', emphasis: true },
+                    { label: t('advisor.charts.current'), value: simulation.current_rent, prefix: '$' },
+                    { label: t('advisor.charts.proposed'), value: simulation.new_rent, prefix: '$', emphasis: true },
                 ]}
             />
         )

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { todayInElSalvador } from '../../../lib/rentSchedule'
 
 // One small form for the "say why" steps: declining a request, withdrawing
@@ -6,7 +7,7 @@ import { todayInElSalvador } from '../../../lib/rentSchedule'
 export default function ReasonModal({
     title,
     subtitle,
-    reasonLabel = 'Reason',
+    reasonLabel,
     reasonRequired = false,
     placeholder,
     withDate = false,
@@ -17,6 +18,7 @@ export default function ReasonModal({
     onClose,
     onConfirm,
 }) {
+    const { t } = useTranslation()
     const [reason, setReason] = useState('')
     const [date, setDate] = useState(minDate || todayInElSalvador())
     const [saving, setSaving] = useState(false)
@@ -44,7 +46,7 @@ export default function ReasonModal({
                 onClick={(e) => e.stopPropagation()}
                 onSubmit={submit}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
                 <div className="ns-modal-body">
@@ -53,7 +55,7 @@ export default function ReasonModal({
 
                     {withDate && (
                         <>
-                            <label className="ns-label" htmlFor="reasonDate">New end date</label>
+                            <label className="ns-label" htmlFor="reasonDate">{t('reasonModal.newEndDate')}</label>
                             <input
                                 id="reasonDate"
                                 type="date"
@@ -68,7 +70,7 @@ export default function ReasonModal({
                     )}
 
                     <label className="ns-label" htmlFor="reasonText">
-                        {reasonLabel} {!reasonRequired && <span className="ns-pay-muted">(optional)</span>}
+                        {reasonLabel || t('reasonModal.reason')} {!reasonRequired && <span className="ns-pay-muted">({t('listingForm.optional')})</span>}
                     </label>
                     <textarea
                         id="reasonText"
@@ -89,7 +91,7 @@ export default function ReasonModal({
                     )}
 
                     <button type="submit" className={`ns-submit-btn ${danger ? 'ns-submit-danger' : ''}`} disabled={saving}>
-                        {saving ? 'Saving...' : confirmLabel}
+                        {saving ? t('common.saving') : confirmLabel}
                     </button>
                 </div>
             </form>

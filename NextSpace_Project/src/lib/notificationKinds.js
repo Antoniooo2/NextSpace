@@ -3,7 +3,10 @@
 // automations ("Lease offer: …", "Rent overdue: …"), so the prefix is enough
 // to tell them apart. Order matters: more specific prefixes first.
 import { supabase } from './supabaseClient'
+import i18n from '../i18n'
 import { renewalOpen, renewalState } from './contracts'
+import { formatDate, formatTime } from './format'
+import { BRAND_VALUES } from './brand'
 
 const KINDS = [
     { kind: 'request', test: /^(New contract request|Request waiting)/, icon: 'bi-inbox-fill', tone: 'info' },
@@ -58,28 +61,28 @@ export function notificationAction(n, contract, owed) {
     const { kind } = notificationKind(n)
     if (!contract) return null
     const iAmTenant = contract.tenant_dui === n.recipient_dui
-    const open = (label, section = 'contracts') => ({ label, section })
+    const open = (key, section = 'contracts') => ({ labelKey: `notifications.actions.${key}`, section })
 
     switch (kind) {
         case 'request':
-            return contract.status === 'Pending' ? open('Answer request') : 'done'
+            return contract.status === 'Pending' ? open('answerRequest') : 'done'
         case 'offer':
-            return contract.status === 'Offered' && new Date(contract.offer_expires_at) > new Date() ? open('Review offer') : 'done'
+            return contract.status === 'Offered' && new Date(contract.offer_expires_at) > new Date() ? open('reviewOffer') : 'done'
         case 'renewal-request':
-            return contract.status === 'Active' && contract.renewal_requested_at ? open('Answer') : 'done'
+            return contract.status === 'Active' && contract.renewal_requested_at ? open('answer') : 'done'
         case 'renewal-offer':
-            return contract.status === 'Active' && contract.renewal_offered_at ? open('Review renewal') : 'done'
+            return contract.status === 'Active' && contract.renewal_offered_at ? open('reviewRenewal') : 'done'
         case 'end-request':
             return contract.status === 'Active' && contract.termination_requested_at && contract.termination_requested_by !== (iAmTenant ? 'tenant' : 'owner')
-                ? open('Answer')
+                ? open('answer')
                 : 'done'
         case 'lease-ending':
-            if (renewalOpen(contract) && !renewalState(contract)) return open(iAmTenant ? 'Ask to renew' : 'Offer renewal')
+            if (renewalOpen(contract) && !renewalState(contract)) return open(iAmTenant ? 'askToRenew' : 'offerRenewal')
             return contract.status === 'Active' && renewalState(contract) ? 'done' : null
         case 'rent-due':
         case 'rent-late': {
             const due = owed[n.contract_id] || 0
-            if (due > 0) return open(iAmTenant ? 'Pay now' : 'View rent', 'payments')
+            if (due > 0) return open(iAmTenant ? 'payNow' : 'viewRent', 'payments')
             return 'done'
         }
         default:
@@ -116,10 +119,10 @@ export function timeLabel(iso) {
     const date = new Date(iso)
     const now = new Date()
     const mins = Math.round((now - date) / 60000)
-    if (mins < 1) return 'Just now'
-    if (mins < 60) return `${mins} min ago`
-    if (date.toDateString() === now.toDateString()) return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    if (mins < 1) return i18n.t('notifications.time.justNow')
+    if (mins < 60) return i18n.t('notifications.time.minAgo', { count: mins })
+    if (date.toDateString() === now.toDateString()) return formatTime(date)
+    return formatDate(date, { month: 'short', day: 'numeric' })
 }
 
 // Today / Yesterday / This week / Earlier.
@@ -128,8 +131,82 @@ export function dayGroup(iso) {
     const start = new Date()
     start.setHours(0, 0, 0, 0)
     const diffDays = Math.floor((start - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000)
-    if (diffDays <= 0) return 'Today'
-    if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return 'This week'
-    return 'Earlier'
+    if (diffDays <= 0) return 'today'
+    if (diffDays === 1) return 'yesterday'
+    if (diffDays < 7) return 'thisWeek'
+    return 'earlier'
+}
+
+const TITLE_PREFIXES = {
+    'New contract request': 'newContractRequest',
+    'Contract accepted': 'contractAccepted',
+    'Lease offer': 'leaseOffer',
+    'Updated lease offer': 'updatedLeaseOffer',
+    'Offer expires soon': 'offerExpiresSoon',
+    'Offer expired': 'offerExpired',
+    'Offer turned down': 'offerTurnedDown',
+    Offer: 'offer',
+    'Lease signed': 'leaseSigned',
+    'Lease renewed': 'leaseRenewed',
+    'Lease ended': 'leaseEnded',
+    'Request declined': 'requestDeclined',
+    'Request closed': 'requestClosed',
+    'Request withdrawn': 'requestWithdrawn',
+    'Request to end lease early': 'requestEndEarly',
+    'Early end accepted': 'earlyEndAccepted',
+    'Early end declined': 'earlyEndDeclined',
+    'Renewal request': 'renewalRequest',
+    'Renewal offer': 'renewalOffer',
+    'Renewal offer expires soon': 'renewalOfferExpiresSoon',
+    'Renewal offer expired': 'renewalOfferExpired',
+    'Renewal not going ahead': 'renewalNotGoingAhead',
+    'Rent due today': 'rentDueToday',
+    'Rent due tomorrow': 'rentDueTomorrow',
+    'Rent overdue': 'rentOverdue',
+    'Late rent': 'lateRent',
+    'Rent reminder from your owner': 'rentReminderFromOwner',
+    'Payment received': 'paymentReceived',
+    'Payment confirmed': 'paymentConfirmed',
+    'Payment recorded': 'paymentRecorded',
+    'Transfer sent': 'transferSent',
+    'Heads up from Rony': 'headsUpFromRony',
+    'New space for your search': 'newSpaceForSearch',
+    'This week': 'thisWeek',
+    'Message from your property owner': 'messageFromOwner',
+}
+
+const COUNTED_PREFIXES = [
+    [/^Rent due in (\d+) days$/, 'rentDueInDays'],
+    [/^Lease ending in (\d+) days$/, 'leaseEndingInDays'],
+    [/^Rent (\d+) days overdue$/, 'rentDaysOverdue'],
+    [/^Still unpaid after (\d+) days$/, 'stillUnpaidAfterDays'],
+    [/^Request waiting (\d+) days$/, 'requestWaitingDays'],
+]
+
+const TITLE_FALLBACKS = {
+    'your property': 'yourProperty',
+    'your lease': 'yourLease',
+    'a space': 'aSpace',
+}
+
+function translatePrefix(prefix) {
+    const key = TITLE_PREFIXES[prefix]
+    if (key) return i18n.t(`notifications.titles.${key}`, BRAND_VALUES)
+    for (const [pattern, countedKey] of COUNTED_PREFIXES) {
+        const match = prefix.match(pattern)
+        if (match) return i18n.t(`notifications.titles.${countedKey}`, { count: Number(match[1]) })
+    }
+    return null
+}
+
+export function notificationTitle(n) {
+    const title = n?.title || ''
+    const split = title.indexOf(': ')
+    const prefix = split === -1 ? title : title.slice(0, split)
+    const translated = translatePrefix(prefix)
+    if (translated == null) return title
+    if (split === -1) return translated
+    const rest = title.slice(split + 2)
+    const fallback = TITLE_FALLBACKS[rest]
+    return `${translated}: ${fallback ? i18n.t(`notifications.titles.fallback.${fallback}`) : rest}`
 }

@@ -1,10 +1,14 @@
+import { useTranslation } from 'react-i18next'
 import { SERVICE_ICON, areaOf, isNewListing, locationOf, typeColors, typeIcon } from '../../lib/listings'
 import { formatPpm } from '../../lib/market'
+import { money } from '../../lib/money'
+import { propertyTypeLabel, serviceLabel } from '../../lib/displayValues'
+import { DOT, SQ_M } from '../../lib/symbols'
 
 const REQUEST_BADGE = {
-    Pending: { label: 'Requested', icon: 'bi-inbox', tone: 'info' },
-    Offered: { label: 'Offer waiting', icon: 'bi-pen', tone: 'warning' },
-    Active: { label: 'Your lease', icon: 'bi-key', tone: 'success' },
+    Pending: { label: 'propertyCard.badge.requested', icon: 'bi-inbox', tone: 'info' },
+    Offered: { label: 'propertyCard.badge.offerWaiting', icon: 'bi-pen', tone: 'warning' },
+    Active: { label: 'propertyCard.badge.yourLease', icon: 'bi-key', tone: 'success' },
 }
 
 // A space in the Marketplace: photo, price (and how it compares), where it is,
@@ -22,6 +26,7 @@ export default function PropertyCard({
     onToggleCompare,
     compareFull = false,
 }) {
+    const { t } = useTranslation()
     const icon = typeIcon(property.property_type)
     const [bg, fg] = typeColors(property.property_type)
     const rent = property.monthly_rent
@@ -32,16 +37,16 @@ export default function PropertyCard({
 
     return (
         <article className={`ns-mk-card ${comparing ? 'is-comparing' : ''}`}>
-            <button type="button" className="ns-mk-card-media" onClick={() => onOpen?.(property)} aria-label={`Open ${property.property_name}`}>
+            <button type="button" className="ns-mk-card-media" onClick={() => onOpen?.(property)} aria-label={t('propertyCard.open', { name: property.property_name })}>
                 {property.photo_url ? (
                     <img src={property.photo_url} alt="" loading="lazy" />
                 ) : (
                     <span className="ns-mk-card-placeholder" style={{ background: bg, color: fg }}>
                         <i className={`bi ${icon}`}></i>
-                        <small>{property.property_type}</small>
+                        <small>{propertyTypeLabel(property.property_type)}</small>
                     </span>
                 )}
-                {isNewListing(property) && <span className="ns-mk-badge-new">New</span>}
+                {isNewListing(property) && <span className="ns-mk-badge-new">{t('propertyCard.new')}</span>}
                 {property.photos?.length > 1 && (
                     <span className="ns-mk-photo-count">
                         <i className="bi bi-images"></i> {property.photos.length}
@@ -55,8 +60,8 @@ export default function PropertyCard({
                     className={`ns-mk-save ${saved ? 'is-saved' : ''}`}
                     onClick={() => onToggleSave(property)}
                     aria-pressed={saved}
-                    aria-label={saved ? 'Remove from saved' : 'Save this space'}
-                    title={saved ? 'Saved' : 'Save'}
+                    aria-label={saved ? t('propertyCard.unsave') : t('propertyCard.saveThis')}
+                    title={saved ? t('propertyCard.saved') : t('propertyCard.save')}
                 >
                     <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i>
                 </button>
@@ -64,7 +69,7 @@ export default function PropertyCard({
 
             {badge && (
                 <button type="button" className={`ns-mk-mine tone-${badge.tone}`} onClick={() => onOpenRequest?.(property)}>
-                    <i className={`bi ${badge.icon}`}></i> {badge.label}
+                    <i className={`bi ${badge.icon}`}></i> {t(badge.label)}
                 </button>
             )}
 
@@ -72,17 +77,17 @@ export default function PropertyCard({
                 <div className="ns-mk-card-price">
                     {rent != null ? (
                         <>
-                            ${Number(rent).toLocaleString()}
-                            <small>/month</small>
+                            {money(rent)}
+                            <small>{t('common.perMonth')}</small>
                         </>
                     ) : (
-                        <span className="ns-mk-card-noprice">Price on request</span>
+                        <span className="ns-mk-card-noprice">{t('propertyCard.priceOnRequest')}</span>
                     )}
                 </div>
                 <div className="ns-mk-card-tagrow">
                     {insight ? (
-                        <span className={`ns-price-tag tone-${insight.tone}`} title={`${formatPpm(insight.ppm)} vs ${formatPpm(insight.median)} for ${insight.scope}`}>
-                            {insight.label} · {formatPpm(insight.ppm)}
+                        <span className={`ns-price-tag tone-${insight.tone}`} title={t('propertyCard.ppmVs', { ppm: formatPpm(insight.ppm), median: formatPpm(insight.median), scope: insight.scope })}>
+                            {insight.label} {DOT} {formatPpm(insight.ppm)}
                         </span>
                     ) : (
                         <span className="ns-mk-card-ppm">{area && rent != null ? formatPpm(Number(rent) / area) : '\u00a0'}</span>
@@ -90,30 +95,30 @@ export default function PropertyCard({
                 </div>
                 <h3>{property.property_name}</h3>
                 <p className="ns-mk-card-loc" title={location || undefined}>
-                    <i className="bi bi-geo-alt"></i> {location || 'Location not listed'}
+                    <i className="bi bi-geo-alt"></i> {location || t('propertyCard.noLocation')}
                 </p>
                 <div className="ns-mk-card-facts">
                     <span>
-                        <i className={`bi ${icon}`}></i> {property.property_type}
+                        <i className={`bi ${icon}`}></i> {propertyTypeLabel(property.property_type)}
                     </span>
                     {area && (
                         <span>
-                            <i className="bi bi-bounding-box"></i> {area} m²
+                            <i className="bi bi-bounding-box"></i> {area} {SQ_M}
                         </span>
                     )}
                 </div>
-                <div className="ns-mk-card-services" aria-label="Amenities">
+                <div className="ns-mk-card-services" aria-label={t('propertyCard.amenities')}>
                     {services.length > 0 ? (
                         <>
                             {services.slice(0, 4).map((name) => (
-                                <span key={name} title={name}>
+                                <span key={name} title={serviceLabel(name)}>
                                     <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i>
                                 </span>
                             ))}
                             {services.length > 4 && <small>+{services.length - 4}</small>}
                         </>
                     ) : (
-                        <em>No amenities listed</em>
+                        <em>{t('propertyCard.noAmenities')}</em>
                     )}
                 </div>
             </button>
@@ -126,7 +131,7 @@ export default function PropertyCard({
                         disabled={compareFull && !comparing}
                         onChange={() => onToggleCompare(property)}
                     />
-                    <span>{comparing ? 'Comparing' : compareFull ? 'Compare (3 max)' : 'Compare'}</span>
+                    <span>{comparing ? t('propertyCard.comparing') : compareFull ? t('propertyCard.compareMax') : t('propertyCard.compare')}</span>
                 </label>
             )}
         </article>

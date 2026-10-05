@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 // Sticky bar of in-page links ("Overview · Properties · Analysis · History").
 // Tapping one scrolls to that part of the page; the part in view is
 // highlighted as you scroll.
-export function SectionNav({ sections, label = 'Sections' }) {
+export function SectionNav({ sections, label }) {
+    const { t } = useTranslation()
     const [active, setActive] = useState(sections[0]?.id)
     const ids = sections.map((s) => s.id).join('|')
 
@@ -30,7 +32,7 @@ export function SectionNav({ sections, label = 'Sections' }) {
     }
 
     return (
-        <nav className="ns-section-nav" aria-label={label}>
+        <nav className="ns-section-nav" aria-label={label || t('common.sections')}>
             {sections.map((s) => (
                 <button
                     type="button"

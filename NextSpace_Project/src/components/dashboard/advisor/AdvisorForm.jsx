@@ -1,8 +1,11 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { propertyTypeLabel, serviceLabel } from '../../../lib/displayValues'
 import { PROPERTY_TYPES } from '../../../lib/propertyTypes'
 import { EL_SALVADOR_DEPARTMENTS, EL_SALVADOR_DEPARTMENT_NAMES } from '../../../lib/elSalvadorLocations'
 
 export default function AdvisorForm({ initialFilter, servicesCatalog, onSubmit }) {
+    const { t } = useTranslation()
     const [budget, setBudget] = useState(
         initialFilter?.budget_max != null ? String(initialFilter.budget_max) : ''
     )
@@ -37,50 +40,49 @@ export default function AdvisorForm({ initialFilter, servicesCatalog, onSubmit }
 
         const serviceNames = servicesCatalog
             .filter((s) => selectedServiceIds.includes(s.service_id))
-            .map((s) => s.service_name)
+            .map((s) => serviceLabel(s.service_name))
 
-        const parts = [propertyType ? `a ${propertyType} space` : 'a commercial space']
-        if (municipality) parts.push(`in ${municipality}`)
-        else if (department) parts.push(`in ${department}`)
-        if (filter.budget_max != null) parts.push(`with a budget up to $${filter.budget_max} per month`)
-        if (serviceNames.length > 0) parts.push(`needing ${serviceNames.join(', ')}`)
+        const parts = [propertyType ? t('advisor.form.typeSpace', { type: propertyTypeLabel(propertyType) }) : t('advisor.form.anySpace')]
+        if (municipality) parts.push(t('advisor.form.inPlace', { place: municipality }))
+        else if (department) parts.push(t('advisor.form.inPlace', { place: department }))
+        if (filter.budget_max != null) parts.push(t('advisor.form.budget', { amount: `$${filter.budget_max}` }))
+        if (serviceNames.length > 0) parts.push(t('advisor.form.needing', { services: serviceNames.join(', ') }))
 
-        onSubmit(filter, `I am looking for ${parts.join(', ')}.`)
+        onSubmit(filter, t('advisor.form.message', { parts: parts.join(', ') }))
     }
 
     return (
         <form className="advisor-form" onSubmit={handleSubmit}>
             <p className="advisor-form-lead">
-                Tell me what you are looking for and I will search the listings. You can change any of
-                this later just by asking.
+                {t('advisor.form.lead')}
             </p>
             <div className="advisor-form-grid">
                 <div className="advisor-form-field">
-                    <label>Monthly budget (USD)</label>
+                    <label>{t('advisor.form.budgetLabel')}</label>
                     <input
                         type="number"
                         min="0"
                         step="10"
-                        placeholder="No limit"
+                        placeholder={t('advisor.form.noLimit')}
                         value={budget}
                         onChange={(e) => setBudget(e.target.value)}
                     />
                 </div>
                 <div className="advisor-form-field">
-                    <label>Business type</label>
+                    <label>{t('advisor.form.businessType')}</label>
                     <select value={propertyType} onChange={(e) => setPropertyType(e.target.value)}>
-                        <option value="">Any type</option>
+                        <option value="">{t('advisor.filter.anyType')}</option>
                         {PROPERTY_TYPES.map((type) => (
                             <option key={type} value={type}>
-                                {type}
+                                {propertyTypeLabel(type)}
                             </option>
                         ))}
                     </select>
                 </div>
                 <div className="advisor-form-field">
-                    <label>Department</label>
+                    <label>{t('listingForm.department')}</label>
                     <select value={department} onChange={(e) => handleDepartmentChange(e.target.value)}>
-                        <option value="">Any department</option>
+                        <option value="">{t('marketplace.anyDepartment')}</option>
                         {EL_SALVADOR_DEPARTMENT_NAMES.map((name) => (
                             <option key={name} value={name}>
                                 {name}
@@ -89,13 +91,13 @@ export default function AdvisorForm({ initialFilter, servicesCatalog, onSubmit }
                     </select>
                 </div>
                 <div className="advisor-form-field">
-                    <label>Municipality</label>
+                    <label>{t('marketplace.municipality')}</label>
                     <select
                         value={municipality}
                         onChange={(e) => setMunicipality(e.target.value)}
                         disabled={!department}
                     >
-                        <option value="">Any municipality</option>
+                        <option value="">{t('marketplace.anyMunicipality')}</option>
                         {(EL_SALVADOR_DEPARTMENTS[department] || []).map((name) => (
                             <option key={name} value={name}>
                                 {name}
@@ -105,7 +107,7 @@ export default function AdvisorForm({ initialFilter, servicesCatalog, onSubmit }
                 </div>
             </div>
             <div className="advisor-form-field advisor-form-services">
-                <label>Must-have services</label>
+                <label>{t('advisor.form.mustHave')}</label>
                 <div className="advisor-form-chips">
                     {servicesCatalog.map((service) => (
                         <button
@@ -117,13 +119,13 @@ export default function AdvisorForm({ initialFilter, servicesCatalog, onSubmit }
                             }
                             onClick={() => toggleService(service.service_id)}
                         >
-                            {service.service_name}
+                            {serviceLabel(service.service_name)}
                         </button>
                     ))}
                 </div>
             </div>
             <button type="submit" className="advisor-cta">
-                Find spaces
+                {t('advisor.form.find')}
             </button>
         </form>
     )

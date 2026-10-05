@@ -1,3 +1,5 @@
+import { listingStatusLabel } from './displayValues'
+
 export const PROPERTY_TYPES = [
     'Café/Restaurant',
     'Store/Boutique',
@@ -8,10 +10,20 @@ export const PROPERTY_TYPES = [
 
 // How a listing's availability reads to its owner. 'Occupied' is set by the
 // lease flow only; owners switch between listed and paused.
+function listingEntry(status, tone, icon) {
+    return {
+        get label() {
+            return listingStatusLabel(status)
+        },
+        tone,
+        icon,
+    }
+}
+
 export const LISTING_STATUS = {
-    Available: { label: 'Listed', tone: 'success', icon: 'bi-broadcast' },
-    Reserved: { label: 'Paused', tone: 'neutral', icon: 'bi-pause-circle' },
-    Occupied: { label: 'Leased', tone: 'info', icon: 'bi-key' },
+    Available: listingEntry('Available', 'success', 'bi-broadcast'),
+    Reserved: listingEntry('Reserved', 'neutral', 'bi-pause-circle'),
+    Occupied: listingEntry('Occupied', 'info', 'bi-key'),
 }
 
 export const TYPE_ICON = {

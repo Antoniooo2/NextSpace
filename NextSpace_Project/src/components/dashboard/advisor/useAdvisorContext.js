@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../../i18n'
+import { BRAND_VALUES } from '../../../lib/brand'
+import { DOT } from '../../../lib/symbols'
 import { supabase } from '../../../lib/supabaseClient'
 import { money } from '../../../lib/contracts'
 import { daysUntil, effectiveStatus, todayInElSalvador } from '../../../lib/rentSchedule'
@@ -7,8 +11,10 @@ import { daysUntil, effectiveStatus, todayInElSalvador } from '../../../lib/rent
 // the user's own rows (no AI call), and each one carries the question it
 // asks Rony when tapped.
 
+const t = (key, values) => i18n.t(`advisor.cards.${key}`, { ...BRAND_VALUES, ...values })
+
 function lateText(days) {
-    return days === 1 ? '1 day late' : `${days} days late`
+    return i18n.t('rent.daysLate', { count: days })
 }
 
 async function callerDui() {
@@ -50,7 +56,7 @@ async function businessCards() {
             .limit(1),
     ])
 
-    const nameOf = (c) => c?.add_business?.property_name || 'your space'
+    const nameOf = (c) => c?.add_business?.property_name || t('yourSpace')
     const byId = new Map((contracts || []).map((c) => [c.contract_id, c]))
     const active = (contracts || []).filter((c) => c.status === 'Active')
     const payments = await openPayments(active.map((c) => c.contract_id))
@@ -63,9 +69,9 @@ async function businessCards() {
         cards.push({
             tone: 'bad',
             icon: 'bi-exclamation-triangle',
-            title: `${money(late.amount)} overdue`,
-            subtitle: `${name} · ${lateText(-daysUntil(late.payment_date))}`,
-            prompt: `I'm late on rent for ${name}. How much do I owe and what should I do?`,
+            title: t('overdue', { amount: money(late.amount) }),
+            subtitle: `${name} ${DOT} ${lateText(-daysUntil(late.payment_date))}`,
+            prompt: t('latePrompt', { name }),
         })
     } else if (next) {
         const name = nameOf(byId.get(next.contract_id))
@@ -73,9 +79,17 @@ async function businessCards() {
         cards.push({
             tone: days <= 7 ? 'warn' : 'info',
             icon: 'bi-calendar-event',
-            title: `${money(next.amount)} due ${days === 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`}`,
-            subtitle: `Next rent · ${name}`,
-            prompt: 'When is my next payment due and how much is it?',
+            title: t('dueTitle', {
+                amount: money(next.amount),
+                when:
+                    days === 0
+                        ? i18n.t('insights.tenant.today')
+                        : days === 1
+                          ? i18n.t('insights.tenant.tomorrow')
+                          : i18n.t('insights.tenant.inDays', { count: days }),
+            }),
+            subtitle: t('nextRent', { name, dot: DOT }),
+            prompt: t('nextPrompt'),
         })
     }
 
@@ -84,9 +98,9 @@ async function businessCards() {
         cards.push({
             tone: 'warn',
             icon: 'bi-pen',
-            title: 'Lease offer to sign',
+            title: t('offerTitle'),
             subtitle: nameOf(offer),
-            prompt: `I have a lease offer for ${nameOf(offer)}. What should I check before signing?`,
+            prompt: t('offerPrompt', { name: nameOf(offer) }),
         })
     } else {
         const pending = (contracts || []).find((c) => c.status === 'Pending')
@@ -94,9 +108,9 @@ async function businessCards() {
             cards.push({
                 tone: 'info',
                 icon: 'bi-hourglass-split',
-                title: 'Request waiting on the owner',
+                title: t('pendingTitle'),
                 subtitle: nameOf(pending),
-                prompt: `I asked to lease ${nameOf(pending)}. What happens next?`,
+                prompt: t('pendingPrompt', { name: nameOf(pending) }),
             })
         }
     }
@@ -106,9 +120,9 @@ async function businessCards() {
         cards.push({
             tone: 'good',
             icon: 'bi-bookmark-heart',
-            title: 'Find more like your saved spaces',
-            subtitle: `Last saved: ${lastSaved}`,
-            prompt: `Find me spaces similar to ${lastSaved}.`,
+            title: t('savedTitle'),
+            subtitle: t('savedSubtitle', { name: lastSaved }),
+            prompt: t('savedPrompt', { name: lastSaved }),
         })
     }
 
@@ -116,9 +130,9 @@ async function businessCards() {
         cards.push({
             tone: 'info',
             icon: 'bi-search',
-            title: 'Find a new space',
-            subtitle: 'Tell Rony your budget and area',
-            prompt: 'Help me find a commercial space within my budget.',
+            title: t('findTitle'),
+            subtitle: t('findSubtitle'),
+            prompt: t('findPrompt'),
         })
     }
     return cards.slice(0, 3)
@@ -147,13 +161,13 @@ async function ownerCards() {
     )
     if (late) {
         const c = list.find((x) => x.contract_id === late.contract_id)
-        const tenant = [c?.users?.first_name, c?.users?.last_name].filter(Boolean).join(' ') || 'A tenant'
+        const tenant = [c?.users?.first_name, c?.users?.last_name].filter(Boolean).join(' ') || t('aTenant')
         cards.push({
             tone: 'bad',
             icon: 'bi-exclamation-triangle',
-            title: `${tenant} is ${lateText(-daysUntil(late.payment_date))}`,
-            subtitle: `${money(late.amount)} · ${c?.add_business?.property_name || ''}`,
-            prompt: `Draft a friendly reminder for ${tenant} about the late rent.`,
+            title: t('tenantLate', { tenant, late: lateText(-daysUntil(late.payment_date)) }),
+            subtitle: `${money(late.amount)} ${DOT} ${c?.add_business?.property_name || ''}`,
+            prompt: t('reminderPrompt', { tenant }),
         })
     }
 
@@ -163,9 +177,9 @@ async function ownerCards() {
         cards.push({
             tone: 'warn',
             icon: 'bi-inbox',
-            title: requests.length === 1 ? '1 lease request waiting' : `${requests.length} lease requests waiting`,
-            subtitle: name || 'Review who applied',
-            prompt: name ? `Which lease request should I accept for ${name}?` : 'Which lease request should I accept?',
+            title: t('requestsTitle', { count: requests.length }),
+            subtitle: name || t('reviewApplied'),
+            prompt: name ? t('requestsPromptName', { name }) : t('requestsPrompt'),
         })
     }
 
@@ -175,9 +189,9 @@ async function ownerCards() {
         cards.push({
             tone: 'info',
             icon: 'bi-megaphone',
-            title: `${vacant.property_name} has no tenant`,
-            subtitle: 'Make the listing stand out',
-            prompt: `How can I improve the listing for ${vacant.property_name}?`,
+            title: t('vacantTitle', { name: vacant.property_name }),
+            subtitle: t('vacantSubtitle'),
+            prompt: t('vacantPrompt', { name: vacant.property_name }),
         })
     }
 
@@ -185,24 +199,26 @@ async function ownerCards() {
         cards.push({
             tone: 'good',
             icon: 'bi-check-circle',
-            title: 'No late rent right now',
-            subtitle: 'See what you will collect this year',
-            prompt: 'How much will I still collect this year?',
+            title: t('noLateTitle'),
+            subtitle: t('noLateSubtitle'),
+            prompt: t('noLatePrompt'),
         })
     }
     if (cards.length < 3) {
         cards.push({
             tone: 'info',
             icon: 'bi-clipboard-data',
-            title: 'Portfolio check-up',
-            subtitle: 'What needs attention first',
-            prompt: 'Give me a quick overview of my portfolio and tell me what needs attention first.',
+            title: t('checkupTitle'),
+            subtitle: t('checkupSubtitle'),
+            prompt: t('checkupPrompt'),
         })
     }
     return cards.slice(0, 3)
 }
 
 export function useAdvisorLiveCards(role, enabled = true) {
+    const { i18n: i18next } = useTranslation()
+    const language = i18next.language
     const [cards, setCards] = useState([])
 
     useEffect(() => {
@@ -219,75 +235,32 @@ export function useAdvisorLiveCards(role, enabled = true) {
         return () => {
             cancelled = true
         }
-    }, [role, enabled])
+    }, [role, enabled, language])
 
     return cards
 }
 
+function topic(id, icon, key) {
+    return {
+        id,
+        icon,
+        get label() {
+            return i18n.t(`advisor.topics.${key}.label`)
+        },
+        get prompts() {
+            return i18n.t(`advisor.topics.${key}.prompts`, { returnObjects: true })
+        },
+    }
+}
+
 export const BUSINESS_TOPICS = [
-    {
-        id: 'search',
-        label: 'Find a space',
-        icon: 'bi-search',
-        prompts: [
-            'Find me a local in San Salvador under $800',
-            'What are the cheapest spaces with parking?',
-            'Which area has the best prices for a restaurant?',
-            'Show me spaces with water and electricity included',
-        ],
-    },
-    {
-        id: 'rent',
-        label: 'My rent',
-        icon: 'bi-credit-card',
-        prompts: [
-            'When is my next payment due?',
-            'How much do I still owe this year?',
-            'Am I late on anything?',
-        ],
-    },
-    {
-        id: 'leases',
-        label: 'My leases',
-        icon: 'bi-file-earmark-text',
-        prompts: [
-            'When does my lease end?',
-            'Should I renew my lease?',
-            'What should I check before signing a lease?',
-        ],
-    },
+    topic('search', 'bi-search', 'businessSearch'),
+    topic('rent', 'bi-credit-card', 'businessRent'),
+    topic('leases', 'bi-file-earmark-text', 'businessLeases'),
 ]
 
 export const OWNER_TOPICS = [
-    {
-        id: 'portfolio',
-        label: 'My portfolio',
-        icon: 'bi-buildings',
-        prompts: [
-            'What needs my attention?',
-            'Which property earns the most?',
-            'Is my rent in line with the market?',
-            'What if I raise the rent 10%?',
-        ],
-    },
-    {
-        id: 'rent',
-        label: 'Collections',
-        icon: 'bi-cash-coin',
-        prompts: [
-            'Who is late on rent?',
-            'How much will I still collect this year?',
-            'Draft a reminder for a late tenant',
-        ],
-    },
-    {
-        id: 'listings',
-        label: 'Better listings',
-        icon: 'bi-megaphone',
-        prompts: [
-            'Improve my listings',
-            'Which listing needs better photos or details?',
-            'Rewrite the description of my vacant space',
-        ],
-    },
+    topic('portfolio', 'bi-buildings', 'ownerPortfolio'),
+    topic('rent', 'bi-cash-coin', 'ownerRent'),
+    topic('listings', 'bi-megaphone', 'ownerListings'),
 ]

@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../../i18n'
+import { BRAND_VALUES } from '../../../lib/brand'
 import { supabase } from '../../../lib/supabaseClient'
 import { createNotification } from '../../../lib/notifications'
 import { AdvisorComposer, AdvisorHome, AdvisorTopBar, RonyTyping } from './AdvisorChrome'
@@ -11,24 +14,24 @@ import { OWNER_TOPICS, useAdvisorLiveCards } from './useAdvisorContext'
 // Older chats opened with this automatic question; it stays hidden when
 // those chats are loaded. New chats start on the welcome screen instead.
 const KICKOFF_MESSAGE = 'Give me a quick overview of my portfolio and tell me what needs attention first.'
-const COMPACT_WELCOME_TEXT = 'Hi, ask me about **rent collection**, your leases or your tenants.'
-const COMPACT_STARTERS = ['Who is late on rent?', 'How much will I still collect this year?', 'Which lease ends soonest?']
 const HISTORY_LIMIT = 20
 
 function computeChips(intent) {
+    const t = (key) => i18n.t(`advisor.owner.chips.${key}`)
     if (intent === 'analyze' || intent === 'audit') {
-        return ['Who is late on rent?', 'How much will I still collect this year?', 'Improve my listings']
+        return [t('whoLate'), t('collectYear'), t('improveListings')]
     }
     if (intent === 'draft_message') {
-        return ['Draft another message', 'What else needs attention?']
+        return [t('draftAnother'), t('whatElse')]
     }
     if (intent === 'simulate') {
-        return ['Try a different rent change', 'What else needs attention?']
+        return [t('differentRent'), t('whatElse')]
     }
-    return ['What needs my attention?', 'Who is late on rent?', 'Improve my listings']
+    return [t('attention'), t('whoLate'), t('improveListings')]
 }
 
 export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsumed, compact = false }) {
+    const { t } = useTranslation()
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [messages, setMessages] = useState([])
     const [chatLog, setChatLog] = useState([])
@@ -150,7 +153,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
 
         if (!accessToken) {
             setLoading(false)
-            setError('Your session expired. Please sign in again.')
+            setError(t('payments.sessionExpired'))
             return
         }
 
@@ -169,7 +172,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
 
             const result = await response.json()
             if (!response.ok) {
-                throw new Error(result.error || 'Something went wrong. Please try again.')
+                throw new Error(result.error || t('common.genericError'))
             }
 
             const blocks = blocksFrom(result, computeChips(result.intent))
@@ -206,7 +209,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
                 ...persistableBlocks(blocks),
             })
         } catch (err) {
-            setError(err.message || 'Could not reach Rony. Please try again.')
+            setError(err.message || t('advisor.unreachable', BRAND_VALUES))
         } finally {
             setLoading(false)
         }
@@ -227,7 +230,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
     const handleNewChat = async () => {
         const { error: deleteError } = await clearHistory()
         if (deleteError) {
-            setError('Could not clear the conversation. Please try again.')
+            setError(t('advisor.clearError'))
             return
         }
         setChatLog([])
@@ -259,7 +262,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
 
     const handleRewrite = (row) => {
         if (loading) return
-        sendTurn({ userVisibleText: `Rewrite the description for ${row.property_name}.` })
+        sendTurn({ userVisibleText: t('advisor.owner.rewritePrompt', { name: row.property_name }) })
     }
 
     const handleSaveListing = async (item, index) => {
@@ -273,11 +276,11 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
             .select()
 
         if (updateError) {
-            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not save the listing.' } }))
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'advisor.owner.saveError' } }))
             return
         }
 
-        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'success', text: 'Saved to listing' } }))
+        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'success', text: 'advisor.owner.saved' } }))
     }
 
     const handleSendMessage = async (item, index) => {
@@ -288,7 +291,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
             data: { user },
         } = await supabase.auth.getUser()
         if (!user) {
-            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not send the message.' } }))
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'notice.sendError' } }))
             return
         }
 
@@ -299,7 +302,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
             .single()
 
         if (userError || !userRow) {
-            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not send the message.' } }))
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'notice.sendError' } }))
             return
         }
 
@@ -313,18 +316,18 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
         })
 
         if (notifyError) {
-            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'Could not send the message.' } }))
+            setActionStatus((prev) => ({ ...prev, [index]: { kind: 'error', text: 'notice.sendError' } }))
             return
         }
 
-        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'success', text: 'Message sent' } }))
+        setActionStatus((prev) => ({ ...prev, [index]: { kind: 'success', text: 'advisor.owner.sent' } }))
     }
 
     if (!historyLoaded) {
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading your conversation...</p>
+                <p>{t('advisor.loading')}</p>
             </div>
         )
     }
@@ -336,12 +339,12 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
     const renderDraft = (item, i) => (
         <div className="advisor-draft">
             <span className="advisor-draft-label">
-                <i className="bi bi-pencil-square"></i> {item.intent === 'rewrite_listing' ? 'New description' : 'Draft message'}
+                <i className="bi bi-pencil-square"></i> {item.intent === 'rewrite_listing' ? t('advisor.owner.newDescription') : t('advisor.owner.draftMessage')}
             </span>
             <p>{item.draft}</p>
             <div className="advisor-draft-actions">
                 <button type="button" className="advisor-draft-copy" onClick={() => copyDraft(item.draft, i)}>
-                    <i className="bi bi-clipboard"></i> {copiedIndex === i ? 'Copied' : 'Copy'}
+                    <i className="bi bi-clipboard"></i> {copiedIndex === i ? t('advisor.reply.copied') : t('advisor.reply.copy')}
                 </button>
                 {item.intent === 'rewrite_listing' && item.highlightPropertyId && actionStatus[i]?.kind !== 'success' && (
                     <button
@@ -350,7 +353,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
                         onClick={() => handleSaveListing(item, i)}
                         disabled={actionStatus[i]?.kind === 'pending'}
                     >
-                        <i className="bi bi-check2"></i> Save to listing
+                        <i className="bi bi-check2"></i> {t('advisor.owner.saveToListing')}
                     </button>
                 )}
                 {item.intent === 'draft_message' &&
@@ -363,18 +366,18 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
                             onClick={() => handleSendMessage(item, i)}
                             disabled={actionStatus[i]?.kind === 'pending'}
                         >
-                            <i className="bi bi-send"></i> Send
+                            <i className="bi bi-send"></i> {t('common.send')}
                         </button>
                     )}
             </div>
             {actionStatus[i]?.kind === 'success' && (
                 <p className="advisor-action-success">
-                    <i className="bi bi-check-circle"></i> {actionStatus[i].text}
+                    <i className="bi bi-check-circle"></i> {t(actionStatus[i].text)}
                 </p>
             )}
             {actionStatus[i]?.kind === 'error' && (
                 <div className="alert alert-danger py-1 px-2 mb-0 mt-2" style={{ fontSize: '11.5px' }}>
-                    {actionStatus[i].text}
+                    {t(actionStatus[i].text)}
                 </div>
             )}
         </div>
@@ -384,7 +387,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
         <div className={`advisor-shell ${compact ? 'is-compact' : ''}`}>
             {!compact && (
                 <AdvisorTopBar
-                    subtitle="Knows your properties, tenants and rent"
+                    subtitle={t('advisor.owner.subtitle')}
                     canReset={chatLog.length > 0}
                     onNewChat={handleNewChat}
                 />
@@ -394,7 +397,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
                 {isEmpty && !compact && (
                     <AdvisorHome
                         firstName={firstName}
-                        intro="I watch your properties, tenants and rent, and help you act on what matters."
+                        intro={t('advisor.owner.intro')}
                         liveCards={liveCards}
                         topics={OWNER_TOPICS}
                         onAsk={ask}
@@ -402,7 +405,13 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
                 )}
 
                 {isEmpty && compact && (
-                    <RonyReply item={{ text: COMPACT_WELCOME_TEXT, followUps: COMPACT_STARTERS }} onFollowUp={ask} />
+                    <RonyReply
+                        item={{
+                            text: t('advisor.owner.compactWelcome'),
+                            followUps: [t('advisor.owner.chips.whoLate'), t('advisor.owner.chips.collectYear'), t('advisor.owner.chips.endsSoonest')],
+                        }}
+                        onFollowUp={ask}
+                    />
                 )}
 
                 {chatLog.map((item, i) => {
@@ -449,7 +458,7 @@ export default function OwnerAdvisor({ firstName, onNavigate, seed, onSeedConsum
                 onChange={setInput}
                 onSubmit={handleComposerSubmit}
                 disabled={loading}
-                placeholder="Ask about your portfolio, tenants or listings..."
+                placeholder={t('advisor.owner.placeholder')}
             />
         </div>
     )

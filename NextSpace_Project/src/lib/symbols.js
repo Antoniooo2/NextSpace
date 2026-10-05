@@ -1,0 +1,12 @@
+export const DASH = '\u2014'
+export const DOT = '\u00b7'
+export const MINUS = '\u2212'
+export const EN_DASH = '\u2013'
+export const SQ_M = 'm\u00b2'
+export const QUOTE_OPEN = '\u201c'
+export const QUOTE_CLOSE = '\u201d'
+export const INFINITY = '\u221e'
+export const BULLETS = '\u2022\u2022\u2022\u2022'
+export const PASSWORD_MASK = '\u2022'.repeat(8)
+export const ARROW_RIGHT = '\u2192'
+export const FLAG = '\u2691'

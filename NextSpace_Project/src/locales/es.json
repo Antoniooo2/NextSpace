@@ -69,5 +69,2044 @@
       "youReceive": "Tú recibes",
       "note": "Los depósitos no tienen comisión. Sin planes mensuales ni costos por publicar."
     }
+  },
+  "values": {
+    "propertyType": {
+      "cafeRestaurant": "Café/Restaurante",
+      "storeBoutique": "Tienda/Boutique",
+      "beautySalon": "Salón de belleza",
+      "pharmacyHealthcare": "Farmacia/Salud",
+      "other": "Otro"
+    },
+    "service": {
+      "parking": "Estacionamiento",
+      "airConditioning": "Aire acondicionado",
+      "fiberInternet": "Internet de fibra óptica",
+      "security": "Seguridad 24/7",
+      "elevator": "Ascensor",
+      "electricalPanel": "Tablero eléctrico",
+      "others": "Otros"
+    },
+    "paymentStatus": {
+      "scheduled": "Próximo",
+      "pending": "Por pagar",
+      "paid": "Pagado",
+      "late": "Atrasado",
+      "cancelled": "Cancelado"
+    },
+    "contractStatus": {
+      "pending": "Solicitado",
+      "offered": "Esperando firma",
+      "active": "Activo",
+      "declined": "Rechazado",
+      "withdrawn": "Retirado",
+      "expired": "Finalizado",
+      "cancelled": "Cancelado",
+      "endedEarly": "Terminado anticipadamente"
+    },
+    "listingStatus": {
+      "available": "Publicado",
+      "reserved": "Pausado",
+      "occupied": "Alquilado"
+    },
+    "paymentMethod": {
+      "wompi": "Wompi",
+      "cash": "Efectivo"
+    },
+    "accountType": {
+      "savings": "Ahorro",
+      "checking": "Corriente"
+    },
+    "process": {
+      "payments": "Pagos",
+      "contracts": "Contratos",
+      "marketplace": "Alertas de espacios"
+    },
+    "availability": {
+      "available": "Disponible",
+      "reserved": "Reservado",
+      "occupied": "Ocupado"
+    }
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "loading": "Cargando…",
+    "retry": "Intentar de nuevo",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "remove": "Quitar",
+    "confirm": "Confirmar",
+    "continue": "Continuar",
+    "send": "Enviar",
+    "sending": "Enviando…",
+    "done": "Listo",
+    "yes": "Sí",
+    "no": "No",
+    "none": "Ninguno",
+    "all": "Todos",
+    "property": "Propiedad",
+    "tenant": "Inquilino",
+    "owner": "Propietario",
+    "genericError": "Algo salió mal. Inténtalo de nuevo.",
+    "month_one": "{{count}} mes",
+    "month_other": "{{count}} meses",
+    "day_one": "{{count}} día",
+    "day_other": "{{count}} días",
+    "perMonth": "/mes",
+    "perMonthLong": "al mes",
+    "sections": "Secciones",
+    "dismiss": "Cerrar aviso"
+  },
+  "errors": {
+    "notAllowedValue": "Uno de los valores que ingresaste no está permitido por la base de datos (revisa el tipo de propiedad, la disponibilidad o los valores de tamaño y alquiler).",
+    "noPermission": "No tienes permiso para realizar esta acción en esta propiedad.",
+    "network": "No se pudo conectar con el servidor. Revisa tu conexión a internet e inténtalo de nuevo.",
+    "auth": {
+      "invalidCredentials": "El correo o la contraseña son incorrectos.",
+      "emailNotConfirmed": "Confirma tu correo antes de iniciar sesión. Revisa tu bandeja de entrada.",
+      "alreadyRegistered": "Ya existe una cuenta con este correo. Inicia sesión.",
+      "weakPassword": "La contraseña debe tener al menos 6 caracteres.",
+      "invalidEmail": "Escribe un correo electrónico válido.",
+      "tooManyRequests": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",
+      "samePassword": "La nueva contraseña debe ser diferente a la actual.",
+      "sessionExpired": "Tu sesión expiró. Solicita un nuevo código e inténtalo de nuevo.",
+      "missingFields": "Escribe tu correo y tu contraseña.",
+      "codeExpired": "El código no es válido o ya venció. Solicita uno nuevo."
+    },
+    "noAccountRecord": "No encontramos el registro de tu cuenta. Contacta a soporte."
+  },
+  "rent": {
+    "dueToday": "Vence hoy",
+    "dueTomorrow": "Vence mañana",
+    "dueInDays_one": "Vence en {{count}} día",
+    "dueInDays_other": "Vence en {{count}} días",
+    "daysLate_one": "{{count}} día de atraso",
+    "daysLate_other": "{{count}} días de atraso"
+  },
+  "contracts": {
+    "dueDay_ordinal_other": "{{count}}",
+    "expiresInHours_one": "Vence en {{count}} hora",
+    "expiresInHours_other": "Vence en {{count}} horas",
+    "expiresInDays_one": "Vence en {{count}} día",
+    "expiresInDays_other": "Vence en {{count}} días",
+    "offerExpired": "Oferta vencida",
+    "expired": "Vencida",
+    "record": {
+      "newOnBrand": "Nuevo en {{brand}}",
+      "onTimePct": "{{pct}}% a tiempo",
+      "noHistory": "aún no tiene historial de pagos en {{brand}}",
+      "monthsOnTime_one": "{{onTime}} de {{count}} mes a tiempo",
+      "monthsOnTime_other": "{{onTime}} de {{count}} meses a tiempo",
+      "lateNow_one": "{{months}}, pero con {{count}} mes atrasado en este momento",
+      "lateNow_other": "{{months}}, pero con {{count}} meses atrasados en este momento",
+      "nothingLate": "{{months}} y nada atrasado en este momento"
+    },
+    "events": {
+      "requested": "Contrato solicitado",
+      "invited": "Invitación enviada",
+      "offered": "Oferta enviada y firmada por el propietario",
+      "signed": "Firmado por el inquilino: contrato activo",
+      "declined": "Rechazado",
+      "autoDeclined": "Cerrado automáticamente",
+      "withdrawn": "Retirado por el negocio",
+      "terminationRequested": "Terminación anticipada solicitada",
+      "terminationAccepted": "Terminación anticipada aceptada",
+      "terminationDeclined": "Terminación anticipada rechazada",
+      "expired": "Contrato finalizado",
+      "renewalOffer": "Renovación ofrecida y firmada por el propietario",
+      "renewalRequest": "Renovación solicitada por el negocio",
+      "reminder": "Recordatorio de alquiler enviado",
+      "autoReminder": "Recordatorio automático de alquiler",
+      "renewed": "Renovación firmada: contrato extendido",
+      "renewalDeclined": "La renovación no seguirá adelante",
+      "renewalExpired": "Oferta de renovación vencida",
+      "offerExpired": "Oferta vencida",
+      "requestReminder": "Se le recordó la solicitud al propietario",
+      "offerReminder": "Se le recordó firmar al negocio"
+    },
+    "clauses": {
+      "premises": {
+        "title": "Inmueble",
+        "body": "El propietario arrienda al inquilino el local comercial \"{{name}}\"{{location}}, tal como está publicado en {{brand}}, para uso comercial del inquilino.",
+        "fallbackName": "la propiedad",
+        "location": " en {{place}}"
+      },
+      "term": {
+        "title": "Plazo",
+        "body": "El contrato va del {{start}} al {{end}}{{length}}.",
+        "length_one": " ({{count}} mes)",
+        "length_other": " ({{count}} meses)"
+      },
+      "rent": {
+        "title": "Alquiler y pago",
+        "body": "El alquiler mensual es de {{rent}} y vence el día {{day}} de cada mes a partir de la fecha de inicio. El alquiler se paga en línea a través de {{brand}} ({{provider}}), que lo cobra en nombre del propietario; puede pagarse desde 7 días antes de cada fecha de vencimiento y se aplica primero al mes pendiente más antiguo. Cada pago genera un comprobante."
+      },
+      "fee": {
+        "title": "Comisión de servicio de {{brand}}",
+        "body": "{{brand}} conserva el {{rate}} de cada pago mensual de alquiler ({{fee}} de {{rent}}) como comisión de servicio y transfiere el resto ({{net}}) a la cuenta bancaria del propietario. La comisión se descuenta del alquiler del propietario: el inquilino paga exactamente el alquiler mensual indicado y nada más. El depósito no tiene comisión."
+      },
+      "deposit": {
+        "title": "Depósito",
+        "body": "El inquilino entrega al propietario un depósito de garantía de {{deposit}} antes de la fecha de inicio. Se devuelve al final del contrato, descontando el costo de los daños documentados que excedan el desgaste normal.",
+        "none": "Este contrato no requiere depósito de garantía."
+      },
+      "use": {
+        "title": "Uso del espacio",
+        "body": "El inquilino usará el espacio solo para actividades comerciales lícitas, mantendrá los permisos que su negocio requiera y no lo subarrendará sin el consentimiento por escrito del propietario."
+      },
+      "maintenance": {
+        "title": "Mantenimiento",
+        "body": "El propietario es responsable de las reparaciones estructurales y de las instalaciones principales del edificio. El inquilino es responsable del mantenimiento diario y de los daños causados por su uso del espacio."
+      },
+      "latePayment": {
+        "title": "Pago atrasado",
+        "body": "Si el alquiler no se paga en su fecha de vencimiento, {{brand}} envía recordatorios ese mismo día y a los 7 y 15 días. No se aplica recargo por atraso salvo que se indique en las cláusulas especiales."
+      },
+      "earlyEnd": {
+        "title": "Terminación anticipada",
+        "body": "Cualquiera de las partes puede solicitar la terminación anticipada del contrato a través de {{brand}}, indicando una fecha y un motivo. Solo tiene efecto si la otra parte acepta; en ese caso se eliminan los alquileres posteriores a la fecha de terminación acordada."
+      },
+      "renewal": {
+        "title": "Renovación",
+        "body": "En los últimos 90 días del contrato cualquiera de las partes puede proponer una renovación a través de {{brand}}. Tiene efecto cuando el inquilino firma la oferta de renovación del propietario; el nuevo alquiler aplica a partir de la fecha de finalización actual. De lo contrario, el contrato termina en su fecha de finalización y el espacio vuelve a estar disponible."
+      },
+      "signature": {
+        "title": "Firma electrónica",
+        "body": "Ambas partes aceptan que escribir su nombre completo y confirmar a través de {{brand}}, con registro de fecha y hora, constituye su firma de este contrato."
+      }
+    }
+  },
+  "notifications": {
+    "actions": {
+      "answerRequest": "Responder solicitud",
+      "reviewOffer": "Revisar oferta",
+      "answer": "Responder",
+      "reviewRenewal": "Revisar renovación",
+      "askToRenew": "Pedir renovación",
+      "offerRenewal": "Ofrecer renovación",
+      "payNow": "Pagar ahora",
+      "viewRent": "Ver alquiler"
+    },
+    "time": {
+      "justNow": "Justo ahora",
+      "minAgo_one": "hace {{count}} min",
+      "minAgo_other": "hace {{count}} min"
+    },
+    "groups": {
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "thisWeek": "Esta semana",
+      "earlier": "Anteriores"
+    },
+    "titles": {
+      "newContractRequest": "Nueva solicitud de contrato",
+      "contractAccepted": "Contrato aceptado",
+      "leaseOffer": "Oferta de contrato",
+      "updatedLeaseOffer": "Oferta de contrato actualizada",
+      "offerExpiresSoon": "La oferta vence pronto",
+      "offerExpired": "Oferta vencida",
+      "offerTurnedDown": "Oferta rechazada",
+      "offer": "Oferta",
+      "leaseSigned": "Contrato firmado",
+      "leaseRenewed": "Contrato renovado",
+      "leaseEnded": "Contrato finalizado",
+      "requestDeclined": "Solicitud rechazada",
+      "requestClosed": "Solicitud cerrada",
+      "requestWithdrawn": "Solicitud retirada",
+      "requestEndEarly": "Solicitud de terminación anticipada",
+      "earlyEndAccepted": "Terminación anticipada aceptada",
+      "earlyEndDeclined": "Terminación anticipada rechazada",
+      "renewalRequest": "Solicitud de renovación",
+      "renewalOffer": "Oferta de renovación",
+      "renewalOfferExpiresSoon": "La oferta de renovación vence pronto",
+      "renewalOfferExpired": "Oferta de renovación vencida",
+      "renewalNotGoingAhead": "La renovación no seguirá adelante",
+      "rentDueToday": "El alquiler vence hoy",
+      "rentDueTomorrow": "El alquiler vence mañana",
+      "rentOverdue": "Alquiler vencido",
+      "lateRent": "Alquiler atrasado",
+      "rentReminderFromOwner": "Recordatorio de alquiler de tu propietario",
+      "paymentReceived": "Pago recibido",
+      "paymentConfirmed": "Pago confirmado",
+      "paymentRecorded": "Pago registrado",
+      "transferSent": "Transferencia enviada",
+      "headsUpFromRony": "Aviso de {{advisor}}",
+      "newSpaceForSearch": "Nuevo espacio para tu búsqueda",
+      "thisWeek": "Esta semana",
+      "messageFromOwner": "Mensaje de tu propietario",
+      "rentDueInDays_one": "El alquiler vence en {{count}} día",
+      "rentDueInDays_other": "El alquiler vence en {{count}} días",
+      "leaseEndingInDays_one": "El contrato termina en {{count}} día",
+      "leaseEndingInDays_other": "El contrato termina en {{count}} días",
+      "rentDaysOverdue_one": "Alquiler con {{count}} día de atraso",
+      "rentDaysOverdue_other": "Alquiler con {{count}} días de atraso",
+      "stillUnpaidAfterDays_one": "Sigue sin pagarse después de {{count}} día",
+      "stillUnpaidAfterDays_other": "Sigue sin pagarse después de {{count}} días",
+      "requestWaitingDays_one": "Solicitud en espera desde hace {{count}} día",
+      "requestWaitingDays_other": "Solicitud en espera desde hace {{count}} días",
+      "fallback": {
+        "yourProperty": "tu propiedad",
+        "yourLease": "tu contrato",
+        "aSpace": "un espacio"
+      }
+    },
+    "title": "Notificaciones",
+    "loading": "Cargando notificaciones…",
+    "unread": "No leída",
+    "unreadCount_one": "{{count}} sin leer",
+    "unreadCount_other": "{{count}} sin leer",
+    "bell": {
+      "label": "Notificaciones",
+      "labelUnread_one": "Notificaciones, {{count}} sin leer",
+      "labelUnread_other": "Notificaciones, {{count}} sin leer",
+      "latest": "Últimas notificaciones",
+      "caughtUp": "Estás al día.",
+      "seeAll": "Ver todas las notificaciones"
+    },
+    "filters": {
+      "all": "Todas",
+      "unread": "No leídas",
+      "action": "Requieren acción"
+    },
+    "filterLabel": "Filtrar notificaciones",
+    "needAction_one": "{{count}} cosa requiere tu acción. Todo lo demás es para tu registro.",
+    "needAction_other": "{{count}} cosas requieren tu acción. Todo lo demás es para tu registro.",
+    "nothingToDo": "Novedades sobre tus contratos y pagos. Nada requiere tu acción por ahora.",
+    "markAllRead": "Marcar todas como leídas",
+    "markRead": "Marcar como leídas",
+    "empty": {
+      "title": "Estás al día",
+      "text": "La nueva actividad de tus contratos y pagos aparecerá aquí en cuanto ocurra."
+    },
+    "emptyFilter": {
+      "noAction": "Nada requiere tu acción",
+      "nothing": "No hay nada aquí",
+      "allRead": "Ya leíste todo.",
+      "tryAnother": "Prueba con otro filtro."
+    }
+  },
+  "market": {
+    "similarIn": "similares en {{place}}",
+    "similarType": "espacios similares de tipo {{type}}",
+    "below": "{{pct}}% por debajo de similares",
+    "above": "{{pct}}% por encima de similares",
+    "fair": "Precio justo"
+  },
+  "listings": {
+    "checklist": {
+      "photos": "Fotos",
+      "morePhotos": "3 o más fotos",
+      "rent": "Alquiler mensual",
+      "description": "Descripción",
+      "location": "Ubicación",
+      "services": "Servicios"
+    }
+  },
+  "savedSearch": {
+    "anySpace": "Cualquier espacio",
+    "inPlace": "{{what}} en {{place}}",
+    "upTo": "hasta {{amount}}",
+    "from": "desde {{amount}}"
+  },
+  "payouts": {
+    "errors": {
+      "holderName": "Escribe el nombre completo del titular de la cuenta.",
+      "bankName": "Elige o escribe el banco.",
+      "accountNumber": "Usa solo números (puedes usar guiones), con al menos 6 dígitos."
+    }
+  },
+  "risk": {
+    "new": "Contrato nuevo",
+    "high": "Riesgo alto",
+    "medium": "En observación",
+    "low": "Confiable",
+    "reasons": {
+      "noHistory": "Todavía no ha vencido ningún alquiler, así que no hay historial de pagos.",
+      "paidOnTime_one": "{{paid}} de {{count}} mes pagado a tiempo ({{pct}}%).",
+      "paidOnTime_other": "{{paid}} de {{count}} meses pagados a tiempo ({{pct}}%).",
+      "lateMonths_one": "{{count}} mes sin pagar y atrasado, el más antiguo con {{days}} días.",
+      "lateMonths_other": "{{count}} meses sin pagar y atrasados, el más antiguo con {{days}} días.",
+      "avgLate": "En promedio el alquiler llega con {{days}} días de atraso."
+    }
+  },
+  "insights": {
+    "overMonths_one": " en {{count}} mes",
+    "overMonths_other": " en {{count}} meses",
+    "owner": {
+      "theirLease": "su contrato",
+      "late_one": "{{tenant}} tiene {{count}} día de atraso en {{name}}: debe {{owed}}{{over}}.",
+      "late_other": "{{tenant}} tiene {{count}} días de atraso en {{name}}: debe {{owed}}{{over}}.",
+      "sendReminder": "Enviar recordatorio",
+      "collected": "Este mes has cobrado {{collected}} de {{expected}} esperados ({{pct}}%).",
+      "dueThisWeek_one": "En los próximos 7 días vencen {{amount}} de {{count}} inquilino.",
+      "dueThisWeek_other": "En los próximos 7 días vencen {{amount}} de {{count}} inquilinos.",
+      "leaseEnds_one": "El contrato de {{name}} termina en {{count}} día: después de eso tu alquiler esperado baja {{rent}}/mes.",
+      "leaseEnds_other": "El contrato de {{name}} termina en {{count}} días: después de eso tu alquiler esperado baja {{rent}}/mes.",
+      "goodCandidate": " El inquilino ha pagado a tiempo, es un buen candidato para renovar.",
+      "answerRenewal": "Responder solicitud de renovación",
+      "offerRenewal": "Ofrecer renovación",
+      "askRony": "Preguntarle a {{advisor}}",
+      "askRonyText": "El contrato de {{name}} termina el {{date}}. ¿Debo ofrecer una renovación o volver a publicarlo, y a qué precio?",
+      "noneLate": "Ningún inquilino está atrasado con el alquiler."
+    },
+    "tenant": {
+      "yourLease": "tu contrato",
+      "late_one": "Tu alquiler de {{name}} tiene {{count}} día de atraso: debes {{owed}}{{over}}. Los meses se pagan del más antiguo al más reciente.",
+      "late_other": "Tu alquiler de {{name}} tiene {{count}} días de atraso: debes {{owed}}{{over}}. Los meses se pagan del más antiguo al más reciente.",
+      "payNow": "Pagar ahora",
+      "today": "hoy",
+      "tomorrow": "mañana",
+      "inDays_one": "en {{count}} día",
+      "inDays_other": "en {{count}} días",
+      "due": "{{amount}} de {{name}} vence {{when}}.",
+      "totalOwed_one": "En total debes {{total}} en este momento en {{count}} contrato.",
+      "totalOwed_other": "En total debes {{total}} en este momento en {{count}} contratos.",
+      "renewalOffered": "El propietario ofreció renovar {{name}} a {{rent}}/mes. Revísalo y fírmalo en Contratos.",
+      "reviewRenewal": "Revisar renovación",
+      "renewalRequested": "Pediste renovar {{name}}. El propietario responderá con una oferta para firmar.",
+      "strongRecord_one": " Has pagado a tiempo tu {{count}} mes, un buen argumento para renovar.",
+      "strongRecord_other": " Has pagado a tiempo los {{count}} meses, un buen argumento para renovar.",
+      "leaseEnds_one": "Tu contrato de {{name}} termina en {{count}} día ({{date}}).",
+      "leaseEnds_other": "Tu contrato de {{name}} termina en {{count}} días ({{date}}).",
+      "askToRenew": "Pedir renovación",
+      "upToDateNext": "Estás al día en todos tus contratos. Próximo pago: {{amount}} de {{name}} el {{date}}.",
+      "allPaid": "Estás al día y todos los meses de tus contratos están pagados.",
+      "streak_one": "{{count}} mes seguido pagado a tiempo en {{name}}. Excelente historial.",
+      "streak_other": "{{count}} meses seguidos pagados a tiempo en {{name}}. Excelente historial."
+    }
+  },
+  "docs": {
+    "receipt": {
+      "title": "Comprobante de pago de alquiler",
+      "issued": "Emitido el {{date}}",
+      "amountPaid": "MONTO PAGADO",
+      "paidStamp": "PAGADO",
+      "rentPeriod": "Período de alquiler",
+      "dueDate": "Fecha de vencimiento",
+      "paidOn": "Pagado el",
+      "paymentMethod": "Método de pago",
+      "transactionId": "ID de transacción",
+      "property": "Propiedad",
+      "contract": "Contrato",
+      "tenant": "Inquilino",
+      "propertyOwner": "Propietario",
+      "footer": "Este comprobante fue generado por {{brand}} a partir del pago confirmado a través de {{provider}}. {{brand}} cobra el alquiler en nombre del propietario, por lo que este pago cubre el alquiler de este período. Guárdalo como comprobante de pago.",
+      "fileName": "comprobante"
+    },
+    "lease": {
+      "title": "Contrato de arrendamiento comercial - {{name}}",
+      "subtitle": "Contrato #{{id}} - {{status}}",
+      "parties": "Partes",
+      "owner": "Propietario",
+      "tenant": "Inquilino",
+      "space": "Espacio",
+      "location": "Ubicación",
+      "keyTerms": "Términos principales",
+      "monthlyRent": "Alquiler mensual",
+      "rentChange": "{{rent}} desde el {{date}} (antes {{previous}})",
+      "rentDue": "Vencimiento del alquiler",
+      "rentDueValue": "El día {{day}} de cada mes",
+      "start": "Inicio",
+      "end": "Fin",
+      "length": "Duración",
+      "deposit": "Depósito",
+      "fee": "Comisión de {{brand}}",
+      "feeValue": "{{rate}} de cada alquiler, a cargo del propietario",
+      "clauses": "Cláusulas",
+      "specialClauses": "Cláusulas especiales",
+      "signatures": "Firmas",
+      "notSigned": "Aún sin firmar",
+      "signedElectronically": "{{role}} - firmado electrónicamente el {{date}}",
+      "renewed_one": "Renovado {{count}} vez. La última renovación fue firmada electrónicamente el {{date}} por {{owner}} (propietario) y {{tenant}} (inquilino), extendiendo el contrato hasta el {{end}}.",
+      "renewed_other": "Renovado {{count}} veces. La última renovación fue firmada electrónicamente el {{date}} por {{owner}} (propietario) y {{tenant}} (inquilino), extendiendo el contrato hasta el {{end}}.",
+      "verificationCode": "Código de verificación: {{code}}",
+      "endedEarly": "Terminado anticipadamente de mutuo acuerdo el {{date}}.",
+      "ended": "El contrato finalizó el {{date}}.",
+      "footer": "Firmado electrónicamente a través de {{brand}}. El código de verificación identifica esta versión exacta del contrato.",
+      "fileName": "contrato"
+    },
+    "reports": {
+      "generated": "Generado el {{date}}",
+      "page": "Página {{page}} de {{pages}}",
+      "expected": "Esperado",
+      "collected": "Cobrado",
+      "wholeLease": "Todo el contrato",
+      "year": "Año {{year}}",
+      "statementTitle": "Estado de cuenta de alquiler - {{name}}",
+      "lease": "Contrato",
+      "property": "Propiedad",
+      "contract": "Contrato",
+      "tenant": "Inquilino",
+      "owner": "Propietario",
+      "monthlyRent": "Alquiler mensual",
+      "totalInPeriod": "Total del período",
+      "paid": "Pagado",
+      "owedNow": "Adeudado hoy",
+      "onTime": "A tiempo",
+      "monthByMonth": "Mes a mes",
+      "period": "Período",
+      "due": "Vence",
+      "status": "Estado",
+      "paidOn": "Pagado el",
+      "daysLate": "Días de atraso",
+      "amount": "Monto",
+      "receipt": "Comprobante",
+      "providerTransactions": "Transacciones de {{provider}}",
+      "transactionId": "ID de transacción",
+      "statementFooter": "Generado por {{brand}} a partir del calendario de alquileres y los pagos confirmados a través de {{provider}}.",
+      "statementFile": "estado-de-cuenta",
+      "monthlyTitle": "Reporte mensual de alquileres - {{month}}",
+      "ronyAnalysis": "Análisis de {{advisor}}",
+      "collectionRate": "Tasa de cobro",
+      "overdueToday": "Vencido a hoy",
+      "collectedFromTenants": "Cobrado a inquilinos",
+      "feeLabel": "Comisión de {{brand}} ({{rate}})",
+      "youReceive": "Tú recibes",
+      "expectedVsCollected": "Esperado vs. cobrado, últimos 6 meses",
+      "byProperty": "Por propiedad",
+      "dueInMonth": "Vence en el mes",
+      "toYou": "Para ti",
+      "risk": "Riesgo",
+      "lateRent": "Alquileres atrasados (a hoy)",
+      "month": "Mes",
+      "comingUp": "Próximos vencimientos",
+      "leasesEnding": "Contratos que terminan en los próximos 3 meses",
+      "ends": "Termina",
+      "monthlyFooter": "Generado por {{brand}}. Los inquilinos pagan el alquiler en línea a través de {{provider}}; los montos reflejan pagos confirmados. {{brand}} conserva una comisión del {{rate}} de cada pago de alquiler y te transfiere el resto.",
+      "monthlyFile": "reporte-de-alquileres",
+      "rentPeriod": "Período de alquiler",
+      "dueDate": "Fecha de vencimiento",
+      "amountUsd": "Monto (USD)",
+      "feeUsd": "Comisión de {{brand}} (USD)",
+      "toYouUsd": "Para ti (USD)",
+      "transfer": "Transferencia",
+      "method": "Método",
+      "providerTransaction": "Transacción de {{provider}}",
+      "transferSent": "Enviada",
+      "transferPending": "Pendiente",
+      "leaseStart": "Inicio del contrato",
+      "leaseEnd": "Fin del contrato",
+      "monthsPaid": "Meses pagados",
+      "monthsInLease": "Meses del contrato",
+      "onTimePct": "% a tiempo",
+      "avgDaysLate": "Promedio de días de atraso",
+      "fee": "Comisión de {{brand}}",
+      "leftOnLease": "Restante del contrato",
+      "expectedRentUsd": "Alquiler esperado (USD)",
+      "toYouAfterFee": "Para ti después de la comisión del {{rate}} (USD)",
+      "leasesPaying": "Contratos que pagan",
+      "leaseEndsThisMonth": "Contrato que termina este mes",
+      "sheetSummary": "Resumen",
+      "sheetPayments": "Pagos",
+      "sheetProjection": "Proyección",
+      "sheetLease": "Contrato",
+      "rentFile": "alquileres",
+      "item": "Concepto",
+      "value": "Valor",
+      "paidOnTime": "Pagado a tiempo",
+      "paidSoFar": "Pagado hasta hoy",
+      "contractFile": "contrato"
+    }
+  },
+  "app": {
+    "crashed": "La aplicación falló al mostrarse.",
+    "failedToStart": "La aplicación no pudo iniciar."
+  },
+  "auth": {
+    "goHome": "Ir a la página de inicio",
+    "emailPlaceholder": "ejemplo@nextspace.com",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña",
+    "login": {
+      "tagline": "Gestión de alquileres sencilla para emprendedores",
+      "welcome": "Bienvenido a {{brand}}",
+      "email": "Tu correo electrónico",
+      "password": "Tu contraseña",
+      "forgot": "¿La olvidaste?",
+      "remember": "Mantener sesión iniciada",
+      "submit": "Entrar a mi espacio",
+      "submitting": "Iniciando sesión…",
+      "noAccount": "¿Aún no eres parte de {{brand}}?",
+      "createAccount": "Crear mi cuenta"
+    },
+    "signup": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Es gratis y toma menos de 2 minutos.",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Ronaldo",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Mendoza",
+      "email": "Correo electrónico",
+      "dui": "DUI",
+      "password": "Contraseña",
+      "accountType": "Tipo de cuenta",
+      "types": {
+        "business": {
+          "title": "Negocio",
+          "description": "Quiero abrir o encontrar el local para mi negocio"
+        },
+        "owner": {
+          "title": "Propietario",
+          "description": "Quiero alquilar mi propiedad"
+        }
+      },
+      "submit": "Crear mi cuenta",
+      "submitting": "Creando cuenta…",
+      "haveAccount": "¿Ya tienes una cuenta?",
+      "signIn": "Inicia sesión",
+      "duiFormat": "Escribe tu DUI con 8 dígitos, un guion y 1 dígito (00000000-0).",
+      "couldNotCreate": "No pudimos crear la cuenta. Revisa tu DUI, o inicia sesión si ya tienes una cuenta.",
+      "success": "¡Cuenta creada! Revisa tu correo para confirmarla."
+    },
+    "forgot": {
+      "title": "¿Olvidaste tu contraseña?",
+      "subtitle": "Escribe tu correo y te enviaremos un código de 6 dígitos.",
+      "emailPlaceholder": "ejemplo@tupropiedad.com",
+      "emailRequired": "Escribe tu correo electrónico.",
+      "emailInvalid": "Escribe un correo electrónico válido.",
+      "requestFailed": "No pudimos procesar tu solicitud: {{message}}",
+      "sendCode": "Enviar código",
+      "backToSignIn": "Volver a iniciar sesión",
+      "codeTitle": "Escribe tu código",
+      "codeSubtitle": "Enviamos un código de 6 dígitos a {{email}}. Escríbelo abajo junto con tu nueva contraseña.",
+      "codeLabel": "Código de 6 dígitos",
+      "codeRequired": "Escribe el código de 6 dígitos que llegó a tu correo.",
+      "invalidCode": "Código inválido o vencido: {{message}}",
+      "reset": "Restablecer contraseña",
+      "differentEmail": "Usar otro correo"
+    },
+    "password": {
+      "new": "Nueva contraseña",
+      "confirm": "Confirma la nueva contraseña",
+      "required": "Escribe una nueva contraseña.",
+      "tooShort": "La contraseña debe tener al menos 6 caracteres.",
+      "confirmRequired": "Confirma tu nueva contraseña.",
+      "mismatch": "Las contraseñas no coinciden.",
+      "updateFailed": "No pudimos actualizar tu contraseña: {{message}}",
+      "updated": "Contraseña actualizada. Redirigiendo…"
+    },
+    "newPassword": {
+      "title": "Crea una nueva contraseña",
+      "subtitle": "Elige una contraseña segura para tu cuenta.",
+      "submit": "Guardar nueva contraseña"
+    }
+  },
+  "dashboard": {
+    "loading": "Cargando tu espacio…",
+    "there": "usuario",
+    "user": "Usuario",
+    "back": {
+      "listings": "Volver a los espacios",
+      "profile": "Volver al perfil",
+      "advisor": "Volver con {{advisor}}"
+    },
+    "navGroups": {
+      "main": "Principal",
+      "manage": "Gestión",
+      "account": "Cuenta"
+    },
+    "nav": {
+      "myProperties": "Mis propiedades",
+      "marketplace": "Marketplace",
+      "advisor": "Asesor IA",
+      "contracts": "Contratos",
+      "payments": "Pagos",
+      "notifications": "Notificaciones",
+      "profile": "Perfil"
+    },
+    "accountType": {
+      "business": "Negocio",
+      "owner": "Propietario"
+    },
+    "attention": {
+      "business": {
+        "payments": "Tienes alquiler vencido",
+        "contracts": "Tienes una oferta de contrato esperando"
+      },
+      "owner": {
+        "payments": "Un inquilino está atrasado con el alquiler",
+        "contracts": "Nuevas solicitudes de contrato por revisar"
+      }
+    },
+    "greeting": {
+      "morning": "Buenos días",
+      "afternoon": "Buenas tardes",
+      "evening": "Buenas noches"
+    },
+    "brandHome": "Inicio de {{brand}}",
+    "closeMenu": "Cerrar menú",
+    "openMenu": "Abrir menú",
+    "showMenu": "Mostrar el menú",
+    "hideMenu": "Ocultar el menú",
+    "hideMenuTitle": "Ocultar el menú para tener más espacio",
+    "logout": "Cerrar sesión",
+    "logoutConfirm": {
+      "title": "¿Cerrar sesión en {{brand}}?",
+      "description": "Tendrás que iniciar sesión de nuevo para entrar a tu panel."
+    },
+    "search": {
+      "owner": "Busca tus propiedades…",
+      "business": "Busca espacios por nombre, tipo o ubicación…"
+    }
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "subtitleShort": "Locales comerciales en alquiler en todo El Salvador.",
+    "subtitle": "Locales comerciales en alquiler en todo El Salvador. Solicita un contrato y el propietario responde en Contratos.",
+    "loading": "Cargando espacios",
+    "loadError": "Algo salió mal al cargar las propiedades.",
+    "any": "cualquiera",
+    "amenity": "Servicio",
+    "searchSaved": "Búsqueda guardada. Te avisaremos cuando un nuevo espacio coincida con ella.",
+    "alerts": "Alertas",
+    "savedSearches": "Búsquedas guardadas",
+    "savedSearchesHint": "Recibes una notificación cuando un nuevo espacio coincide con alguna de estas.",
+    "noSavedSearches": "Aún no tienes ninguna. Elige filtros o una categoría y toca",
+    "notifyMeShort": "Avisarme",
+    "deleteSavedSearch": "Eliminar búsqueda guardada",
+    "filters": "Filtros",
+    "typeOfSpace": "Tipo de espacio",
+    "allSpaces": "Todos los espacios",
+    "location": "Ubicación",
+    "anyDepartment": "Cualquier departamento",
+    "municipality": "Municipio",
+    "anyMunicipality": "Cualquier municipio",
+    "monthlyRentUsd": "Alquiler mensual (USD)",
+    "min": "Mín.",
+    "max": "Máx.",
+    "minRent": "Alquiler mínimo",
+    "maxRent": "Alquiler máximo",
+    "size": "Tamaño ({{unit}})",
+    "minSize": "Tamaño mínimo",
+    "maxSize": "Tamaño máximo",
+    "mustHave": "Debe tener",
+    "spaces_one": "{{count}} espacio",
+    "spaces_other": "{{count}} espacios",
+    "forQuery": "para {{query}}",
+    "removeFilter": "Quitar filtro {{label}}",
+    "clearAll": "Borrar todo",
+    "alertOn": "Alerta activa",
+    "notifyMe": "Avisarme de nuevas coincidencias",
+    "sortLabel": "Ordenar",
+    "sort": {
+      "newest": "Más recientes primero",
+      "priceAsc": "Precio: de menor a mayor",
+      "priceDesc": "Precio: de mayor a menor",
+      "sizeDesc": "Tamaño: más grandes primero"
+    },
+    "empty": {
+      "title": "Ningún espacio coincide",
+      "text": "Prueba otra zona o quita un filtro."
+    },
+    "clearFilters": "Borrar filtros",
+    "askRonyQuery": "Encuéntrame un espacio: {{query}}",
+    "askRonyDefault": "Ayúdame a encontrar un local comercial para mi negocio.",
+    "describeToRony": "Descríbeselo a {{advisor}}",
+    "showMore": "Mostrar más espacios",
+    "showing": "Mostrando {{shown}} de {{total}}",
+    "compare": {
+      "tray": "Espacios para comparar",
+      "remove": "Quitar {{name}}",
+      "addOne": "Agrega uno más para comparar",
+      "clear": "Limpiar",
+      "button": "Comparar {{count}}"
+    }
+  },
+  "propertyCard": {
+    "badge": {
+      "requested": "Solicitado",
+      "offerWaiting": "Oferta pendiente",
+      "yourLease": "Tu contrato"
+    },
+    "open": "Abrir {{name}}",
+    "new": "Nuevo",
+    "unsave": "Quitar de guardados",
+    "saveThis": "Guardar este espacio",
+    "saved": "Guardado",
+    "save": "Guardar",
+    "priceOnRequest": "Precio a consultar",
+    "ppmVs": "{{ppm}} vs. {{median}} en {{scope}}",
+    "noLocation": "Ubicación no indicada",
+    "amenities": "Servicios",
+    "noAmenities": "Sin servicios indicados",
+    "comparing": "Comparando",
+    "compareMax": "Comparar (máx. 3)",
+    "compare": "Comparar"
+  },
+  "compare": {
+    "title": "Comparar espacios",
+    "best": "Mejor",
+    "view": "Ver",
+    "monthlyRent": "Alquiler mensual",
+    "onRequest": "A consultar",
+    "size": "Tamaño",
+    "pricePerM2": "Precio por {{unit}}",
+    "type": "Tipo",
+    "location": "Ubicación",
+    "amenities": "Servicios",
+    "amenityCount": "{{count}} de {{total}}"
+  },
+  "ownerHome": {
+    "tabs": {
+      "all": "Todas",
+      "leased": "Alquiladas",
+      "available": "Sin alquilar",
+      "attention": "Requieren atención"
+    },
+    "flags": {
+      "earlyEnd": "Terminación anticipada solicitada",
+      "renewalRequested": "Renovación solicitada",
+      "renewalOffered": "Renovación ofrecida"
+    },
+    "leasedTo": "Alquilado a <strong>{{name}}</strong> hasta el {{date}}",
+    "offerAwaiting": "Oferta en espera de la firma de <strong>{{name}}</strong>",
+    "requestsWaiting_one": "<strong>{{count}} solicitud</strong> espera tu respuesta",
+    "requestsWaiting_other": "<strong>{{count}} solicitudes</strong> esperan tu respuesta",
+    "paused": "Pausado: oculto del Marketplace",
+    "vacantToday": "Publicado: desocupado desde hoy",
+    "vacantFor_one": "Publicado: desocupado desde hace {{count}} día",
+    "vacantFor_other": "Publicado: desocupado desde hace {{count}} días",
+    "rentPerMonth": "{{rent}}/mes",
+    "noRent": "Sin alquiler definido",
+    "noLocation": "Sin ubicación",
+    "views30": "Visitas en los últimos 30 días",
+    "listingQuality": "Calidad de la publicación",
+    "listingScore": "Publicación {{score}}%",
+    "manage": "Gestionar",
+    "loading": "Cargando tus propiedades…",
+    "subtitle": "Tus espacios y lo que necesita cada uno, {{name}}. Abre uno para gestionarlo.",
+    "publish": "Publicar nuevo espacio",
+    "filterLabel": "Filtrar propiedades",
+    "empty": {
+      "noneTitle": "Aún no has publicado ningún espacio",
+      "attentionTitle": "Nada requiere tu atención",
+      "tabTitle": "No hay propiedades aquí",
+      "noneText": "Publica tu primer local comercial y empieza a llegar a emprendedores de todo El Salvador.",
+      "attentionText": "Todas las publicaciones están completas y no hay solicitudes en espera.",
+      "tabText": "Prueba otra pestaña o una palabra diferente."
+    }
+  },
+  "profile": {
+    "subtitleOwner": "Tu cuenta y tu portafolio de un vistazo.",
+    "subtitleBusiness": "Tu cuenta, tu historial y los espacios que guardaste.",
+    "defaultName": "Usuario de {{brand}}",
+    "memberSince": "Miembro desde {{date}}",
+    "email": "Correo",
+    "showDui": "Mostrar DUI",
+    "hideDui": "Ocultar DUI",
+    "edit": "Editar perfil",
+    "chatDeleteError": "No se pudo eliminar el historial del chat. Inténtalo de nuevo.",
+    "chatDeleted": "Tu chat con {{advisor}} fue eliminado.",
+    "bankSaved": "Cuenta bancaria guardada.",
+    "record": {
+      "new": "Nuevo",
+      "pending": "Tienes alquiler pendiente",
+      "great": "Excelente historial de pagos",
+      "improve": "Puedes mejorar",
+      "title": "Cómo te ven los propietarios",
+      "hint": "Se muestra cuando solicitas un espacio",
+      "loading": "Cargando tu historial…",
+      "noHistory": "Aún no tienes historial de alquiler. Pagar a tiempo desde tu primer mes construye el historial que revisan los propietarios.",
+      "paidOnTime_one": "{{onTime}} de {{count}} mes pagado a tiempo.",
+      "paidOnTime_other": "{{onTime}} de {{count}} meses pagados a tiempo.",
+      "lateNow_one": "{{count}} mes está atrasado en este momento.",
+      "lateNow_other": "{{count}} meses están atrasados en este momento.",
+      "activeLeases_one": "contrato activo",
+      "activeLeases_other": "contratos activos",
+      "completed_one": "completado",
+      "completed_other": "completados"
+    },
+    "owner": {
+      "properties": "Propiedades",
+      "leasedFree": "{{leased}} alquiladas {{dot}} {{free}} libres",
+      "activeLeases": "Contratos activos",
+      "tenantsPaying": "Inquilinos pagando alquiler",
+      "yoursIn": "Tuyo en {{year}}",
+      "collectedMinusFee": "{{gross}} cobrados {{minus}} comisión de {{brand}} del {{rate}}"
+    },
+    "settings": {
+      "bankTitle": "Cuenta bancaria para transferencias",
+      "addBank": "Agrega tu cuenta bancaria",
+      "bankText": "{{account}} {{dot}} donde {{brand}} envía tu alquiler",
+      "addBankText": "Donde {{brand}} envía tu alquiler, menos su comisión",
+      "password": "Cambiar contraseña",
+      "passwordText": "Actualiza tu clave de acceso por seguridad",
+      "deleteChat": "Eliminar chat con {{advisor}}",
+      "deleteChatText": "Empieza el Asesor IA desde cero",
+      "signOut": "Cerrar sesión",
+      "signOutText": "Salir de {{brand}} en este dispositivo"
+    },
+    "saved": {
+      "title": "Espacios guardados",
+      "showLess": "Ver menos",
+      "viewAll": "Ver todos",
+      "loading": "Cargando tus espacios guardados…",
+      "empty": "Toca Guardar en un espacio del Marketplace para tenerlo aquí.",
+      "browse": "Explorar el Marketplace",
+      "removeName": "Quitar {{name}} de guardados"
+    },
+    "confirmChat": {
+      "title": "¿Eliminar tu chat con {{advisor}}?",
+      "description": "Se elimina toda la conversación. {{advisor}} sigue conociendo tus datos de {{brand}}.",
+      "confirm": "Eliminar chat"
+    },
+    "confirmLogout": {
+      "title": "¿Cerrar sesión?",
+      "description": "Necesitarás tu correo y contraseña para volver a entrar."
+    },
+    "editModal": {
+      "nameRequired": "Escribe tu nombre y apellido.",
+      "saveError": "No pudimos guardar tus cambios. Revisa tu conexión e inténtalo de nuevo.",
+      "subtitleOwner": "Los negocios ven tu nombre en tus publicaciones y contratos.",
+      "subtitleBusiness": "Los propietarios ven tu nombre cuando solicitas un espacio o firmas un contrato.",
+      "fixed": "El correo y el DUI no se pueden cambiar.",
+      "save": "Guardar cambios"
+    },
+    "passwordModal": {
+      "subtitle": "Elige una nueva contraseña para tu cuenta.",
+      "success": "Contraseña actualizada. Úsala la próxima vez que inicies sesión.",
+      "confirm": "Confirmar contraseña",
+      "submit": "Actualizar contraseña"
+    }
+  },
+  "listingForm": {
+    "steps": {
+      "basics": "Datos básicos",
+      "location": "Ubicación",
+      "price": "Precio",
+      "details": "Fotos y detalles"
+    },
+    "stepsLabel": "Pasos",
+    "tips": {
+      "traffic": "Tránsito de personas y negocios cercanos",
+      "condition": "Estado y acabados",
+      "access": "Acceso, estacionamiento y horarios"
+    },
+    "copyName": "{{name}} (copia)",
+    "errors": {
+      "name": "Ponle un nombre a tu espacio.",
+      "width": "Escribe el ancho en metros.",
+      "length": "Escribe el largo en metros.",
+      "rent": "El alquiler debe ser mayor a $0."
+    },
+    "yourSpace": "Tu espacio",
+    "photos": {
+      "badType": "Elige imágenes JPG, PNG, WEBP o GIF.",
+      "tooBig": "Cada imagen debe pesar 5MB o menos.",
+      "tooMany": "Un espacio puede tener hasta {{max}} fotos.",
+      "title": "Fotos",
+      "coverHint": "la primera es la portada",
+      "drop": "Arrastra fotos aquí o haz clic para subirlas",
+      "dropHint": "Hasta 6 {{dot}} JPG, PNG o WEBP {{dot}} 5MB cada una. Los espacios con 3 o más fotos reciben más solicitudes.",
+      "alt": "Foto {{n}}",
+      "cover": "Portada",
+      "makeCover": "Usar como portada",
+      "remove": "Quitar foto",
+      "add": "Agregar"
+    },
+    "saveFailed": "No pudimos guardar tus cambios. Inténtalo de nuevo.",
+    "publishFailed": "No pudimos publicar este espacio. Inténtalo de nuevo.",
+    "issues": {
+      "photos": "las fotos",
+      "amenities": "los servicios",
+      "and": " y "
+    },
+    "partialSave": "El espacio se guardó, pero no se pudieron actualizar {{items}}. Ábrelo de nuevo para reintentar.",
+    "titleEdit": "Editar espacio",
+    "titleSimilar": "Publicar un espacio similar",
+    "titleNew": "Publicar un nuevo espacio",
+    "subtitleEdit": "Ve a cualquier sección, cambia lo que necesites y guarda.",
+    "subtitleNew": "Cuatro pasos rápidos. Puedes cambiar todo después.",
+    "preview": "Vista previa",
+    "name": "Nombre del espacio",
+    "namePlaceholder": "Local Las Flores",
+    "kind": "¿Qué tipo de espacio es?",
+    "size": "Tamaño",
+    "widthLabel": "Ancho en metros",
+    "wide": "m de ancho",
+    "lengthLabel": "Largo en metros",
+    "long": "m de largo",
+    "locationIntro": "Los negocios filtran el Marketplace por departamento y municipio, así que los espacios con ubicación aparecen en más búsquedas.",
+    "department": "Departamento",
+    "selectDepartment": "Elige un departamento",
+    "selectMunicipality": "Elige un municipio",
+    "address": "Dirección",
+    "optional": "opcional",
+    "addressPlaceholder": "p. ej., Calle El Mirador 125, Escalón",
+    "rent": "Alquiler mensual",
+    "perMonth": "/ mes",
+    "noRentHelp": "Sin alquiler, el espacio muestra \"Precio a consultar\" y recibe menos solicitudes.",
+    "feeNote": "Publicar es gratis. {{brand}} solo conserva el {{rate}} de cada pago de alquiler, cuando se paga, y transfiere el resto a tu cuenta bancaria. Los depósitos no tienen comisión.",
+    "suggest": {
+      "scopeLocal": "Los espacios de tipo {{type}} en {{place}}",
+      "scopeAll": "Los espacios de tipo {{type}} en {{brand}}",
+      "title": "Sugerido: alrededor de {{rent}}/mes",
+      "text": "{{scope}} se alquilan por alrededor de {{ppm}}. Para tus {{area}} {{unit}} eso es cerca de {{rent}}.",
+      "use": "Usarlo",
+      "notEnough": "Todavía no hay suficientes espacios similares en {{brand}} para sugerir un precio.",
+      "needSize": "Agrega el tamaño en Datos básicos para obtener un alquiler sugerido según espacios similares."
+    },
+    "loadingAmenities": "Cargando servicios…",
+    "characters_one": "{{count}} carácter",
+    "characters_other": "{{count}} caracteres",
+    "recommended": "se recomiendan {{n}} o más",
+    "descriptionPlaceholder": "¿Qué hace que este espacio sea ideal para un negocio?",
+    "ideas": "Ideas:",
+    "onMarketplace": "En el Marketplace",
+    "leasedNote": "Alquilado: vuelve al Marketplace cuando termine el contrato.",
+    "publishNow": "Publicar ahora",
+    "publishNowHint": "Los negocios pueden encontrarlo y solicitarlo",
+    "keepPaused": "Mantener pausado",
+    "keepPausedHint": "Oculto hasta que lo publiques",
+    "feeAgree": "Acepto que {{brand}} conserve <strong>el {{rate}} de cada alquiler mensual</strong> que mis inquilinos paguen a través de la app y transfiera el resto a mi cuenta bancaria. Publicar es gratis.",
+    "feeRequired": "Acepta la comisión de {{brand}} para publicar tu primer espacio.",
+    "howSeen": "Cómo lo verán los negocios",
+    "completeHint": "Las publicaciones completas reciben más solicitudes.",
+    "stepOf": "Paso {{step}} de {{total}}",
+    "publishSpace": "Publicar espacio",
+    "savePaused": "Guardar pausado"
+  },
+  "propertyDetail": {
+    "listedToday": "Publicado hoy",
+    "listedDaysAgo_one": "Publicado hace {{count}} día",
+    "listedDaysAgo_other": "Publicado hace {{count}} días",
+    "listedMonthsAgo_one": "Publicado hace {{count}} mes",
+    "listedMonthsAgo_other": "Publicado hace {{count}} meses",
+    "about": "Sobre este espacio",
+    "noDescription": "El propietario aún no agregó una descripción. Pregúntale a {{advisor}} si se ajusta a tu negocio, o solicita el contrato para hablar de condiciones.",
+    "noAmenities": "Sin servicios indicados.",
+    "locationOnRequest": "Ubicación a consultar",
+    "loadError": "No pudimos cargar esta propiedad. Es posible que la hayan eliminado.",
+    "noDui": "No encontramos el registro de tu cuenta (DUI), así que todavía no puedes solicitar un contrato. Contacta a soporte.",
+    "requestFailed": "No se pudo enviar la solicitud.",
+    "updateFailed": "No se pudo actualizar la publicación.",
+    "deleteFailed": "No se pudo eliminar la propiedad.",
+    "loading": "Cargando propiedad…",
+    "notFound": "Propiedad no encontrada.",
+    "perMonth": "al mes",
+    "perYear": "al año",
+    "perM2": "por {{unit}}",
+    "dimensions": "{{width}} × {{length}} m",
+    "amenitiesCount_one": "servicio",
+    "amenitiesCount_other": "servicios",
+    "cta": {
+      "leased": "Alquilas este espacio",
+      "reviewOffer": "Revisar la oferta del propietario",
+      "waiting": "Solicitud enviada {{dot}} en espera",
+      "request": "Solicitar contrato"
+    },
+    "steps": {
+      "request": "Solicitas",
+      "offer": "El propietario envía una oferta",
+      "sign": "Firmas",
+      "pay": "Pagas el alquiler en {{brand}}"
+    },
+    "tabs": {
+      "overview": "Resumen",
+      "price": "Precio",
+      "performance": "Rendimiento",
+      "listing": "Publicación"
+    },
+    "requestSent": "Solicitud enviada. El propietario responde con una oferta en Contratos y recibirás una notificación.",
+    "noRent": "Este espacio aún no tiene alquiler definido, así que no se puede solicitar.",
+    "notTaking": "Este espacio no está recibiendo solicitudes en este momento.",
+    "glance": "De un vistazo",
+    "rent": "Alquiler",
+    "onBrand": "En {{brand}}",
+    "ownerAnswers": "Propietario {{dot}} responde solicitudes en Contratos",
+    "howLeasing": "Cómo funciona el alquiler",
+    "priceVsSimilar": "Precio vs. espacios similares",
+    "notEnoughSimilar": "Todavía no hay suficientes espacios similares en {{brand}} para comparar.",
+    "whatItCosts": "Lo que cuesta",
+    "offerHint": "La duración del contrato, la fecha de inicio y el depósito vienen en la oferta del propietario; los revisas antes de firmar.",
+    "ask": {
+      "fit": "¿\"{{name}}\" es adecuado para mi negocio?",
+      "goodPrice": "¿{{rent}}/mes es un buen precio para \"{{name}}\" ({{type}}, {{area}} {{unit}} en {{place}})?{{market}} ¿Qué debería negociar?",
+      "goodPriceMarket": " Está a {{ppm}}, mientras que los espacios similares rondan {{median}}.",
+      "whatRent": "¿Qué alquiler debería pedir por \"{{name}}\" ({{type}}, {{area}} {{unit}} en {{place}})? Está publicado a {{rent}}/mes{{market}}. Tuvo {{views}} visitas este mes y {{requests}} solicitudes en total.",
+      "whatRentMarket": " ({{ppm}}; los espacios similares rondan {{median}})"
+    },
+    "askGoodPrice": "Pregúntale a {{advisor}} si es un buen precio",
+    "askPrice": "Pídele a {{advisor}} un precio",
+    "similar": "Espacios similares",
+    "manage": "Gestionar este espacio",
+    "duplicate": "Duplicar",
+    "resume": "Reanudar",
+    "pause": "Pausar",
+    "deleteListing": "Eliminar publicación",
+    "now": {
+      "title": "En este momento",
+      "leasedTo": "Alquilado a {{name}}",
+      "until": "Hasta el {{date}}",
+      "contract": "Contrato",
+      "offerSent": "Oferta enviada a {{name}}",
+      "waitingSignature": "Esperando su firma",
+      "openOffer": "Abrir oferta",
+      "wanted_one": "{{count}} negocio quiere este espacio",
+      "wanted_other": "{{count}} negocios quieren este espacio",
+      "listedWaiting": "Publicado, esperando solicitudes",
+      "pausedHint": "Oculto del Marketplace. Reanúdalo para recibir solicitudes.",
+      "vacantToday": "Desocupado desde hoy",
+      "vacantFor_one": "Desocupado desde hace {{count}} día",
+      "vacantFor_other": "Desocupado desde hace {{count}} días",
+      "missed": "{{amount}} de alquiler perdido"
+    },
+    "interest": {
+      "title": "Interés",
+      "views30": "visitas, últimos 30 días",
+      "saved": "lo guardaron",
+      "requestsAll": "solicitudes en total",
+      "seePerformance": "Ver rendimiento"
+    },
+    "performance": {
+      "views": "Visitas",
+      "saved": "negocios lo guardaron",
+      "requests": "solicitudes de contrato",
+      "viewsAll": "visitas en total",
+      "lookNoRequest": "Los negocios lo ven pero no lo solicitan: revisa el precio y agrega fotos.",
+      "noViews": "Sin visitas este mes. Completa la publicación para que aparezca en más búsquedas.",
+      "privacy": "Cada negocio cuenta una vez por día; quién lo vio se mantiene privado.",
+      "yourPrice": "Tu precio",
+      "vacantMissed_one": "Desocupado {{count}} día: {{amount}} de alquiler perdido.",
+      "vacantMissed_other": "Desocupado {{count}} días: {{amount}} de alquiler perdido."
+    },
+    "previewNote": "Esto es lo que leen los negocios sobre tu espacio.",
+    "complete": "Completar la publicación",
+    "deleteConfirm": {
+      "title": "¿Eliminar esta propiedad?",
+      "description": "\"{{name}}\" se eliminará de forma permanente de tus publicaciones. Esto no se puede deshacer.",
+      "deleting": "Eliminando…"
+    }
+  },
+  "priceBar": {
+    "cheaper": "Más barato",
+    "median": "Mediana {{value}}",
+    "pricier": "Más caro",
+    "compared": "Comparado con {{scope}} en {{brand}}."
+  },
+  "gallery": {
+    "noPhotos": "Aún no hay fotos",
+    "open": "Abrir fotos",
+    "count_one": "{{count}} foto",
+    "count_other": "{{count}} fotos",
+    "previous": "Foto anterior",
+    "next": "Foto siguiente"
+  },
+  "viewsChart": {
+    "last30_one": "visita en los últimos 30 días",
+    "last30_other": "visitas en los últimos 30 días",
+    "vsPrevious": "{{pct}}% vs. los 30 anteriores",
+    "firstViews": "Primeras visitas este mes",
+    "before": "{{count}} en los 30 días anteriores",
+    "aria_one": "{{count}} visita en los últimos 30 días",
+    "aria_other": "{{count}} visitas en los últimos 30 días",
+    "views_one": "visita",
+    "views_other": "visitas"
+  },
+  "contractsBoard": {
+    "loading": "Cargando contratos",
+    "subtitleOwner": "Responde solicitudes con una oferta, sigue las firmas y gestiona tus contratos.",
+    "subtitleTenant": "Revisa y firma ofertas, sigue tus solicitudes y gestiona tus contratos.",
+    "allOccupied": "Todos tus espacios están ocupados",
+    "invite": "Invitar a un negocio",
+    "ronyTitle": "La opinión de {{advisor}} sobre tus contratos",
+    "invitationSent": "Invitación enviada. El negocio tiene 7 días para revisarla y firmarla.",
+    "empty": {
+      "title": "Aún no tienes contratos",
+      "owner": "Cuando un negocio solicite uno de tus espacios aparecerá aquí. También puedes invitar a un negocio directamente.",
+      "tenant": "Encuentra un espacio en el marketplace y solicita un contrato. El propietario responde aquí con una oferta para firmar."
+    },
+    "side": {
+      "owner": "propietario",
+      "tenant": "inquilino"
+    },
+    "sections": {
+      "owner": {
+        "requests": "Solicitudes por responder",
+        "requestsEmpty": "No hay solicitudes nuevas.",
+        "offers": "Esperando la firma del inquilino",
+        "offersEmpty": "No hay ofertas en espera."
+      },
+      "tenant": {
+        "offers": "Ofertas por firmar",
+        "offersEmpty": "No tienes ofertas en espera.",
+        "requests": "Mis solicitudes",
+        "requestsEmpty": "No hay solicitudes abiertas."
+      },
+      "ending": "Por terminar · renovaciones",
+      "active": "Contratos activos",
+      "activeEmpty": "Aún no hay contratos activos."
+    },
+    "flow": {
+      "label": "Etapas del contrato",
+      "active": "Activos",
+      "ending": "Por terminar",
+      "closed": "Cerrados",
+      "closedHint": "Historial",
+      "owner": {
+        "requests": "Solicitudes",
+        "requestsHint": "Responde con una oferta",
+        "offers": "Esperando firma",
+        "offersHint": "El negocio firma",
+        "activeHint": "Alquiler en Pagos",
+        "endingHint": "Renueva o deja que termine"
+      },
+      "tenant": {
+        "requests": "Mis solicitudes",
+        "requestsHint": "El propietario responde",
+        "offers": "Ofertas por firmar",
+        "offersHint": "Revisa y firma",
+        "activeHint": "Paga en Pagos",
+        "endingHint": "Pide renovar"
+      }
+    },
+    "card": {
+      "requested": "Solicitado el {{date}}",
+      "earlyEnd": "Terminación anticipada solicitada para el {{date}}",
+      "endsIn_one": "Termina en {{count}} día",
+      "endsIn_other": "Termina en {{count}} días",
+      "closed": "Cerrado el {{date}}",
+      "yourTurn": "Tu turno"
+    },
+    "insights": {
+      "waitingOne": "{{person}} espera tu respuesta sobre {{name}} ({{record}}).",
+      "manyNew": "{{count}} negocios quieren {{name}}. Ninguno tiene historial de pagos en {{brand}} todavía, así que compara sus solicitudes y pregúntale a {{advisor}}.",
+      "manyBest": "{{count}} negocios quieren {{name}}. Yo elegiría a {{person}}: {{reason}}.",
+      "reviewRequest": "Revisar solicitud",
+      "reviewPersonRequest": "Revisar la solicitud de {{person}}",
+      "offerReceived": "El propietario de {{name}} te envió una oferta de contrato. {{expiry}}.",
+      "reviewAndSign": "Revisar y firmar",
+      "offerExpiring": "Tu oferta a {{person}} por {{name}}: {{expiry}}.",
+      "open": "Abrir",
+      "endRequested": "El {{side}} de {{name}} pidió terminar el contrato el {{date}}.",
+      "wantsRenew_one": "{{person}} quiere renovar {{name}} por {{count}} mes más.",
+      "wantsRenew_other": "{{person}} quiere renovar {{name}} por {{count}} meses más.",
+      "renewalOffer": "Oferta de renovación de {{name}}: {{rent}}/mes. {{expiry}}.",
+      "endsOwner_one": "{{name}} termina en {{count}} día.",
+      "endsOwner_other": "{{name}} termina en {{count}} días.",
+      "goodCandidate": " {{person}} tiene {{record}}, un buen candidato para renovar.",
+      "endsTenant_one": "Tu contrato de {{name}} termina en {{count}} día.",
+      "endsTenant_other": "Tu contrato de {{name}} termina en {{count}} días.",
+      "nothing": "Nada requiere tu atención en Contratos por ahora."
+    },
+    "ask": {
+      "noRequests": "Revisa mis contratos: ¿qué contratos debería renovar y qué debería hacer ahora?",
+      "line": "{{person}} para \"{{name}}\": {{record}}",
+      "record": "{{onTime}}/{{due}} meses pagados a tiempo, {{late}} atrasados ahora, {{leases}} contratos firmados",
+      "noHistory": "sin historial de pagos en {{brand}}",
+      "whoToAccept": "Estos negocios solicitaron mis espacios. ¿A quién debería aceptar en cada espacio y por qué?",
+      "tenant": "Revisa mis contratos y ofertas: ¿qué debería hacer ahora?"
+    }
+  },
+  "contractDetail": {
+    "steps": {
+      "invited": "Invitado",
+      "requested": "Solicitado",
+      "offer": "Oferta firmada por el propietario",
+      "signed": "Firmado por el negocio",
+      "starts": "Inicia",
+      "active": "Activo",
+      "endedEarly": "Terminado anticipadamente",
+      "ended": "Finalizado",
+      "renewedEnds": "Renovado · termina",
+      "ends": "Termina",
+      "declined": "Rechazado",
+      "withdrawn": "Retirado"
+    },
+    "actions": {
+      "makeOffer": "Hacer una oferta",
+      "decline": "Rechazar",
+      "updateOffer": "Actualizar oferta",
+      "cancelOffer": "Cancelar oferta",
+      "withdrawRequest": "Retirar solicitud",
+      "reviewSign": "Revisar y firmar",
+      "turnDown": "Rechazar",
+      "updateRenewal": "Actualizar oferta de renovación",
+      "withdrawRenewal": "Retirar renovación",
+      "answerRenewal": "Responder con una oferta de renovación",
+      "offerRenewal": "Ofrecer renovación",
+      "declineRenewal": "Rechazar renovación",
+      "reviewSignRenewal": "Revisar y firmar la renovación",
+      "turnDownRenewal": "Rechazar la renovación",
+      "cancelRenewalRequest": "Cancelar solicitud de renovación",
+      "askRenew": "Pedir renovación",
+      "askEndEarly": "Pedir terminación anticipada",
+      "acceptEnd": "Aceptar terminación anticipada",
+      "declineEnd": "Rechazar terminación anticipada"
+    },
+    "done": {
+      "endAccepted": "Terminación anticipada aceptada. Se actualizó el calendario de alquileres.",
+      "endDeclined": "Terminación anticipada rechazada. El contrato continúa.",
+      "offerSent": "Oferta enviada a {{person}}. Tiene 7 días para firmarla.",
+      "leaseSigned": "Contrato firmado. Código de verificación {{code}}. Tu calendario de alquileres ya está en Pagos.",
+      "renewalOfferSent": "Oferta de renovación enviada a {{person}}. Tiene 7 días para firmarla.",
+      "renewalRequestSent": "Solicitud de renovación enviada. El propietario responderá con una oferta para firmar.",
+      "renewalSigned": "Renovación firmada. Nuevo código de verificación {{code}}. Los nuevos meses ya están en Pagos.",
+      "otherNotified": "Listo. Se notificó a la otra parte.",
+      "businessNotified": "Listo. Se notificó al negocio.",
+      "ownerNotified": "Listo. Se notificó al propietario.",
+      "endRequestSent": "Solicitud enviada. Te avisaremos de la respuesta."
+    },
+    "banner": {
+      "pendingOwner": "{{person}} quiere alquilar este espacio. Responde con una oferta (la firmas al enviarla) o recházala.",
+      "pendingTenant": "Tu solicitud fue enviada. El propietario responderá con una oferta para firmar o la rechazará.",
+      "offeredOwner": "Esperando que {{person}} firme. {{expiry}}.",
+      "offerExpired": "Esta oferta venció. Pídele al propietario que la envíe de nuevo.",
+      "offeredTenant": "El propietario te envió una oferta y la firmó. Revísala abajo y fírmala. {{expiry}}.",
+      "youAskedEnd": "Pediste terminar el contrato el {{date}}. Esperando la respuesta de la otra parte.",
+      "otherAskedEnd": "El {{side}} pidió terminar el contrato el {{date}}: {{reason}}",
+      "renewalOfferedOwner_one": "Oferta de renovación enviada: {{count}} mes más a {{rent}}/mes. Esperando que {{person}} firme. {{expiry}}.",
+      "renewalOfferedOwner_other": "Oferta de renovación enviada: {{count}} meses más a {{rent}}/mes. Esperando que {{person}} firme. {{expiry}}.",
+      "renewalOfferedTenant_one": "El propietario ofrece renovar por {{count}} mes más a {{rent}}/mes. {{expiry}}.",
+      "renewalOfferedTenant_other": "El propietario ofrece renovar por {{count}} meses más a {{rent}}/mes. {{expiry}}.",
+      "renewalRequestedOwner_one": "{{person}} pidió renovar por {{count}} mes más{{note}} Responde con una oferta de renovación.",
+      "renewalRequestedOwner_other": "{{person}} pidió renovar por {{count}} meses más{{note}} Responde con una oferta de renovación.",
+      "renewalRequestedTenant_one": "Pediste renovar por {{count}} mes más. El propietario responderá con una oferta para firmar.",
+      "renewalRequestedTenant_other": "Pediste renovar por {{count}} meses más. El propietario responderá con una oferta para firmar.",
+      "canRenewOwner_one": "Este contrato termina en {{count}} día. {{record}}Ofrece una renovación o planea volver a publicar el espacio.",
+      "canRenewOwner_other": "Este contrato termina en {{count}} días. {{record}}Ofrece una renovación o planea volver a publicar el espacio.",
+      "canRenewRecord": "{{person}} tiene {{record}} en {{brand}}. ",
+      "canRenewTenant_one": "Tu contrato termina en {{count}} día. Si quieres quedarte, pídele al propietario que lo renueve.",
+      "canRenewTenant_other": "Tu contrato termina en {{count}} días. Si quieres quedarte, pídele al propietario que lo renueve."
+    },
+    "quiet": {
+      "payments": "Alquiler en Pagos",
+      "preparing": "Preparando…",
+      "pdf": "Descargar PDF"
+    },
+    "breadcrumb": "Ruta de navegación",
+    "contractNumber": "Contrato #{{id}}",
+    "daysLeft_one": "Queda {{count}} día",
+    "daysLeft_other": "Quedan {{count}} días",
+    "ending": "Por terminar",
+    "progress": "Avance del contrato",
+    "nextStep": "Siguiente paso",
+    "doc": {
+      "title": "Contrato de arrendamiento comercial",
+      "verification": "Código de verificación {{code}}"
+    },
+    "terms": {
+      "rentChange": "desde el {{date}} (antes {{previous}})",
+      "requestedAt": "Solicitado a {{rent}}/mes (el precio publicado). Los términos aparecen aquí cuando el propietario envía una oferta."
+    },
+    "collapseAll": "Contraer todo",
+    "expandAll": "Expandir todo",
+    "waitingSignature": "Esperando firma",
+    "signedAt": "firmado el {{date}}",
+    "renewals": "Renovaciones",
+    "renewedLine_one": "Renovado {{count}} vez. La última renovación fue firmada el {{date}} por {{owner}} (propietario) y {{tenant}} (inquilino). El contrato ahora termina el {{end}}.",
+    "renewedLine_other": "Renovado {{count}} veces. La última renovación fue firmada el {{date}} por {{owner}} (propietario) y {{tenant}} (inquilino). El contrato ahora termina el {{end}}.",
+    "ask": {
+      "fairRent": "¿{{rent}}/mes es un alquiler justo para \"{{name}}\" comparado con publicaciones similares en {{brand}}?",
+      "clauses": "Sugiere cláusulas especiales para este contrato de \"{{name}}\".",
+      "accept": "{{person}} quiere alquilar \"{{name}}\". Su historial en {{brand}}: {{record}}{{detail}}. ¿Debería aceptar, y con qué condiciones?",
+      "acceptDetail": " ({{onTime}}/{{due}} meses a tiempo, {{leases}} contratos)",
+      "renew": "¿Cómo va {{person}} con el alquiler y debería renovar este contrato? Su historial: {{record}}.",
+      "explain": "Explícame mi contrato de \"{{name}}\" en palabras sencillas: alquiler de {{rent}}/mes, {{months}} meses, depósito de {{deposit}}.",
+      "check": "¿Qué debo revisar antes de firmar un contrato de alquiler comercial para \"{{name}}\"?",
+      "goodPrice": "¿{{rent}}/mes es un buen precio para \"{{name}}\" comparado con espacios similares en {{brand}}?"
+    },
+    "history": "Historial",
+    "requestedOn": "Solicitado el {{date}}.",
+    "noHistory": "Aún no hay historial.",
+    "reason": {
+      "withdrawRenewal": "Retirar la oferta de renovación",
+      "turnDownRenewal": "Rechazar la renovación",
+      "declineRenewal": "Rechazar la solicitud de renovación",
+      "cancelRenewal": "Cancelar tu solicitud de renovación",
+      "renewalSubtitle": "El contrato sigue terminando el {{date}}. Se notificará a la otra parte.",
+      "renewalPlaceholder": "P. ej. pienso usar el espacio para otra cosa",
+      "cancelOffer": "Cancelar tu oferta",
+      "declineRequest": "Rechazar esta solicitud",
+      "declineSubtitle": "Se notificará a {{person}} con tu motivo.",
+      "declinePlaceholder": "P. ej. el espacio ya no está disponible para este tipo de negocio",
+      "declineRequestButton": "Rechazar solicitud",
+      "turnDownOffer": "Rechazar esta oferta",
+      "withdrawRequest": "Retirar tu solicitud",
+      "ownerNotified": "Se notificará al propietario.",
+      "withdrawPlaceholder": "P. ej. encontré otro espacio",
+      "turnDownOfferButton": "Rechazar oferta",
+      "endTitle": "Pedir la terminación anticipada del contrato",
+      "endSubtitle": "La otra parte tiene que aceptarla. Luego se eliminan los alquileres posteriores a la nueva fecha de fin; lo que ya esté atrasado se sigue debiendo.",
+      "endPlaceholder": "Explica el motivo",
+      "sendRequest": "Enviar solicitud"
+    }
+  },
+  "applicant": {
+    "title": "Historial de {{name}} en {{brand}}",
+    "none": "Aún no tiene contratos firmados en {{brand}}, así que no hay historial de pagos para mostrar.",
+    "firstRequest": "Primera solicitud el {{date}}.",
+    "onTime": "a tiempo",
+    "monthsOnTime_one": "de {{count}} mes pagado a tiempo",
+    "monthsOnTime_other": "de {{count}} meses pagados a tiempo",
+    "leasesSigned_one": "contrato firmado",
+    "leasesSigned_other": "contratos firmados",
+    "activeCompleted": "{{active}} activos {{dot}} {{completed}} completados",
+    "lateNow_one": "mes atrasado en este momento",
+    "lateNow_other": "meses atrasados en este momento",
+    "foot": "Totales de todos sus contratos. No se muestran montos ni otros propietarios.",
+    "footSince": "Totales de todos sus contratos desde el {{date}}. No se muestran montos ni otros propietarios."
+  },
+  "reasonModal": {
+    "newEndDate": "Nueva fecha de fin",
+    "reason": "Motivo"
+  },
+  "signModal": {
+    "title": "Firmar el contrato",
+    "confirmError": "Confirma que leíste el contrato y que estás de acuerdo.",
+    "offeredBy": "ofrecido y firmado por {{name}}",
+    "dueDay": "el día {{day}}",
+    "signWithName": "Firma con tu nombre completo",
+    "agree": "Leí el contrato, incluidas las cláusulas estándar y especiales, y estoy de acuerdo. Entiendo que el primer alquiler vence el {{date}} y se paga en {{brand}}.",
+    "signing": "Firmando…",
+    "sign": "Firmar contrato"
+  },
+  "offerModal": {
+    "identifierRequired": "Escribe el correo o el DUI del negocio.",
+    "agreeRequired": "Confirma que aceptas los términos para firmar la oferta.",
+    "titleInvite": "Invitar a un negocio a alquilar",
+    "titleUpdate": "Actualizar tu oferta",
+    "subtitleInvite": "Recibirá una oferta de contrato para revisarla y firmarla. Nada empieza hasta que firme.",
+    "subtitleOffer": "{{person}} solicitó {{name}}. Define los términos; el contrato empieza cuando firme.",
+    "yourSpace": "tu espacio",
+    "identifier": "Correo o DUI del negocio",
+    "identifierPlaceholder": "nombre@negocio.com o 01234567-8",
+    "startDate": "Fecha de inicio",
+    "depositUsd": "Depósito (USD)",
+    "clausesPlaceholder": "P. ej. horario de apertura, rótulos, estacionamiento…",
+    "commercialSpace": "local comercial",
+    "askRonyText": "Sugiere cláusulas especiales para alquilar mi espacio de tipo {{type}} \"{{name}}\" y dime si {{rent}}/mes es razonable comparado con publicaciones similares en {{brand}}.",
+    "askRony": "Pregúntale a {{advisor}} sobre cláusulas y alquiler",
+    "total": "Total durante el contrato",
+    "youReceiveTotal": "Recibes durante el contrato",
+    "tenantPays": "El inquilino paga cada mes",
+    "youReceive": "Recibes cada mes",
+    "depositNoFee": "El depósito{{amount}} no tiene comisión.",
+    "agree": "Acepto alquilar este espacio con estos términos y las cláusulas estándar de {{brand}}, incluida la comisión de {{brand}} del {{rate}} sobre cada pago de alquiler. La oferta es válida por 7 días.",
+    "sendInvite": "Firmar y enviar invitación",
+    "sendOffer": "Firmar y enviar oferta"
+  },
+  "renewal": {
+    "moreMonths_one": "{{count}} mes más",
+    "moreMonths_other": "{{count}} meses más",
+    "theSpace": "el espacio",
+    "sameRent": "Mismo alquiler",
+    "request": {
+      "notePaid_one": "He pagado a tiempo mi {{count}} mes y me gustaría seguir alquilando {{name}}.",
+      "notePaid_other": "He pagado a tiempo los {{count}} meses y me gustaría seguir alquilando {{name}}.",
+      "note": "Me gustaría seguir alquilando {{name}}.",
+      "title": "Pedir la renovación de tu contrato",
+      "subtitle": "{{name}} termina el {{date}}. El propietario responde con una oferta de renovación para que la firmes.",
+      "stayFor": "Quedarme por",
+      "noteLabel": "Nota para el propietario",
+      "askText": "Mi contrato de \"{{name}}\" termina el {{date}} a {{rent}}/mes. ¿Debería renovar, por cuánto tiempo y qué debería pedirle al propietario?",
+      "askRony": "Pídele consejo a {{advisor}} primero",
+      "send": "Enviar solicitud de renovación"
+    },
+    "offer": {
+      "agreeRequired": "Confirma que aceptas los términos de la renovación para firmar la oferta.",
+      "title": "Ofrecer una renovación",
+      "ends": "termina el {{date}}",
+      "askedFor_one": "pidió {{count}} mes más",
+      "askedFor_other": "pidió {{count}} meses más",
+      "extendBy": "Extender por",
+      "rentLabel": "Alquiler mensual del nuevo período (USD)",
+      "note": "Nota",
+      "askText": "¿Debería renovar el contrato de {{person}} en \"{{name}}\" (ahora {{rent}}/mes, termina el {{date}})? Su historial en {{brand}}: {{record}}{{detail}}. ¿Qué alquiler y duración me sugieres?",
+      "askDetail": ", {{onTime}}/{{due}} meses a tiempo, {{late}} atrasados ahora",
+      "askRony": "Pregúntale a {{advisor}}: ¿renovar y a qué precio?",
+      "rentChange": "Cambio de alquiler",
+      "added": "Se suma al contrato",
+      "agree": "Acepto extender este contrato con estos términos; todas las demás cláusulas se mantienen. La oferta es válida por 7 días.",
+      "send": "Firmar y enviar renovación"
+    },
+    "sign": {
+      "agreeRequired": "Confirma que aceptas la renovación.",
+      "title": "Firmar la renovación",
+      "extendedBy": "Extendido por",
+      "rentFrom": "Alquiler desde el {{date}}",
+      "change": "Cambio",
+      "ownerNote": "Nota del propietario:",
+      "agree": "Acepto extender el contrato hasta el {{date}} a {{rent}}/mes. Todas las demás cláusulas se mantienen.",
+      "sign": "Firmar renovación"
+    }
+  },
+  "payments": {
+    "receiptError": "No se pudo crear el comprobante. Inténtalo de nuevo.",
+    "sessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
+    "startFailed": "No se pudo iniciar el pago con {{provider}}.",
+    "startFailedRetry": "No se pudo iniciar el pago con {{provider}}. Inténtalo de nuevo.",
+    "loading": "Cargando pagos…",
+    "sectionsLabel": "Secciones de pagos",
+    "next6": "Próximos 6 meses",
+    "dueDesc": "Alquiler de {{month}} {{dot}} vence el {{date}}",
+    "opening": "Abriendo {{provider}}…",
+    "payWith": "Pagar {{amount}} con {{provider}}",
+    "secure": "Pago seguro con {{provider}}.",
+    "caughtUp": "Estás al día",
+    "fullyPaid": "Contrato pagado por completo",
+    "fullyPaidText": "Todos los meses de este contrato están pagados. No hay nada más pendiente.",
+    "noSchedule": "Aún sin calendario",
+    "perMo": "/mes",
+    "monthsPaidOf_one": "de {{count}} mes pagado",
+    "monthsPaidOf_other": "de {{count}} meses pagados",
+    "daysLeftLease_one": "Queda {{count}} día de contrato",
+    "daysLeftLease_other": "Quedan {{count}} días de contrato",
+    "viewContract": "Ver contrato",
+    "notConfigured": "Los pagos en línea aún no están configurados en este sitio, así que el pago no se inició y no se cobró nada. Inténtalo más tarde.",
+    "rentByMonth": "Alquiler por mes",
+    "historyTitle": "Historial de pagos",
+    "tabs": {
+      "label": "Tus contratos",
+      "monthsLate_one": "{{count}} mes atrasado",
+      "monthsLate_other": "{{count}} meses atrasados",
+      "due": "{{amount}} por pagar",
+      "fullyPaid": "Pagado por completo",
+      "upToDate": "Al día"
+    },
+    "ring": {
+      "daysLate_one": "día de atraso",
+      "daysLate_other": "días de atraso",
+      "daysLeft_one": "día restante",
+      "daysLeft_other": "días restantes"
+    },
+    "export": {
+      "statement": "Estado de cuenta (PDF)",
+      "statementDesc": "Cada mes de {{name}}, totales y comprobantes",
+      "thisLease": "este contrato",
+      "statementYear": "Estado de cuenta {{year}} (PDF)",
+      "statementYearDesc": "Solo este año calendario, p. ej. para contabilidad",
+      "excel": "Excel (.xlsx)",
+      "excelDesc": "Resumen del contrato y cada pago"
+    },
+    "return": {
+      "checking": "Confirmando tu pago con {{provider}}…",
+      "paid": "Pago recibido. ¡Gracias! Tu comprobante está en el historial de abajo.",
+      "pending": "Todavía no hemos confirmado este pago. {{provider}} puede tardar un minuto en avisarnos; vuelve a revisar en un momento.",
+      "checkAgain": "Revisar de nuevo"
+    },
+    "kpi": {
+      "onTimeLabel_one": "{{paid}} de {{count}} mes a tiempo",
+      "onTimeLabel_other": "{{paid}} de {{count}} meses a tiempo",
+      "onTimeRecord": "Historial de puntualidad",
+      "nothingDue": "Aún no vence nada",
+      "everyMonth": "Todos los meses a tiempo",
+      "pctOnTime": "{{pct}}% de los meses a tiempo",
+      "ofLease": "de {{total}} en este contrato",
+      "leftThisYear": "Pendiente este año",
+      "throughDec31": "hasta el 31 de diciembre, este contrato"
+    },
+    "timeline": {
+      "title": "Línea de tiempo del alquiler",
+      "hint": "Toca un mes para ver detalles y comprobantes"
+    },
+    "tenant": {
+      "empty": {
+        "waitingTitle": "Esperando al propietario",
+        "noLeaseTitle": "Sin contrato activo",
+        "waitingText": "Tienes una solicitud u oferta de contrato en curso. Cuando se firme el contrato, tu calendario de alquileres aparecerá aquí.",
+        "noLeaseText": "Encuentra un espacio y solicita un contrato. Cuando firmes la oferta del propietario, tu calendario de alquileres aparecerá aquí.",
+        "viewContracts": "Ver mis contratos",
+        "browse": "Explorar espacios"
+      },
+      "subtitleMany_one": "Tienes {{count}} contrato activo. El alquiler se paga en línea con {{provider}}, empezando por el mes más antiguo.",
+      "subtitleMany_other": "Tienes {{count}} contratos activos. El alquiler se paga en línea con {{provider}}, empezando por el mes más antiguo.",
+      "subtitleOne": "Tu alquiler de {{name}}, pagado en línea con {{provider}}.",
+      "askSituation": "Explícame mi situación de pagos de \"{{name}}\": ¿estoy al día y qué viene?",
+      "myLease": "mi contrato",
+      "thisLease": "Este contrato",
+      "yourLease": "Tu contrato",
+      "leaseHint": "{{name}} {{dot}} qué pagar y cómo vas",
+      "outstanding_one": "{{count}} mes pendiente {{dot}} {{total}} en total. Se pagan del más antiguo al más reciente.",
+      "outstanding_other": "{{count}} meses pendientes {{dot}} {{total}} en total. Se pagan del más antiguo al más reciente.",
+      "nextPayment": "Próximo pago el {{date}} {{dot}} {{when}}. Se puede pagar una semana antes.",
+      "noScheduleText": "Este contrato aún no tiene fechas de inicio y fin, así que no hay calendario de alquileres. Pídele al propietario que defina las fechas del contrato.",
+      "reviewRenewalOffer": "Revisar oferta de renovación",
+      "askOwe": "¿Cuánto debo todavía este año y cuándo vence mi próximo pago?",
+      "allLeasesTogether": "Todos tus contratos juntos",
+      "fromSchedule": "Según tu calendario de alquileres",
+      "chartLabel": "Alquiler que pagarás en los próximos seis meses",
+      "endingNote": "dejas de pagar {{rent}}/mes después de eso, a menos que renueves.",
+      "allLeases": "Todos tus contratos",
+      "everyDueMonth": "Cada mes que ya venció",
+      "renewalSent": "Solicitud de renovación enviada a {{name}}. Responderá con una oferta que firmas en Contratos.",
+      "yourOwner": "tu propietario"
+    }
+  },
+  "ownerPayments": {
+    "trend": {
+      "noData": "sin datos del mes pasado",
+      "same": "Igual que el mes pasado",
+      "pts": "pts",
+      "vsLastMonth": "vs. el mes pasado"
+    },
+    "transfersError": "No se pudieron cargar las transferencias: {{message}}",
+    "subtitle": "El alquiler de todas tus propiedades. Los inquilinos pagan en línea con {{provider}}; {{brand}} conserva su comisión del {{rate}} y te transfiere el resto.",
+    "export": {
+      "report": "Reporte mensual (PDF)",
+      "reportDesc": "Totales, gráfico, cada propiedad y alquileres atrasados, con el análisis de {{advisor}}",
+      "excel": "Libro de Excel (.xlsx)",
+      "excelDesc": "Resumen por propiedad, cada pago y proyección a 6 meses"
+    },
+    "yourProperties": "Tus propiedades",
+    "transfers": "Transferencias",
+    "analysis": "Análisis",
+    "todayHint": "Lo que necesita tu atención y cómo va este mes",
+    "askSummary": "Resume mis cobros de alquiler de este mes y dime qué debo hacer primero.",
+    "kpi": {
+      "collectedIn": "Cobrado en {{month}}",
+      "toYouAfterFee": "{{amount}} para ti después de la comisión de {{brand}}",
+      "expected": "Esperado este mes",
+      "ofRentDue": "del alquiler que vence este mes",
+      "overdue": "Vencido",
+      "nobodyLate": "Nadie está atrasado",
+      "tenantsLate_one": "{{count}} inquilino atrasado",
+      "tenantsLate_other": "{{count}} inquilinos atrasados"
+    },
+    "next30": {
+      "title": "Próximos 30 días",
+      "coming": "{{amount}} por recibir",
+      "toYou": "{{amount}} para ti",
+      "none": "No vence ningún alquiler en los próximos 30 días."
+    },
+    "more": "+{{count}} más",
+    "propertiesHint_one": "{{count}} contrato activo {{dot}} toca uno para ver sus detalles",
+    "propertiesHint_other": "{{count}} contratos activos {{dot}} toca uno para ver sus detalles",
+    "noLeases": "Aún no tienes contratos activos. Acepta una solicitud de contrato desde la sección Contratos.",
+    "card": {
+      "dueNow": "Por pagar",
+      "monthsPaid_one": "{{paid}} de {{count}} mes pagado",
+      "monthsPaid_other": "{{paid}} de {{count}} meses pagados",
+      "lateSince": "Atrasado desde",
+      "nextDue": "Próximo vencimiento",
+      "details": "Detalles"
+    },
+    "askTenant": "¿Cómo va {{tenant}} con el alquiler de {{name}}? ¿Qué debería hacer ahora?",
+    "transfersHint": "Tu alquiler menos la comisión de {{brand}} del {{rate}}, enviado a tu cuenta bancaria",
+    "analysisHint": "Cómo ha llegado el alquiler y qué esperar",
+    "chart": {
+      "title": "Alquiler esperado vs. cobrado",
+      "range": "Rango",
+      "empty": "Todavía no ha vencido ningún alquiler en este período."
+    },
+    "projection": {
+      "title": "Ingresos esperados, próximos 6 meses",
+      "hint": "Según tus contratos activos",
+      "note": "Alquiler que pagarán tus inquilinos. Lo recibes menos la comisión de {{brand}} del {{rate}} (unos {{amount}} en estos seis meses)."
+    },
+    "historyHint": "Cada mes que ya venció, del más reciente al más antiguo"
+  },
+  "paymentDetail": {
+    "title": "Detalles del pago",
+    "transferToYou": "Transferencia a ti",
+    "sent": "Enviada el {{date}} {{dot}} Ref. {{reference}}",
+    "nextTransfer": "Sale en tu próxima transferencia",
+    "paidTo": "Pagado a",
+    "ownerThrough": "El propietario, a través de {{brand}}",
+    "rentFor": "Alquiler de {{month}}",
+    "tenantPaid": "El inquilino pagó",
+    "tenantPays": "El inquilino paga",
+    "willReceive": "Recibirás",
+    "creatingPdf": "Creando PDF…",
+    "downloadReceipt": "Descargar comprobante (PDF)",
+    "waitingTenant": "Esperando que {{name}} lo pague con {{provider}} en la app.",
+    "theTenant": "el inquilino",
+    "pay": "Pagar {{amount}}",
+    "olderFirst": "Los meses más antiguos se pagan primero. Paga el mes pendiente más antiguo para continuar.",
+    "notDueOwner": "Aún no vence. El inquilino puede pagarlo a partir de una semana antes de su vencimiento.",
+    "notDueTenant": "Puedes pagar este mes a partir de una semana antes de su vencimiento.",
+    "cancelled": "Este mes se canceló cuando terminó el contrato.",
+    "askText": "Háblame de mi alquiler de {{month}} de {{name}} ({{amount}}, vence el {{date}}, estado: {{status}}). ¿Qué debería hacer?",
+    "askRony": "Pregúntale a {{advisor}} sobre este mes"
+  },
+  "collectionsChart": {
+    "aria": "Alquiler esperado frente a cobrado en los últimos seis meses",
+    "barAria": "{{month}}: esperado {{expected}}, cobrado {{collected}}",
+    "pctCollected": "{{pct}}% cobrado",
+    "caption": "Alquiler esperado frente a cobrado, últimos seis meses"
+  },
+  "exportMenu": {
+    "error": "No se pudo crear el archivo. Inténtalo de nuevo.",
+    "label": "Exportar"
+  },
+  "feeBreakdown": {
+    "gross": "Alquiler que paga el inquilino"
+  },
+  "timeline": {
+    "empty": "Este contrato aún no tiene calendario de alquileres."
+  },
+  "riskBadge": {
+    "why": "¿Por qué esta calificación?",
+    "title": "Riesgo de pago: {{label}}",
+    "ask": "Pregúntale a {{advisor}} qué hacer"
+  },
+  "ronyCard": {
+    "title": "Resumen de {{advisor}}",
+    "updated": "Actualizado hace un momento según tu calendario de alquileres"
+  },
+  "projectionChart": {
+    "label": "Alquiler esperado para los próximos seis meses",
+    "endingNote": "{{rent}}/mes menos después de eso.",
+    "leaseEnds": "termina contrato",
+    "barAria": "{{month}}: {{amount}} esperado",
+    "noRent": "Sin alquiler programado",
+    "ending": "El contrato de {{name}} termina el {{date}}{{days}}: {{note}}",
+    "inDays_one": " (en {{count}} día)",
+    "inDays_other": " (en {{count}} días)"
+  },
+  "reportModal": {
+    "writing": "{{advisor}} está escribiendo el análisis…",
+    "building": "Generando el PDF…",
+    "noRony": "{{advisor}} no estaba disponible, así que el reporte se creó sin el párrafo de análisis.",
+    "error": "No se pudo crear el reporte. Inténtalo de nuevo.",
+    "title": "Reporte mensual de alquileres",
+    "subtitle": "Un PDF con los totales del mes, un gráfico de 6 meses, cada propiedad, los alquileres atrasados, lo que viene y los contratos por terminar.",
+    "thisMonth": "este mes",
+    "include": "Incluir el análisis de {{advisor}}",
+    "includeHint": "Un párrafo breve que compara el mes, indica quién está atrasado y qué hacer a continuación.",
+    "download": "Descargar reporte"
+  },
+  "notice": {
+    "template": {
+      "there": "inquilino",
+      "yourSpace": "tu espacio",
+      "thanksOnTime": "Gracias por pagar todos los meses a tiempo. ",
+      "thanksRenting": "Gracias por alquilar conmigo. ",
+      "renewal": "Hola, {{first}}: tu contrato de {{name}} termina el {{date}}. {{thanks}}Me encantaría renovarlo contigo; avísame si te interesa.",
+      "firm_one": "Hola, {{first}}: tu alquiler de {{amount}} de {{name}} ya tiene {{count}} día de atraso (venció el {{due}}). Págalo lo antes posible desde la sección Pagos de {{brand}} y avísame si hay algún problema.",
+      "firm_other": "Hola, {{first}}: tu alquiler de {{amount}} de {{name}} ya tiene {{count}} días de atraso (venció el {{due}}). Págalo lo antes posible desde la sección Pagos de {{brand}} y avísame si hay algún problema.",
+      "friendly_one": "Hola, {{first}}: solo un recordatorio amistoso de que tu alquiler de {{amount}} de {{name}} tiene {{count}} día de atraso (venció el {{due}}). Puedes pagarlo cuando quieras desde la sección Pagos de {{brand}}. ¡Gracias!",
+      "friendly_other": "Hola, {{first}}: solo un recordatorio amistoso de que tu alquiler de {{amount}} de {{name}} tiene {{count}} días de atraso (venció el {{due}}). Puedes pagarlo cuando quieras desde la sección Pagos de {{brand}}. ¡Gracias!"
+    },
+    "ronyUnavailableShort": "{{advisor}} no está disponible",
+    "writtenByRony": "Escrito por {{advisor}} con los números reales de este contrato. Revísalo antes de enviarlo.",
+    "ronyUnavailable": "{{advisor}} no está disponible en este momento. Puedes editar el mensaje de arriba y enviarlo tú mismo.",
+    "sendError": "No se pudo enviar el mensaje.",
+    "reminderTitle": "Enviar un recordatorio de alquiler",
+    "renewalTitle": "Ofrecer una renovación del contrato",
+    "subtitleReminder": "{{name}} lo recibe en sus Notificaciones y puede pagar desde su pantalla de Pagos.",
+    "subtitleRenewal": "{{name}} lo recibe en sus Notificaciones.",
+    "tone": "Tono",
+    "tones": {
+      "friendly": "Amistoso",
+      "firm": "Firme"
+    },
+    "message": "Mensaje",
+    "ronyWriting": "{{advisor}} está escribiendo…",
+    "writeWithRony": "Escribirlo con {{advisor}}",
+    "sendTo": "Enviar a {{name}}"
+  },
+  "leaseDetail": {
+    "activity": {
+      "paid": "Pagó {{amount}} del alquiler de {{month}}",
+      "onTime": "a tiempo",
+      "tx": "Tx {{id}}…",
+      "becameLate": "El alquiler de {{month}} ({{amount}}) quedó atrasado",
+      "overdue_one": "{{count}} día de atraso",
+      "overdue_other": "{{count}} días de atraso",
+      "askedRenew": "{{name}} pidió renovar",
+      "yourTenant": "Tu inquilino",
+      "youOffered": "Ofreciste una renovación",
+      "reminder_friendly": "Enviaste un recordatorio amistoso",
+      "reminder_firm": "Enviaste un recordatorio firme",
+      "reminder": "Enviaste un recordatorio",
+      "started": "Inicio del contrato"
+    },
+    "thisProperty": "esta propiedad",
+    "rentLine": "{{rent}}/mes ({{net}} para ti después de la comisión del {{rate}})",
+    "noEndDate": "Sin fecha de fin",
+    "sendReminder": "Enviar recordatorio",
+    "collectedOf": "{{collected}} de {{total}}",
+    "ofMonthsDue_one": "{{paid}} de {{count}} mes vencido",
+    "ofMonthsDue_other": "{{paid}} de {{count}} meses vencidos",
+    "leftOnLease_one": "{{amount}} restantes del contrato ({{count}} mes)",
+    "leftOnLease_other": "{{amount}} restantes del contrato ({{count}} meses)",
+    "tapMonth": "Toca un mes para ver detalles",
+    "activityTitle": "Actividad",
+    "activityHint": "Pagos, recordatorios y ofertas",
+    "noActivity": "Aún no hay actividad.",
+    "showMore": "Ver más",
+    "reminderSent": "Recordatorio enviado a {{name}}.",
+    "renewalSent": "Oferta de renovación enviada a {{name}}.",
+    "yourTenant": "tu inquilino"
+  },
+  "transfers": {
+    "flowLabel": "Cómo te llega tu alquiler",
+    "flowNote": "Los inquilinos pagan el alquiler completo en línea con {{provider}}. {{brand}} conserva el {{rate}} por encontrar a tu inquilino, cobrar el alquiler, enviar recordatorios y gestionar contratos, y transfiere el resto a tu cuenta bancaria. Los depósitos no tienen comisión.",
+    "waiting": "Pendiente de transferir",
+    "nothingPending": "Nada pendiente",
+    "waitingCount_one": "{{count}} pago {{dot}} sale en la próxima transferencia",
+    "waitingCount_other": "{{count}} pagos {{dot}} salen en la próxima transferencia",
+    "transferredIn": "Transferido en {{year}}",
+    "noneYet": "Aún no hay transferencias",
+    "lastOne": "La última el {{date}}",
+    "feeIn": "Comisión de {{brand}} en {{year}}",
+    "rateOf": "{{rate}} de {{amount}} cobrados",
+    "sentBy": "Enviadas por {{brand}} a tu cuenta bancaria",
+    "emptyText": "Aún no hay transferencias. Cuando {{brand}} te envíe dinero aparecerá aquí con su referencia bancaria y recibirás una notificación.",
+    "line_one": "{{count}} pago {{dot}} {{gross}} cobrados {{minus}} {{fee}} de comisión {{dot}} Ref. {{reference}}",
+    "line_other": "{{count}} pagos {{dot}} {{gross}} cobrados {{minus}} {{fee}} de comisión {{dot}} Ref. {{reference}}",
+    "bankAccount": "Cuenta bancaria",
+    "change": "Cambiar",
+    "missing": "Agrega la cuenta bancaria donde quieres recibir tu alquiler. {{brand}} no puede transferirte el dinero hasta que lo hagas.",
+    "addBank": "Agregar cuenta bancaria",
+    "nextTransfer": "En tu próxima transferencia",
+    "paidLine": "{{name}} pagó {{gross}} {{minus}} {{fee}} de comisión",
+    "showAll": "Ver los {{count}}"
+  },
+  "history": {
+    "empty": "Todavía no ha vencido nada.",
+    "searchOwner": "Busca inquilino, propiedad, mes…",
+    "searchTenant": "Busca propiedad, mes, monto…",
+    "searchLabel": "Buscar en el historial de pagos",
+    "allProperties": "Todas las propiedades",
+    "year": "Año",
+    "allYears": "Todos los años",
+    "noMatch": "Ningún pago coincide con estos filtros.",
+    "paidOf": "{{paid}} pagados de {{total}}",
+    "paid": "{{paid}} pagados",
+    "due": "Vence el {{date}}",
+    "paidOn": "Pagado el {{date}}",
+    "pendingTransfer": "transferencia pendiente",
+    "showOlder_one": "Ver meses anteriores ({{count}} más)",
+    "showOlder_other": "Ver meses anteriores ({{count}} más)"
+  },
+  "payoutModal": {
+    "titleChange": "Cambiar cuenta bancaria",
+    "subtitle": "{{brand}} transfiere a esta cuenta el alquiler que pagan tus inquilinos, menos la comisión de {{brand}}. Solo tú y el equipo de {{brand}} pueden verla.",
+    "holder": "Titular de la cuenta",
+    "bank": "Banco",
+    "bankPlaceholder": "Elige o escribe tu banco",
+    "type": "Tipo de cuenta",
+    "number": "Número de cuenta",
+    "save": "Guardar cuenta bancaria"
+  },
+  "advisor": {
+    "notSignedIn": "No has iniciado sesión",
+    "loading": "Cargando tu conversación…",
+    "unreachable": "No se pudo contactar a {{advisor}}. Inténtalo de nuevo.",
+    "clearError": "No se pudo borrar la conversación. Inténtalo de nuevo.",
+    "openPayments": "Abrir Pagos",
+    "removeAttachment": "Quitar adjunto",
+    "newChat": "Nuevo chat",
+    "newChatConfirm": {
+      "title": "¿Empezar un nuevo chat?",
+      "description": "Esta conversación se eliminará. {{advisor}} sigue conociendo tus datos, solo olvida lo que hablaron.",
+      "confirm": "Empezar nuevo chat"
+    },
+    "home": {
+      "greetingName": "Hola, {{name}}. ¿En qué te ayudo hoy?",
+      "greeting": "¿En qué te ayudo hoy?"
+    },
+    "composer": {
+      "label": "Escríbele a {{advisor}}",
+      "hint": "{{advisor}} responde con tus datos de {{brand}} {{dot}} Enter para enviar, Shift+Enter para una nueva línea"
+    },
+    "filter": {
+      "anyType": "Cualquier tipo",
+      "services_one": "{{count}} servicio",
+      "services_other": "{{count}} servicios"
+    },
+    "chart": {
+      "listing": "Espacio",
+      "budget": "Presupuesto",
+      "rentVsBudget": "Alquiler frente a tu presupuesto"
+    },
+    "table": {
+      "services": "Servicios",
+      "notListed": "No indicado",
+      "noneListed": "Ninguno indicado"
+    },
+    "card": {
+      "bestFit": "Mejor opción",
+      "noRent": "Alquiler no indicado"
+    },
+    "audit": {
+      "issues": "Problemas",
+      "rewrite": "Reescribir",
+      "noPhotos": "Sin fotos",
+      "shortDescription": "Descripción muy corta",
+      "noServices": "Sin servicios indicados",
+      "noLocation": "Falta la ubicación",
+      "noRent": "Sin alquiler definido"
+    },
+    "drawer": {
+      "label": "{{advisor}}, asesor con IA",
+      "knows": "Conoce tu calendario de alquileres y tus contratos",
+      "openFull": "Abrir la página completa del Asesor IA",
+      "fullChat": "Chat completo",
+      "close": "Cerrar {{advisor}}"
+    },
+    "form": {
+      "typeSpace": "un espacio de tipo {{type}}",
+      "anySpace": "un local comercial",
+      "inPlace": "en {{place}}",
+      "budget": "con un presupuesto de hasta {{amount}} al mes",
+      "needing": "que tenga {{services}}",
+      "message": "Estoy buscando {{parts}}.",
+      "lead": "Cuéntame qué buscas y revisaré las publicaciones. Puedes cambiar cualquier cosa después con solo pedírmelo.",
+      "budgetLabel": "Presupuesto mensual (USD)",
+      "noLimit": "Sin límite",
+      "businessType": "Tipo de negocio",
+      "mustHave": "Servicios indispensables",
+      "find": "Buscar espacios"
+    },
+    "charts": {
+      "occupancy": "Ocupación del portafolio",
+      "paymentStatus": "Estado de los pagos",
+      "incomeByMonth": "Ingresos por mes",
+      "rentComparison": "Comparación de alquiler",
+      "current": "Actual",
+      "proposed": "Propuesto"
+    },
+    "reply": {
+      "copyAnswer": "Copiar respuesta",
+      "copied": "Copiado",
+      "copy": "Copiar"
+    },
+    "cards": {
+      "yourSpace": "tu espacio",
+      "overdue": "{{amount}} vencidos",
+      "latePrompt": "Estoy atrasado con el alquiler de {{name}}. ¿Cuánto debo y qué debería hacer?",
+      "dueTitle": "{{amount}} vence {{when}}",
+      "nextRent": "Próximo alquiler {{dot}} {{name}}",
+      "nextPrompt": "¿Cuándo vence mi próximo pago y de cuánto es?",
+      "offerTitle": "Oferta de contrato por firmar",
+      "offerPrompt": "Tengo una oferta de contrato para {{name}}. ¿Qué debo revisar antes de firmar?",
+      "pendingTitle": "Solicitud en espera del propietario",
+      "pendingPrompt": "Pedí alquilar {{name}}. ¿Qué sigue?",
+      "savedTitle": "Encuentra más como tus espacios guardados",
+      "savedSubtitle": "Último guardado: {{name}}",
+      "savedPrompt": "Encuéntrame espacios similares a {{name}}.",
+      "findTitle": "Encuentra un nuevo espacio",
+      "findSubtitle": "Dile a {{advisor}} tu presupuesto y zona",
+      "findPrompt": "Ayúdame a encontrar un local comercial dentro de mi presupuesto.",
+      "aTenant": "Un inquilino",
+      "tenantLate": "{{tenant}} tiene {{late}}",
+      "reminderPrompt": "Redacta un recordatorio amistoso para {{tenant}} sobre el alquiler atrasado.",
+      "requestsTitle_one": "{{count}} solicitud de contrato en espera",
+      "requestsTitle_other": "{{count}} solicitudes de contrato en espera",
+      "reviewApplied": "Revisa quién la envió",
+      "requestsPromptName": "¿Qué solicitud de contrato debería aceptar para {{name}}?",
+      "requestsPrompt": "¿Qué solicitud de contrato debería aceptar?",
+      "vacantTitle": "{{name}} no tiene inquilino",
+      "vacantSubtitle": "Haz que la publicación destaque",
+      "vacantPrompt": "¿Cómo puedo mejorar la publicación de {{name}}?",
+      "noLateTitle": "Ningún alquiler atrasado por ahora",
+      "noLateSubtitle": "Mira cuánto cobrarás este año",
+      "noLatePrompt": "¿Cuánto me falta por cobrar este año?",
+      "checkupTitle": "Revisión del portafolio",
+      "checkupSubtitle": "Qué requiere atención primero",
+      "checkupPrompt": "Dame un resumen rápido de mi portafolio y dime qué requiere atención primero."
+    },
+    "topics": {
+      "businessSearch": {
+        "label": "Buscar un espacio",
+        "prompts": [
+          "Encuéntrame un local en San Salvador por menos de $800",
+          "¿Cuáles son los espacios más baratos con estacionamiento?",
+          "¿Qué zona tiene los mejores precios para un restaurante?",
+          "Muéstrame espacios con agua y luz incluidas"
+        ]
+      },
+      "businessRent": {
+        "label": "Mi alquiler",
+        "prompts": [
+          "¿Cuándo vence mi próximo pago?",
+          "¿Cuánto debo todavía este año?",
+          "¿Estoy atrasado en algo?"
+        ]
+      },
+      "businessLeases": {
+        "label": "Mis contratos",
+        "prompts": [
+          "¿Cuándo termina mi contrato?",
+          "¿Debería renovar mi contrato?",
+          "¿Qué debo revisar antes de firmar un contrato?"
+        ]
+      },
+      "ownerPortfolio": {
+        "label": "Mi portafolio",
+        "prompts": [
+          "¿Qué requiere mi atención?",
+          "¿Qué propiedad genera más ingresos?",
+          "¿Mi alquiler está acorde al mercado?",
+          "¿Qué pasa si subo el alquiler un 10%?"
+        ]
+      },
+      "ownerRent": {
+        "label": "Cobros",
+        "prompts": [
+          "¿Quién está atrasado con el alquiler?",
+          "¿Cuánto me falta por cobrar este año?",
+          "Redacta un recordatorio para un inquilino atrasado"
+        ]
+      },
+      "ownerListings": {
+        "label": "Mejores publicaciones",
+        "prompts": [
+          "Mejora mis publicaciones",
+          "¿Qué publicación necesita mejores fotos o detalles?",
+          "Reescribe la descripción de mi espacio desocupado"
+        ]
+      }
+    },
+    "business": {
+      "chips": {
+        "raiseBudget": "Subir mi presupuesto",
+        "differentArea": "Probar otra zona",
+        "cheaper": "Algo más barato",
+        "whyThat": "¿Por qué ese?",
+        "checkBeforeSigning": "¿Qué debo revisar antes de firmar?",
+        "widen": "Ampliar más la búsqueda",
+        "otherOptions": "¿Hay otras opciones?",
+        "oweThisYear": "¿Cuánto debo todavía este año?",
+        "nextPayment": "¿Cuándo vence mi próximo pago?",
+        "lateAnything": "¿Estoy atrasado en algo?",
+        "leaseEnd": "¿Cuándo termina mi contrato?"
+      },
+      "relaxedItems": {
+        "requiredServices": "quité los servicios obligatorios",
+        "municipality": "busqué en todo el departamento en lugar de un solo municipio",
+        "budget15": "subí el presupuesto un 15%",
+        "budget30": "subí el presupuesto un 30%",
+        "otherTypes": "incluí otros tipos de propiedad"
+      },
+      "relaxed": "Para encontrar más, {{items}}.",
+      "subtitleFilters": "Buscando con tus filtros",
+      "subtitle": "Conoce el marketplace, tu alquiler y tus contratos",
+      "intro": "Busco por ti en el marketplace de {{brand}} y estoy pendiente de tu alquiler y tus contratos.",
+      "preferForm": "¿Prefieres filtros? Busca con un formulario",
+      "compactWelcome": "Hola, pregúntame sobre tu **alquiler**, tus **contratos** o tus pagos, o sobre cómo encontrar otro espacio.",
+      "placeholder": "Pregúntale lo que quieras a {{advisor}}, o dile qué cambiar…"
+    },
+    "owner": {
+      "chips": {
+        "whoLate": "¿Quién está atrasado con el alquiler?",
+        "collectYear": "¿Cuánto me falta por cobrar este año?",
+        "improveListings": "Mejora mis publicaciones",
+        "draftAnother": "Redacta otro mensaje",
+        "whatElse": "¿Qué más requiere atención?",
+        "differentRent": "Probar otro cambio de alquiler",
+        "attention": "¿Qué requiere mi atención?",
+        "endsSoonest": "¿Qué contrato termina primero?"
+      },
+      "rewritePrompt": "Reescribe la descripción de {{name}}.",
+      "saveError": "No se pudo guardar la publicación.",
+      "saved": "Guardado en la publicación",
+      "sent": "Mensaje enviado",
+      "newDescription": "Nueva descripción",
+      "draftMessage": "Borrador del mensaje",
+      "saveToListing": "Guardar en la publicación",
+      "subtitle": "Conoce tus propiedades, inquilinos y alquileres",
+      "intro": "Estoy pendiente de tus propiedades, inquilinos y alquileres, y te ayudo a actuar en lo importante.",
+      "compactWelcome": "Hola, pregúntame sobre el **cobro de alquileres**, tus contratos o tus inquilinos.",
+      "placeholder": "Pregunta sobre tu portafolio, inquilinos o publicaciones…"
+    }
   }
 }

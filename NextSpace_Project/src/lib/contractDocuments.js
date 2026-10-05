@@ -4,14 +4,21 @@ import { formatDueDate } from './rentSchedule'
 import { dueDayLabel, money, personName, standardClauses, statusMeta } from './contracts'
 import { contractRate, formatRate } from './platformFee'
 import { ensureSpace, facts, footer, header, newDoc, paragraph, sectionTitle } from './paymentReports'
+import i18n, { currentLocale } from '../i18n'
+import { BRAND_NAME, BRAND_VALUES } from './brand'
+import { DASH, DOT } from './symbols'
 
 const TEXT = [26, 31, 43]
 const MUTED = [110, 120, 138]
 const LINE = [229, 234, 243]
 
+const LONG_DATE = { month: 'long', day: 'numeric', year: 'numeric' }
+
+const t = (key, values) => i18n.t(`docs.lease.${key}`, { ...BRAND_VALUES, ...values })
+
 function stamp(ts) {
-    if (!ts) return '—'
-    return new Date(ts).toLocaleString('en-US', {
+    if (!ts) return DASH
+    return new Date(ts).toLocaleString(currentLocale(), {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
@@ -28,33 +35,41 @@ export async function downloadContractPdf(contract) {
     const owner = property.users
     const tenant = contract.users
 
-    let y = header(ctx, `Commercial lease · ${property.property_name || 'Property'}`, `Contract #${contract.contract_id} · ${statusMeta(contract).label}`)
+    let y = header(
+        ctx,
+        t('title', { name: property.property_name || i18n.t('common.property') }),
+        t('subtitle', { id: contract.contract_id, status: statusMeta(contract).label })
+    )
 
-    y = sectionTitle(ctx, y, 'Parties')
+    y = sectionTitle(ctx, y, t('parties'))
     y = facts(ctx, y + 8, [
-        ['Owner', `${contract.owner_signed_name || personName(owner)}`],
-        ['Tenant', `${contract.tenant_signed_name || personName(tenant)}${contract.tenant_dui ? ` · DUI ${contract.tenant_dui}` : ''}`],
-        ['Space', property.property_name],
-        ['Location', [property.address, property.municipality, property.department].filter(Boolean).join(', ') || '—'],
+        [t('owner'), `${contract.owner_signed_name || personName(owner)}`],
+        [t('tenant'), `${contract.tenant_signed_name || personName(tenant)}${contract.tenant_dui ? ` ${DOT} DUI ${contract.tenant_dui}` : ''}`],
+        [t('space'), property.property_name],
+        [t('location'), [property.address, property.municipality, property.department].filter(Boolean).join(', ') || DASH],
     ])
 
-    y = sectionTitle(ctx, y, 'Key terms')
+    y = sectionTitle(ctx, y, t('keyTerms'))
     y = facts(ctx, y + 8, [
         [
-            'Monthly rent',
+            t('monthlyRent'),
             contract.previous_rent != null && contract.rent_changes_from
-                ? `${money(contract.monthly_rent)} from ${formatDueDate(contract.rent_changes_from)} (was ${money(contract.previous_rent)})`
+                ? t('rentChange', {
+                      rent: money(contract.monthly_rent),
+                      date: formatDueDate(contract.rent_changes_from),
+                      previous: money(contract.previous_rent),
+                  })
                 : money(contract.monthly_rent),
         ],
-        ['Rent due', `The ${dueDayLabel(contract.start_date)} of each month`],
-        ['Start', formatDueDate(contract.start_date, { month: 'long', day: 'numeric', year: 'numeric' })],
-        ['End', formatDueDate(contract.end_date, { month: 'long', day: 'numeric', year: 'numeric' })],
-        ['Length', contract.duration_months ? `${contract.duration_months} months` : '—'],
-        ['Deposit', Number(contract.deposit || 0) > 0 ? money(contract.deposit) : 'None'],
-        ['NextSpace fee', `${formatRate(contractRate(contract))} of each rent, paid by owner`],
+        [t('rentDue'), t('rentDueValue', { day: dueDayLabel(contract.start_date) })],
+        [t('start'), formatDueDate(contract.start_date, LONG_DATE)],
+        [t('end'), formatDueDate(contract.end_date, LONG_DATE)],
+        [t('length'), contract.duration_months ? i18n.t('common.month', { count: contract.duration_months }) : DASH],
+        [t('deposit'), Number(contract.deposit || 0) > 0 ? money(contract.deposit) : i18n.t('common.none')],
+        [t('fee'), t('feeValue', { rate: formatRate(contractRate(contract)) })],
     ])
 
-    y = sectionTitle(ctx, y, 'Clauses')
+    y = sectionTitle(ctx, y, t('clauses'))
     standardClauses(contract).forEach((clause, i) => {
         y = ensureSpace(ctx, y, 40)
         doc.setFont('helvetica', 'bold')
@@ -65,28 +80,28 @@ export async function downloadContractPdf(contract) {
     })
 
     if (contract.special_clauses) {
-        y = sectionTitle(ctx, y, 'Special clauses')
+        y = sectionTitle(ctx, y, t('specialClauses'))
         y = paragraph(ctx, y + 8, contract.special_clauses, { boxed: true })
     }
 
-    y = sectionTitle(ctx, y, 'Signatures')
+    y = sectionTitle(ctx, y, t('signatures'))
     y = ensureSpace(ctx, y, 90)
     const colW = (right - left) / 2
     ;[
-        ['Owner', contract.owner_signed_name, contract.owner_signed_at],
-        ['Tenant', contract.tenant_signed_name, contract.tenant_signed_at],
+        [t('owner'), contract.owner_signed_name, contract.owner_signed_at],
+        [t('tenant'), contract.tenant_signed_name, contract.tenant_signed_at],
     ].forEach(([role, name, at], i) => {
         const x = left + i * colW
         doc.setFont('helvetica', 'italic')
         doc.setFontSize(15)
         doc.setTextColor(...TEXT)
-        doc.text(name || 'Not signed yet', x, y + 26)
+        doc.text(name || t('notSigned'), x, y + 26)
         doc.setDrawColor(...LINE)
         doc.line(x, y + 34, x + colW - 24, y + 34)
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(8.5)
         doc.setTextColor(...MUTED)
-        doc.text(`${role} · signed electronically ${at ? stamp(at) : '—'}`, x, y + 48)
+        doc.text(t('signedElectronically', { role, date: at ? stamp(at) : DASH }), x, y + 48)
     })
     y += 70
 
@@ -98,7 +113,13 @@ export async function downloadContractPdf(contract) {
         y = paragraph(
             ctx,
             y,
-            `Renewed ${contract.renewal_count} ${contract.renewal_count === 1 ? 'time' : 'times'}. Last renewal signed electronically ${stamp(contract.last_renewed_at)} by ${contract.last_renewal_owner_name} (owner) and ${contract.last_renewal_tenant_name} (tenant), extending the lease to ${formatDueDate(contract.end_date, { month: 'long', day: 'numeric', year: 'numeric' })}.`
+            t('renewed', {
+                count: contract.renewal_count,
+                date: stamp(contract.last_renewed_at),
+                owner: contract.last_renewal_owner_name,
+                tenant: contract.last_renewal_tenant_name,
+                end: formatDueDate(contract.end_date, LONG_DATE),
+            })
         )
         y += 6
     }
@@ -107,7 +128,7 @@ export async function downloadContractPdf(contract) {
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(10)
         doc.setTextColor(...TEXT)
-        doc.text(`Verification code: ${contract.verification_code}`, left, y)
+        doc.text(t('verificationCode', { code: contract.verification_code }), left, y)
         y += 14
     }
     if (contract.end_reason === 'terminated' || contract.status === 'Expired') {
@@ -116,13 +137,13 @@ export async function downloadContractPdf(contract) {
         doc.setTextColor(...MUTED)
         doc.text(
             contract.end_reason === 'terminated'
-                ? `Ended early by mutual agreement on ${formatDueDate(contract.end_date)}.`
-                : `The lease ended on ${formatDueDate(contract.end_date)}.`,
+                ? t('endedEarly', { date: formatDueDate(contract.end_date) })
+                : t('ended', { date: formatDueDate(contract.end_date) }),
             left,
             y
         )
     }
 
-    footer(ctx, 'Signed electronically through NextSpace. The verification code identifies this exact version of the lease.')
-    doc.save(`NextSpace-lease-${contract.contract_id}.pdf`)
+    footer(ctx, t('footer'))
+    doc.save(`${BRAND_NAME}-${t('fileName')}-${contract.contract_id}.pdf`)
 }

@@ -1,8 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import { formatPpm } from '../../../lib/market'
+import { BRAND_VALUES } from '../../../lib/brand'
 
 // Where this space's rent per m² falls against the median of similar
 // spaces: a track from 0 to twice the median, the median in the middle.
 export default function PriceMarketBar({ insight }) {
+    const { t } = useTranslation()
     if (!insight) return null
     const max = insight.median * 2
     const pos = Math.max(2, Math.min(98, (insight.ppm / max) * 100))
@@ -21,13 +24,13 @@ export default function PriceMarketBar({ insight }) {
                 <span className="ns-pmb-dot" style={{ left: `${pos}%` }} />
             </div>
             <div className="ns-pmb-scale">
-                <span>Cheaper</span>
+                <span>{t('priceBar.cheaper')}</span>
                 <span>
-                    Median {formatPpm(insight.median)}
+                    {t('priceBar.median', { value: formatPpm(insight.median) })}
                 </span>
-                <span>Pricier</span>
+                <span>{t('priceBar.pricier')}</span>
             </div>
-            <small>Compared with {insight.scope} on NextSpace.</small>
+            <small>{t('priceBar.compared', { ...BRAND_VALUES, scope: insight.scope })}</small>
         </div>
     )
 }

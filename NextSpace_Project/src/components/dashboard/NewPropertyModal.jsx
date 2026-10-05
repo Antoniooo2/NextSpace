@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { money } from '../../lib/money'
+import { propertyTypeLabel, serviceLabel } from '../../lib/displayValues'
+import { BRAND_VALUES } from '../../lib/brand'
+import { DASH, DOT, SQ_M } from '../../lib/symbols'
 import { supabase } from '../../lib/supabaseClient'
 import { EL_SALVADOR_DEPARTMENTS, EL_SALVADOR_DEPARTMENT_NAMES } from '../../lib/elSalvadorLocations'
 import { SERVICE_ICON, listingChecklist, listingScore } from '../../lib/listings'
@@ -21,16 +26,16 @@ const MAX_PHOTOS = 6
 const DESCRIPTION_GOOD = 40
 
 const STEPS = [
-    { id: 'basics', label: 'Basics', icon: 'bi-shop', fields: ['name', 'width', 'length'] },
-    { id: 'location', label: 'Location', icon: 'bi-geo-alt', fields: [] },
-    { id: 'price', label: 'Price', icon: 'bi-currency-dollar', fields: ['rent'] },
-    { id: 'details', label: 'Photos & details', icon: 'bi-images', fields: [] },
+    { id: 'basics', label: 'listingForm.steps.basics', icon: 'bi-shop', fields: ['name', 'width', 'length'] },
+    { id: 'location', label: 'listingForm.steps.location', icon: 'bi-geo-alt', fields: [] },
+    { id: 'price', label: 'listingForm.steps.price', icon: 'bi-currency-dollar', fields: ['rent'] },
+    { id: 'details', label: 'listingForm.steps.details', icon: 'bi-images', fields: [] },
 ]
 
 // Where each quality-checklist item is filled in.
 const CHECK_STEP = { photo: 'details', 'more-photos': 'details', rent: 'price', description: 'details', location: 'location', services: 'details' }
 
-const DESCRIPTION_TIPS = ['Foot traffic and nearby businesses', 'Condition and finishes', 'Access, parking and hours']
+const DESCRIPTION_TIPS = ['listingForm.tips.traffic', 'listingForm.tips.condition', 'listingForm.tips.access']
 
 function positive(value) {
     const n = Number(value)
@@ -38,11 +43,12 @@ function positive(value) {
 }
 
 export default function NewPropertyModal({ property, template, ownerDui, onClose, onSaved }) {
+    const { t } = useTranslation()
     // "Duplicate" starts a new listing from another one's details (no photos).
     const base = property || template || null
     const isEditMode = Boolean(property)
 
-    const [propertyName, setPropertyName] = useState(template && !property ? `${template.property_name} (copy)` : property?.property_name || '')
+    const [propertyName, setPropertyName] = useState(template && !property ? t('listingForm.copyName', { name: template.property_name }) : property?.property_name || '')
     const [propertyType, setPropertyType] = useState(base?.property_type || PROPERTY_TYPES[0])
     const [monthlyRent, setMonthlyRent] = useState(base?.monthly_rent != null ? String(base.monthly_rent) : '')
     const [width, setWidth] = useState(base?.business_size_width != null ? String(base.business_size_width) : '')
@@ -128,10 +134,10 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
     // Field problems, shown under each field once the owner tries to move on.
     const fieldErrors = useMemo(() => {
         const errors = {}
-        if (!propertyName.trim()) errors.name = 'Give your space a name.'
-        if (!positive(width)) errors.width = 'Enter the width in meters.'
-        if (!positive(length)) errors.length = 'Enter the length in meters.'
-        if (monthlyRent.trim() !== '' && !positive(monthlyRent)) errors.rent = 'The rent must be more than $0.'
+        if (!propertyName.trim()) errors.name = 'listingForm.errors.name'
+        if (!positive(width)) errors.width = 'listingForm.errors.width'
+        if (!positive(length)) errors.length = 'listingForm.errors.length'
+        if (monthlyRent.trim() !== '' && !positive(monthlyRent)) errors.rent = 'listingForm.errors.rent'
         return errors
     }, [propertyName, width, length, monthlyRent])
 
@@ -143,7 +149,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
     // The listing as it will look on the Marketplace, rebuilt as the owner types.
     const preview = {
         property_id: property?.property_id ?? 0,
-        property_name: propertyName.trim() || 'Your space',
+        property_name: propertyName.trim() || t('listingForm.yourSpace'),
         property_type: propertyType,
         monthly_rent: positive(monthlyRent) ? Number(monthlyRent) : null,
         business_size_width: positive(width) ? Number(width) : null,
@@ -172,7 +178,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
         return {
             ppm: ref.median,
             rent: Math.max(10, Math.round((ref.median * area) / 10) * 10),
-            scope: local ? `${propertyType} spaces in ${department}` : `${propertyType} spaces on NextSpace`,
+            local: Boolean(local),
         }
     }, [marketStats, area, propertyType, department])
 
@@ -209,16 +215,16 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
         const accepted = []
         for (const file of files) {
             if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-                setPhotoError('Please choose JPG, PNG, WEBP, or GIF images.')
+                setPhotoError(t('listingForm.photos.badType'))
                 continue
             }
             if (file.size > MAX_PHOTO_BYTES) {
-                setPhotoError('Each image must be 5MB or smaller.')
+                setPhotoError(t('listingForm.photos.tooBig'))
                 continue
             }
             accepted.push(file)
         }
-        if (accepted.length > room) setPhotoError(`A space can have up to ${MAX_PHOTOS} photos.`)
+        if (accepted.length > room) setPhotoError(t('listingForm.photos.tooMany', { max: MAX_PHOTOS }))
 
         setPhotoItems((prev) => [
             ...prev,
@@ -370,7 +376,9 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
             setErrorMsg(
                 error && error.code !== '42501'
                     ? describeSupabaseError(error)
-                    : `We couldn't ${isEditMode ? 'save your changes' : 'publish this space'}. Please try again.`
+                    : isEditMode
+                      ? t('listingForm.saveFailed')
+                      : t('listingForm.publishFailed')
             )
             return
         }
@@ -383,11 +391,11 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
             photoItems.some((p, i) => p.file || (property?.photos?.[i]?.photo_id ?? null) !== p.photoId)
         if (photosChanged) {
             const photoIssue = await syncPhotos(savedProperty.property_id)
-            if (photoIssue) issues.push('photos')
+            if (photoIssue) issues.push(t('listingForm.issues.photos'))
         }
 
         const servicesIssue = await syncServices(savedProperty.business_id)
-        if (servicesIssue) issues.push('amenities')
+        if (servicesIssue) issues.push(t('listingForm.issues.amenities'))
 
         // Amenities are saved now, so alert businesses whose saved search matches.
         if (!isLeased && listed) {
@@ -396,7 +404,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
 
         setSaving(false)
         if (issues.length > 0) {
-            window.alert(`The space was saved, but the ${issues.join(' and ')} couldn't be updated. Open it again to retry.`)
+            window.alert(t('listingForm.partialSave', { items: issues.join(t('listingForm.issues.and')) }))
         }
         onSaved(savedProperty)
     }
@@ -404,7 +412,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
     const err = (field) =>
         showErrors && fieldErrors[field] ? (
             <p className="ns-lf-error">
-                <i className="bi bi-exclamation-circle"></i> {fieldErrors[field]}
+                <i className="bi bi-exclamation-circle"></i> {t(fieldErrors[field])}
             </p>
         ) : null
 
@@ -412,7 +420,12 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
 
     const current = STEPS[step].id
     const isLast = step === STEPS.length - 1
-    const title = isEditMode ? 'Edit space' : template ? 'Publish a similar space' : 'Publish a new space'
+    const title = isEditMode ? t('listingForm.titleEdit') : template ? t('listingForm.titleSimilar') : t('listingForm.titleNew')
+    const suggestionScope = suggestion
+        ? suggestion.local
+            ? t('listingForm.suggest.scopeLocal', { type: propertyTypeLabel(propertyType), place: department })
+            : t('listingForm.suggest.scopeAll', { ...BRAND_VALUES, type: propertyTypeLabel(propertyType) })
+        : ''
 
     return (
         <div className="ns-modal-backdrop" onClick={onClose}>
@@ -422,19 +435,19 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                         <h2>{title}</h2>
                         <p>
                             {isEditMode
-                                ? 'Jump to any section, change what you need and save.'
-                                : 'Four quick steps. You can change everything later.'}
+                                ? t('listingForm.subtitleEdit')
+                                : t('listingForm.subtitleNew')}
                         </p>
                     </div>
                     <button type="button" className="ns-lf-preview-toggle" onClick={() => setPreviewOpen((v) => !v)}>
-                        <i className={`bi ${previewOpen ? 'bi-pencil' : 'bi-eye'}`}></i> {previewOpen ? 'Edit' : 'Preview'}
+                        <i className={`bi ${previewOpen ? 'bi-pencil' : 'bi-eye'}`}></i> {previewOpen ? t('common.edit') : t('listingForm.preview')}
                     </button>
-                    <button type="button" className="ns-lf-close" onClick={onClose} aria-label="Close">
+                    <button type="button" className="ns-lf-close" onClick={onClose} aria-label={t('common.close')}>
                         <i className="bi bi-x-lg"></i>
                     </button>
                 </header>
 
-                <nav className="ns-lf-steps" aria-label="Steps">
+                <nav className="ns-lf-steps" aria-label={t('listingForm.stepsLabel')}>
                     {STEPS.map((s, i) => {
                         const done = i !== step && (isEditMode ? stepValid(i) : i < reached || i < step)
                         const canJump = isEditMode || i <= reached
@@ -450,7 +463,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                 <span className="ns-lf-step-dot">
                                     {done ? <i className="bi bi-check-lg"></i> : isEditMode ? <i className={`bi ${s.icon}`}></i> : i + 1}
                                 </span>
-                                <span className="ns-lf-step-label">{s.label}</span>
+                                <span className="ns-lf-step-label">{t(s.label)}</span>
                             </button>
                         )
                     })}
@@ -467,21 +480,21 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                         {current === 'basics' && (
                             <section className="ns-lf-section">
                                 <label className="ns-lf-label" htmlFor="propName">
-                                    Name of the space
+                                    {t('listingForm.name')}
                                 </label>
                                 <div className={`ns-lf-input ${bad('name')}`}>
                                     <i className="bi bi-shop"></i>
                                     <input
                                         id="propName"
                                         type="text"
-                                        placeholder="Local Las Flores"
+                                        placeholder={t('listingForm.namePlaceholder')}
                                         value={propertyName}
                                         onChange={(e) => setPropertyName(e.target.value)}
                                     />
                                 </div>
                                 {err('name')}
 
-                                <span className="ns-lf-label">What kind of space is it?</span>
+                                <span className="ns-lf-label">{t('listingForm.kind')}</span>
                                 <div className="ns-lf-chips">
                                     {PROPERTY_TYPES.map((type) => (
                                         <button
@@ -491,12 +504,12 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                             onClick={() => setPropertyType(type)}
                                             aria-pressed={propertyType === type}
                                         >
-                                            <i className={`bi ${TYPE_ICON[type]}`}></i> {type}
+                                            <i className={`bi ${TYPE_ICON[type]}`}></i> {propertyTypeLabel(type)}
                                         </button>
                                     ))}
                                 </div>
 
-                                <span className="ns-lf-label">Size</span>
+                                <span className="ns-lf-label">{t('listingForm.size')}</span>
                                 <div className="ns-lf-size">
                                     <div>
                                         <div className={`ns-lf-input ${bad('width')}`}>
@@ -507,9 +520,9 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                                 placeholder="6"
                                                 value={width}
                                                 onChange={(e) => setWidth(e.target.value)}
-                                                aria-label="Width in meters"
+                                                aria-label={t('listingForm.widthLabel')}
                                             />
-                                            <em>m wide</em>
+                                            <em>{t('listingForm.wide')}</em>
                                         </div>
                                         {err('width')}
                                     </div>
@@ -523,14 +536,14 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                                 placeholder="10"
                                                 value={length}
                                                 onChange={(e) => setLength(e.target.value)}
-                                                aria-label="Length in meters"
+                                                aria-label={t('listingForm.lengthLabel')}
                                             />
-                                            <em>m long</em>
+                                            <em>{t('listingForm.long')}</em>
                                         </div>
                                         {err('length')}
                                     </div>
                                     <span className={`ns-lf-area ${area ? 'is-on' : ''}`}>
-                                        <strong>{area ?? '—'}</strong> m²
+                                        <strong>{area ?? DASH}</strong> {SQ_M}
                                     </span>
                                 </div>
                             </section>
@@ -539,13 +552,12 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                         {current === 'location' && (
                             <section className="ns-lf-section">
                                 <p className="ns-lf-intro">
-                                    <i className="bi bi-info-circle"></i> Businesses filter the Marketplace by department and municipality,
-                                    so spaces with a location show up in more searches.
+                                    <i className="bi bi-info-circle"></i> {t('listingForm.locationIntro')}
                                 </p>
                                 <div className="ns-lf-two">
                                     <div>
                                         <label className="ns-lf-label" htmlFor="propDepartment">
-                                            Department
+                                            {t('listingForm.department')}
                                         </label>
                                         <select
                                             id="propDepartment"
@@ -553,7 +565,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                             value={department}
                                             onChange={(e) => handleDepartmentChange(e.target.value)}
                                         >
-                                            <option value="">Select a department</option>
+                                            <option value="">{t('listingForm.selectDepartment')}</option>
                                             {EL_SALVADOR_DEPARTMENT_NAMES.map((name) => (
                                                 <option key={name} value={name}>
                                                     {name}
@@ -563,7 +575,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                     </div>
                                     <div>
                                         <label className="ns-lf-label" htmlFor="propMunicipality">
-                                            Municipality
+                                            {t('marketplace.municipality')}
                                         </label>
                                         <select
                                             id="propMunicipality"
@@ -572,7 +584,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                             onChange={(e) => setMunicipality(e.target.value)}
                                             disabled={!department}
                                         >
-                                            <option value="">Select a municipality</option>
+                                            <option value="">{t('listingForm.selectMunicipality')}</option>
                                             {(EL_SALVADOR_DEPARTMENTS[department] || []).map((name) => (
                                                 <option key={name} value={name}>
                                                     {name}
@@ -582,14 +594,14 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                     </div>
                                 </div>
                                 <label className="ns-lf-label" htmlFor="propAddress">
-                                    Address <span className="ns-lf-optional">optional</span>
+                                    {t('listingForm.address')} <span className="ns-lf-optional">{t('listingForm.optional')}</span>
                                 </label>
                                 <div className="ns-lf-input">
                                     <i className="bi bi-signpost"></i>
                                     <input
                                         id="propAddress"
                                         type="text"
-                                        placeholder="e.g., 125 El Mirador Street, Escalón"
+                                        placeholder={t('listingForm.addressPlaceholder')}
                                         value={address}
                                         onChange={(e) => setAddress(e.target.value)}
                                     />
@@ -600,7 +612,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                         {current === 'price' && (
                             <section className="ns-lf-section">
                                 <label className="ns-lf-label" htmlFor="propRent">
-                                    Monthly rent <span className="ns-lf-optional">optional</span>
+                                    {t('listingForm.rent')} <span className="ns-lf-optional">{t('listingForm.optional')}</span>
                                 </label>
                                 <div className={`ns-lf-input ns-lf-rent ${bad('rent')}`}>
                                     <span>$</span>
@@ -613,12 +625,12 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                         value={monthlyRent}
                                         onChange={(e) => setMonthlyRent(e.target.value)}
                                     />
-                                    <em>/ month</em>
+                                    <em>{t('listingForm.perMonth')}</em>
                                 </div>
                                 {err('rent')}
                                 {!monthlyRent.trim() && (
                                     <small className="ns-lf-help">
-                                        Without a rent the space shows "Price on request" and gets fewer requests.
+                                        {t('listingForm.noRentHelp')}
                                     </small>
                                 )}
                                 {positive(monthlyRent) && (
@@ -626,10 +638,10 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                         <FeeBreakdown
                                             amount={Number(monthlyRent)}
                                             rate={feeRate}
-                                            grossLabel="Your tenant pays"
-                                            netLabel="You receive"
-                                            suffix="/month"
-                                            note={`Listing is free. NextSpace only keeps ${formatRate(feeRate)} of each rent payment, when it's paid, and transfers the rest to your bank account. Deposits carry no fee.`}
+                                            grossLabel={t('pricing.example.tenantPays')}
+                                            netLabel={t('pricing.example.youReceive')}
+                                            suffix={t('common.perMonth')}
+                                            note={t('listingForm.feeNote', { ...BRAND_VALUES, rate: formatRate(feeRate) })}
                                         />
                                     </div>
                                 )}
@@ -640,15 +652,20 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                             <i className="bi bi-graph-up-arrow"></i>
                                         </span>
                                         <div>
-                                            <strong>Suggested: about ${suggestion.rent.toLocaleString()}/month</strong>
+                                            <strong>{t('listingForm.suggest.title', { rent: money(suggestion.rent) })}</strong>
                                             <p>
-                                                {suggestion.scope} rent for around {formatPpm(suggestion.ppm)}. For your {area} m² that is about $
-                                                {suggestion.rent.toLocaleString()}.
+                                                {t('listingForm.suggest.text', {
+                                                    scope: suggestionScope,
+                                                    ppm: formatPpm(suggestion.ppm),
+                                                    area,
+                                                    unit: SQ_M,
+                                                    rent: money(suggestion.rent),
+                                                })}
                                             </p>
                                         </div>
                                         {Number(monthlyRent) !== suggestion.rent && (
                                             <button type="button" className="ns-outline-btn" onClick={() => setMonthlyRent(String(suggestion.rent))}>
-                                                Use it
+                                                {t('listingForm.suggest.use')}
                                             </button>
                                         )}
                                     </div>
@@ -656,8 +673,8 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                     <p className="ns-lf-intro">
                                         <i className="bi bi-graph-up-arrow"></i>{' '}
                                         {area
-                                            ? 'There are not enough similar spaces on NextSpace yet to suggest a price.'
-                                            : 'Add the size in Basics to get a suggested rent from similar spaces.'}
+                                            ? t('listingForm.suggest.notEnough', BRAND_VALUES)
+                                            : t('listingForm.suggest.needSize')}
                                     </p>
                                 )}
 
@@ -672,31 +689,31 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                         {current === 'details' && (
                             <section className="ns-lf-section">
                                 <span className="ns-lf-label">
-                                    Photos{' '}
+                                    {t('listingForm.photos.title')}{' '}
                                     <span className="ns-lf-optional">
-                                        {photoItems.length}/{MAX_PHOTOS} · the first one is the cover
+                                        {photoItems.length}/{MAX_PHOTOS} {DOT} {t('listingForm.photos.coverHint')}
                                     </span>
                                 </span>
                                 {photoItems.length === 0 ? (
                                     <label htmlFor="propPhoto" className={`ns-lf-drop ${dragging ? 'is-over' : ''}`} {...dropHandlers}>
                                         <i className="bi bi-cloud-arrow-up"></i>
-                                        <strong>Drag photos here or click to upload</strong>
-                                        <span>Up to 6 · JPG, PNG or WEBP · 5MB each. Spaces with 3+ photos get more requests.</span>
+                                        <strong>{t('listingForm.photos.drop')}</strong>
+                                        <span>{t('listingForm.photos.dropHint', { dot: DOT })}</span>
                                     </label>
                                 ) : (
                                     <div className={`ns-photo-grid ns-lf-photos ${dragging ? 'is-over' : ''}`} {...dropHandlers}>
                                         {photoItems.map((item, i) => (
                                             <div key={item.key} className={`ns-photo-tile ${i === 0 ? 'is-cover' : ''}`}>
-                                                <img src={item.url} alt={`Photo ${i + 1}`} />
+                                                <img src={item.url} alt={t('listingForm.photos.alt', { n: i + 1 })} />
                                                 {i === 0 ? (
-                                                    <span className="ns-photo-cover-tag">Cover</span>
+                                                    <span className="ns-photo-cover-tag">{t('listingForm.photos.cover')}</span>
                                                 ) : (
                                                     <button
                                                         type="button"
                                                         className="ns-photo-tile-btn is-left"
                                                         onClick={() => makeCover(item.key)}
-                                                        title="Make cover"
-                                                        aria-label="Make cover"
+                                                        title={t('listingForm.photos.makeCover')}
+                                                        aria-label={t('listingForm.photos.makeCover')}
                                                     >
                                                         <i className="bi bi-star"></i>
                                                     </button>
@@ -705,7 +722,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                                     type="button"
                                                     className="ns-photo-tile-btn"
                                                     onClick={() => removePhoto(item.key)}
-                                                    aria-label="Remove photo"
+                                                    aria-label={t('listingForm.photos.remove')}
                                                 >
                                                     <i className="bi bi-x-lg"></i>
                                                 </button>
@@ -714,7 +731,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                         {photoItems.length < MAX_PHOTOS && (
                                             <label htmlFor="propPhoto" className="ns-photo-tile ns-photo-add">
                                                 <i className="bi bi-plus-lg"></i>
-                                                <span>Add</span>
+                                                <span>{t('listingForm.photos.add')}</span>
                                             </label>
                                         )}
                                     </div>
@@ -722,9 +739,9 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                 <input id="propPhoto" type="file" accept="image/*" multiple className="d-none" onChange={handlePhotoChange} />
                                 {photoError && <p className="ns-lf-error">{photoError}</p>}
 
-                                <span className="ns-lf-label">Amenities</span>
+                                <span className="ns-lf-label">{t('propertyCard.amenities')}</span>
                                 {servicesList.length === 0 ? (
-                                    <p className="ns-lf-help">Loading amenities...</p>
+                                    <p className="ns-lf-help">{t('listingForm.loadingAmenities')}</p>
                                 ) : (
                                     <div className="ns-lf-chips">
                                         {servicesList.map((service) => {
@@ -738,7 +755,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                                     aria-pressed={on}
                                                 >
                                                     <i className={`bi ${on ? 'bi-check-lg' : SERVICE_ICON[service.service_name] || 'bi-plus-circle'}`}></i>
-                                                    {service.service_name}
+                                                    {serviceLabel(service.service_name)}
                                                 </button>
                                             )
                                         })}
@@ -746,46 +763,46 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                 )}
 
                                 <label className="ns-lf-label" htmlFor="propDescription">
-                                    Description
+                                    {t('listings.checklist.description')}
                                     <span className={`ns-lf-count ${description.trim().length >= DESCRIPTION_GOOD ? 'is-good' : ''}`}>
-                                        {description.trim().length} characters
-                                        {description.trim().length < DESCRIPTION_GOOD && ` · ${DESCRIPTION_GOOD}+ recommended`}
+                                        {t('listingForm.characters', { count: description.trim().length })}
+                                        {description.trim().length < DESCRIPTION_GOOD && ` ${DOT} ${t('listingForm.recommended', { n: DESCRIPTION_GOOD })}`}
                                     </span>
                                 </label>
                                 <textarea
                                     id="propDescription"
                                     className="form-control ns-lf-textarea"
                                     rows={4}
-                                    placeholder="What makes this space a good fit for a business?"
+                                    placeholder={t('listingForm.descriptionPlaceholder')}
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                 />
                                 <div className="ns-lf-tips">
-                                    <span>Ideas:</span>
-                                    {DESCRIPTION_TIPS.map((t) => (
-                                        <em key={t}>{t}</em>
+                                    <span>{t('listingForm.ideas')}</span>
+                                    {DESCRIPTION_TIPS.map((tip) => (
+                                        <em key={tip}>{t(tip)}</em>
                                     ))}
                                 </div>
 
-                                <span className="ns-lf-label">On the Marketplace</span>
+                                <span className="ns-lf-label">{t('listingForm.onMarketplace')}</span>
                                 {isLeased ? (
                                     <p className="ns-lf-intro">
-                                        <i className="bi bi-key"></i> Leased — it returns to the Marketplace when the lease ends.
+                                        <i className="bi bi-key"></i> {t('listingForm.leasedNote')}
                                     </p>
                                 ) : (
                                     <div className="ns-lf-publish">
                                         <button type="button" className={listed ? 'is-on' : ''} onClick={() => setListed(true)} aria-pressed={listed}>
                                             <i className="bi bi-broadcast"></i>
                                             <span>
-                                                <strong>Publish now</strong>
-                                                <small>Businesses can find and request it</small>
+                                                <strong>{t('listingForm.publishNow')}</strong>
+                                                <small>{t('listingForm.publishNowHint')}</small>
                                             </span>
                                         </button>
                                         <button type="button" className={!listed ? 'is-on' : ''} onClick={() => setListed(false)} aria-pressed={!listed}>
                                             <i className="bi bi-pause-circle"></i>
                                             <span>
-                                                <strong>Keep paused</strong>
-                                                <small>Hidden until you publish it</small>
+                                                <strong>{t('listingForm.keepPaused')}</strong>
+                                                <small>{t('listingForm.keepPausedHint')}</small>
                                             </span>
                                         </button>
                                     </div>
@@ -802,9 +819,12 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                             }}
                                         />
                                         <span>
-                                            I agree that NextSpace keeps <strong>{formatRate(feeRate)} of each monthly rent</strong> my
-                                            tenants pay through the app, and transfers the rest to my bank account. Publishing is free.
-                                            {feeError && !feeChecked && <em>Accept the NextSpace fee to publish your first space.</em>}
+                                            <Trans
+                                                i18nKey="listingForm.feeAgree"
+                                                values={{ ...BRAND_VALUES, rate: formatRate(feeRate) }}
+                                                components={{ strong: <strong /> }}
+                                            />
+                                            {feeError && !feeChecked && <em>{t('listingForm.feeRequired', BRAND_VALUES)}</em>}
                                         </span>
                                     </label>
                                 )}
@@ -814,7 +834,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
 
                     <aside className="ns-lf-aside">
                         <span className="ns-lf-aside-label">
-                            <i className="bi bi-eye"></i> How businesses will see it
+                            <i className="bi bi-eye"></i> {t('listingForm.howSeen')}
                         </span>
                         <div className="ns-lf-preview" aria-hidden="true">
                             <PropertyCard property={preview} insight={insight} />
@@ -822,7 +842,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
 
                         <div className="ns-lf-quality">
                             <div className="ns-lf-quality-head">
-                                <strong>Listing quality</strong>
+                                <strong>{t('ownerHome.listingQuality')}</strong>
                                 <span className={scoreTone}>{score}%</span>
                             </div>
                             <div className="ns-lf-quality-bar">
@@ -846,7 +866,7 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                     </li>
                                 ))}
                             </ul>
-                            <small>Complete listings get more requests.</small>
+                            <small>{t('listingForm.completeHint')}</small>
                         </div>
                     </aside>
                 </div>
@@ -855,34 +875,34 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                     {isEditMode ? (
                         <>
                             <button type="button" className="ns-outline-btn" onClick={onClose}>
-                                Cancel
+                                {t('common.cancel')}
                             </button>
                             <span className="ns-lf-foot-step" />
                             <button type="button" className="ns-lf-primary" onClick={handleSubmit} disabled={saving}>
-                                {saving ? 'Saving...' : 'Save changes'}
+                                {saving ? t('common.saving') : t('profile.editModal.save')}
                             </button>
                         </>
                     ) : (
                         <>
                             {step > 0 ? (
                                 <button type="button" className="ns-outline-btn" onClick={() => goTo(step - 1)}>
-                                    <i className="bi bi-arrow-left"></i> Back
+                                    <i className="bi bi-arrow-left"></i> {t('common.back')}
                                 </button>
                             ) : (
                                 <button type="button" className="ns-outline-btn" onClick={onClose}>
-                                    Cancel
+                                    {t('common.cancel')}
                                 </button>
                             )}
                             <span className="ns-lf-foot-step">
-                                Step {step + 1} of {STEPS.length}
+                                {t('listingForm.stepOf', { step: step + 1, total: STEPS.length })}
                             </span>
                             {isLast ? (
                                 <button type="button" className="ns-lf-primary" onClick={handleSubmit} disabled={saving}>
-                                    {saving ? 'Saving...' : listed ? 'Publish space' : 'Save paused'}
+                                    {saving ? t('common.saving') : listed ? t('listingForm.publishSpace') : t('listingForm.savePaused')}
                                 </button>
                             ) : (
                                 <button type="button" className="ns-lf-primary" onClick={next}>
-                                    Next <i className="bi bi-arrow-right"></i>
+                                    {t('common.next')} <i className="bi bi-arrow-right"></i>
                                 </button>
                             )}
                         </>

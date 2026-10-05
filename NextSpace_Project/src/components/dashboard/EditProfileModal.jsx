@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabaseClient'
+import { DASH } from '../../lib/symbols'
 
 export default function EditProfileModal({ user, onClose, onUpdated }) {
+    const { t } = useTranslation()
     const meta = user.user_metadata || {}
     const [firstName, setFirstName] = useState(meta.first_name || '')
     const [lastName, setLastName] = useState(meta.last_name || '')
@@ -13,7 +16,7 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
         const first = firstName.trim()
         const last = lastName.trim()
         if (!first || !last) {
-            setErrorMsg('Please enter your first and last name.')
+            setErrorMsg(t('profile.editModal.nameRequired'))
             return
         }
 
@@ -32,7 +35,7 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
         if (dbError || !dbData || dbData.length === 0) {
             console.error('Profile: users row not updated', dbError)
             setSaving(false)
-            setErrorMsg('We could not save your changes. Check your connection and try again.')
+            setErrorMsg(t('profile.editModal.saveError'))
             return
         }
 
@@ -42,7 +45,7 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
 
         setSaving(false)
         if (authError) {
-            setErrorMsg('We could not save your changes. Check your connection and try again.')
+            setErrorMsg(t('profile.editModal.saveError'))
             return
         }
 
@@ -53,16 +56,16 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
     return (
         <div className="ns-modal-backdrop" onClick={onClose}>
             <div className="ns-modal ns-modal-form" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
 
                 <div className="ns-modal-body">
-                    <h2 className="ns-modal-form-title">Edit profile</h2>
+                    <h2 className="ns-modal-form-title">{t('profile.edit')}</h2>
                     <p className="ns-modal-form-subtitle">
                         {meta.account_type === 'property-owner'
-                            ? 'Businesses see your name on your listings and leases.'
-                            : 'Owners see your name when you apply for a space or sign a lease.'}
+                            ? t('profile.editModal.subtitleOwner')
+                            : t('profile.editModal.subtitleBusiness')}
                     </p>
 
                     {errorMsg && (
@@ -77,15 +80,15 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                                 <i className="bi bi-envelope"></i> {user.email}
                             </span>
                             <span>
-                                <i className="bi bi-person-vcard"></i> DUI {meta.dui || '—'}
+                                <i className="bi bi-person-vcard"></i> DUI {meta.dui || DASH}
                             </span>
-                            <small>Email and DUI can't be changed.</small>
+                            <small>{t('profile.editModal.fixed')}</small>
                         </div>
 
                         <div className="row g-2">
                             <div className="col-6">
                                 <div className="ns-mb-field">
-                                    <label className="ns-label" htmlFor="editFirstName">First name</label>
+                                    <label className="ns-label" htmlFor="editFirstName">{t('auth.signup.firstName')}</label>
                                     <div className="ns-input-group input-group">
                                         <span className="input-group-text"><i className="bi bi-person"></i></span>
                                         <input
@@ -97,7 +100,7 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                             </div>
                             <div className="col-6">
                                 <div className="ns-mb-field">
-                                    <label className="ns-label" htmlFor="editLastName">Last name</label>
+                                    <label className="ns-label" htmlFor="editLastName">{t('auth.signup.lastName')}</label>
                                     <div className="ns-input-group input-group">
                                         <span className="input-group-text"><i className="bi bi-person"></i></span>
                                         <input
@@ -110,7 +113,7 @@ export default function EditProfileModal({ user, onClose, onUpdated }) {
                         </div>
 
                         <button type="submit" className="ns-submit-btn" disabled={saving}>
-                            {saving ? 'Saving...' : 'Save changes'}
+                            {saving ? t('common.saving') : t('profile.editModal.save')}
                         </button>
                     </form>
                 </div>

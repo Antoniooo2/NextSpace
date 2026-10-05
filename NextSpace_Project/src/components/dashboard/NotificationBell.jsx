@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabaseClient'
-import { markNotificationsRead, notificationKind, notificationTarget, timeLabel } from '../../lib/notificationKinds'
+import { markNotificationsRead, notificationKind, notificationTarget, notificationTitle, timeLabel } from '../../lib/notificationKinds'
 import './notifications.css'
 
 // The bell in the top bar: the unread dot, and on click the five latest
 // notifications without leaving the current screen.
 export default function NotificationBell({ unreadCount, liveTick, onNavigate, onRead }) {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const [items, setItems] = useState([])
     const [loading, setLoading] = useState(false)
@@ -59,7 +61,7 @@ export default function NotificationBell({ unreadCount, liveTick, onNavigate, on
             <button
                 type="button"
                 className="ns-dash-icon-btn"
-                aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+                aria-label={unreadCount > 0 ? t('notifications.bell.labelUnread', { count: unreadCount }) : t('notifications.bell.label')}
                 aria-expanded={open}
                 onClick={() => setOpen((v) => !v)}
             >
@@ -68,15 +70,15 @@ export default function NotificationBell({ unreadCount, liveTick, onNavigate, on
             </button>
 
             {open && (
-                <div className="ns-bell-panel" role="dialog" aria-label="Latest notifications">
+                <div className="ns-bell-panel" role="dialog" aria-label={t('notifications.bell.latest')}>
                     <header>
-                        <strong>Notifications</strong>
-                        {unreadCount > 0 && <span>{unreadCount} unread</span>}
+                        <strong>{t('notifications.bell.label')}</strong>
+                        {unreadCount > 0 && <span>{t('notifications.unreadCount', { count: unreadCount })}</span>}
                     </header>
                     {loading && items.length === 0 ? (
-                        <p className="ns-bell-empty">Loading...</p>
+                        <p className="ns-bell-empty">{t('common.loading')}</p>
                     ) : items.length === 0 ? (
-                        <p className="ns-bell-empty">You're all caught up.</p>
+                        <p className="ns-bell-empty">{t('notifications.bell.caughtUp')}</p>
                     ) : (
                         <ul>
                             {items.map((n) => {
@@ -88,10 +90,10 @@ export default function NotificationBell({ unreadCount, liveTick, onNavigate, on
                                                 <i className={`bi ${meta.icon}`}></i>
                                             </span>
                                             <span className="ns-bell-text">
-                                                <strong>{n.title}</strong>
+                                                <strong>{notificationTitle(n)}</strong>
                                                 <small>{timeLabel(n.created_at)}</small>
                                             </span>
-                                            {!n.read && <span className="ns-nt-dot" aria-label="Unread" />}
+                                            {!n.read && <span className="ns-nt-dot" aria-label={t('notifications.unread')} />}
                                         </button>
                                     </li>
                                 )
@@ -106,7 +108,7 @@ export default function NotificationBell({ unreadCount, liveTick, onNavigate, on
                             onNavigate('notifications')
                         }}
                     >
-                        See all notifications <i className="bi bi-arrow-right"></i>
+                        {t('notifications.bell.seeAll')} <i className="bi bi-arrow-right"></i>
                     </button>
                 </div>
             )}

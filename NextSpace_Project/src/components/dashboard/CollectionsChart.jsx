@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { money } from '../../lib/money'
 
 // Two-series ordinal pair from one blue ramp (validated with the dataviz
@@ -35,6 +36,7 @@ function barPath(x, y, w, h) {
 
 // months: [{ key: 'YYYY-MM', label: 'Sep', expected, collected }]
 export default function CollectionsChart({ months }) {
+    const { t } = useTranslation()
     const [hover, setHover] = useState(null)
     const [WIDTH, setWidth] = useState(640)
     const plotRef = useRef(null)
@@ -69,10 +71,10 @@ export default function CollectionsChart({ months }) {
         <div className="ns-collect-chart">
             <div className="ns-collect-legend" aria-hidden="true">
                 <span>
-                    <i style={{ background: EXPECTED_COLOR }} /> Expected
+                    <i style={{ background: EXPECTED_COLOR }} /> {t('docs.reports.expected')}
                 </span>
                 <span>
-                    <i style={{ background: COLLECTED_COLOR }} /> Collected
+                    <i style={{ background: COLLECTED_COLOR }} /> {t('docs.reports.collected')}
                 </span>
             </div>
 
@@ -82,20 +84,20 @@ export default function CollectionsChart({ months }) {
                     width={WIDTH}
                     height={HEIGHT}
                     role="img"
-                    aria-label="Rent expected versus collected over the last six months"
+                    aria-label={t('collectionsChart.aria')}
                     onMouseLeave={() => setHover(null)}
                 >
-                    {ticks.map((t) => (
-                        <g key={t}>
+                    {ticks.map((tick) => (
+                        <g key={tick}>
                             <line
                                 x1={PAD.left}
                                 x2={WIDTH - PAD.right}
-                                y1={y(t)}
-                                y2={y(t)}
-                                className={t === 0 ? 'ns-collect-baseline' : 'ns-collect-grid'}
+                                y1={y(tick)}
+                                y2={y(tick)}
+                                className={tick === 0 ? 'ns-collect-baseline' : 'ns-collect-grid'}
                             />
-                            <text x={PAD.left - 8} y={y(t) + 4} textAnchor="end" className="ns-collect-tick">
-                                {compactMoney(t)}
+                            <text x={PAD.left - 8} y={y(tick) + 4} textAnchor="end" className="ns-collect-tick">
+                                {compactMoney(tick)}
                             </text>
                         </g>
                     ))}
@@ -132,7 +134,7 @@ export default function CollectionsChart({ months }) {
                                     onFocus={() => setHover(i)}
                                     onBlur={() => setHover(null)}
                                     tabIndex={0}
-                                    aria-label={`${m.fullLabel}: expected ${money(m.expected)}, collected ${money(m.collected)}`}
+                                    aria-label={t('collectionsChart.barAria', { month: m.fullLabel, expected: money(m.expected), collected: money(m.collected) })}
                                 />
                             </g>
                         )
@@ -149,25 +151,25 @@ export default function CollectionsChart({ months }) {
                     >
                         <strong>{hovered.fullLabel}</strong>
                         <span>
-                            <i style={{ background: EXPECTED_COLOR }} /> Expected <b>{money(hovered.expected)}</b>
+                            <i style={{ background: EXPECTED_COLOR }} /> {t('docs.reports.expected')} <b>{money(hovered.expected)}</b>
                         </span>
                         <span>
-                            <i style={{ background: COLLECTED_COLOR }} /> Collected <b>{money(hovered.collected)}</b>
+                            <i style={{ background: COLLECTED_COLOR }} /> {t('docs.reports.collected')} <b>{money(hovered.collected)}</b>
                         </span>
                         {hovered.expected > 0 && (
-                            <em>{Math.round((hovered.collected / hovered.expected) * 100)}% collected</em>
+                            <em>{t('collectionsChart.pctCollected', { pct: Math.round((hovered.collected / hovered.expected) * 100) })}</em>
                         )}
                     </div>
                 )}
             </div>
 
             <table className="visually-hidden">
-                <caption>Rent expected versus collected, last six months</caption>
+                <caption>{t('collectionsChart.caption')}</caption>
                 <thead>
                     <tr>
-                        <th>Month</th>
-                        <th>Expected</th>
-                        <th>Collected</th>
+                        <th>{t('docs.reports.month')}</th>
+                        <th>{t('docs.reports.expected')}</th>
+                        <th>{t('docs.reports.collected')}</th>
                     </tr>
                 </thead>
                 <tbody>

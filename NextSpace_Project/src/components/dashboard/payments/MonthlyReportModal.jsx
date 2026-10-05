@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../../../lib/brand'
 import { supabase } from '../../../lib/supabaseClient'
 import { todayInElSalvador } from '../../../lib/rentSchedule'
 import { monthKeyShift, monthLabel } from '../../../lib/leaseInsights'
@@ -7,6 +9,7 @@ import { downloadOwnerMonthlyReportPdf } from '../../../lib/paymentReports'
 // Owner picks a month and whether Rony should write the analysis paragraph,
 // then downloads the monthly rent report PDF.
 export default function MonthlyReportModal({ leases, allRows, ownerName, feeRate, onClose }) {
+    const { t } = useTranslation()
     const current = todayInElSalvador().slice(0, 7)
     const months = Array.from({ length: 12 }, (_, i) => monthKeyShift(current, -i))
     const [monthKey, setMonthKey] = useState(current)
@@ -37,21 +40,21 @@ export default function MonthlyReportModal({ leases, allRows, ownerName, feeRate
         setNote('')
         let summary = null
         if (withRony) {
-            setBusy('Rony is writing the analysis...')
+            setBusy(t('reportModal.writing', BRAND_VALUES))
             summary = await fetchSummary()
         }
-        setBusy('Building the PDF...')
+        setBusy(t('reportModal.building'))
         try {
             await downloadOwnerMonthlyReportPdf({ monthKey, leases, allRows, ownerName, summary, feeRate })
             if (withRony && !summary) {
-                setNote("Rony wasn't available, so the report was created without the analysis paragraph.")
+                setNote(t('reportModal.noRony', BRAND_VALUES))
                 setBusy('')
                 return
             }
             onClose()
         } catch (err) {
             console.error('Could not build the report', err)
-            setNote('Could not create the report. Please try again.')
+            setNote(t('reportModal.error'))
         } finally {
             setBusy('')
         }
@@ -63,21 +66,20 @@ export default function MonthlyReportModal({ leases, allRows, ownerName, feeRate
                 className="ns-modal ns-modal-form ns-notice-modal"
                 role="dialog"
                 aria-modal="true"
-                aria-label="Monthly rent report"
+                aria-label={t('reportModal.title')}
                 onClick={(e) => e.stopPropagation()}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
                 <div className="ns-modal-body">
-                    <h2 className="ns-modal-form-title">Monthly rent report</h2>
+                    <h2 className="ns-modal-form-title">{t('reportModal.title')}</h2>
                     <p className="ns-modal-form-subtitle">
-                        A PDF with the month's totals, a 6-month chart, each property, late rent, what's coming up and
-                        leases ending soon.
+                        {t('reportModal.subtitle')}
                     </p>
 
                     <label className="ns-label" htmlFor="reportMonth">
-                        Month
+                        {t('docs.reports.month')}
                     </label>
                     <select
                         id="reportMonth"
@@ -88,7 +90,7 @@ export default function MonthlyReportModal({ leases, allRows, ownerName, feeRate
                         {months.map((key) => (
                             <option key={key} value={key}>
                                 {monthLabel(key, 'long')}
-                                {key === current ? ' (this month)' : ''}
+                                {key === current ? ` (${t('reportModal.thisMonth')})` : ''}
                             </option>
                         ))}
                     </select>
@@ -97,16 +99,16 @@ export default function MonthlyReportModal({ leases, allRows, ownerName, feeRate
                         <input type="checkbox" checked={withRony} onChange={(e) => setWithRony(e.target.checked)} />
                         <span>
                             <strong>
-                                <i className="bi bi-stars"></i> Include Rony's analysis
+                                <i className="bi bi-stars"></i> {t('reportModal.include', BRAND_VALUES)}
                             </strong>
-                            <small>A short paragraph comparing the month, naming who is late and what to do next.</small>
+                            <small>{t('reportModal.includeHint')}</small>
                         </span>
                     </label>
 
                     {note && <p className="ns-notice-note">{note}</p>}
 
                     <button type="button" className="ns-submit-btn" onClick={generate} disabled={Boolean(busy)}>
-                        <i className="bi bi-file-earmark-pdf"></i> {busy || 'Download report'}
+                        <i className="bi bi-file-earmark-pdf"></i> {busy || t('reportModal.download')}
                     </button>
                 </div>
             </div>

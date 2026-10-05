@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../lib/brand'
 import { supabase } from '../lib/supabaseClient'
 import DashboardLayout from '../components/dashboard/DashboardLayout'
 import BusinessHome from '../components/dashboard/BusinessHome'
@@ -16,12 +18,13 @@ import BusinessContracts from '../components/dashboard/BusinessContracts'
 import Notifications from '../components/dashboard/Notifications'
 
 const BACK_LABEL = {
-    home: 'Back to listings',
-    profile: 'Back to profile',
-    advisor: 'Back to Rony',
+    home: 'dashboard.back.listings',
+    profile: 'dashboard.back.profile',
+    advisor: 'dashboard.back.advisor',
 }
 
 export default function Dashboard() {
+    const { t } = useTranslation()
     const navigate = useNavigate()
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -167,14 +170,14 @@ export default function Dashboard() {
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading your space...</p>
+                <p>{t('dashboard.loading')}</p>
             </div>
         )
     }
 
     const meta = user.user_metadata || {}
     const accountType = meta.account_type === 'property-owner' ? 'property-owner' : 'business'
-    const firstName = meta.first_name || user.email?.split('@')[0] || 'there'
+    const firstName = meta.first_name || user.email?.split('@')[0] || t('dashboard.there')
     const lastName = meta.last_name || ''
 
     const renderContent = () => {
@@ -185,7 +188,7 @@ export default function Dashboard() {
                     user={user}
                     accountType={accountType}
                     onBack={() => setViewingProperty(null)}
-                    backLabel={BACK_LABEL[viewingFrom] || 'Back'}
+                    backLabel={BACK_LABEL[viewingFrom] ? t(BACK_LABEL[viewingFrom], BRAND_VALUES) : t('common.back')}
                     onAskRony={handleAskRony}
                     onViewProperty={setViewingProperty}
                     onNavigate={handleSectionChange}

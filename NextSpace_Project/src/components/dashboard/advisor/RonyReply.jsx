@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { formatTime } from '../../../lib/format'
 import RonyAvatar from '../../RonyAvatar'
 
 const TONE_ICON = { good: 'bi-check-circle-fill', warn: 'bi-exclamation-circle-fill', bad: 'bi-exclamation-triangle-fill', info: 'bi-dot' }
@@ -21,13 +23,14 @@ export function RichText({ text }) {
 
 function timeOf(at) {
     if (!at) return ''
-    return new Date(at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    return formatTime(at)
 }
 
 // One answer from Rony: the headline (typed out when it's new), then key
 // figures, short points, buttons to act, anything extra the turn carries
 // (results, charts, drafts) and follow-up questions.
 export default function RonyReply({ item, onLink, onFollowUp, showFollowUps = true, disabled, onSettled, children }) {
+    const { t } = useTranslation()
     const text = item.text || ''
     const [shown, setShown] = useState(item.fresh ? 0 : text.length)
     const [copied, setCopied] = useState(false)
@@ -126,8 +129,8 @@ export default function RonyReply({ item, onLink, onFollowUp, showFollowUps = tr
 
                         <div className="rony-meta">
                             {item.at && <span>{timeOf(item.at)}</span>}
-                            <button type="button" onClick={copy} aria-label="Copy answer">
-                                <i className={`bi ${copied ? 'bi-check2' : 'bi-copy'}`}></i> {copied ? 'Copied' : 'Copy'}
+                            <button type="button" onClick={copy} aria-label={t('advisor.reply.copyAnswer')}>
+                                <i className={`bi ${copied ? 'bi-check2' : 'bi-copy'}`}></i> {copied ? t('advisor.reply.copied') : t('advisor.reply.copy')}
                             </button>
                         </div>
 

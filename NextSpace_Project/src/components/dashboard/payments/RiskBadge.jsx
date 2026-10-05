@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../../../lib/brand'
 
 const ICON = {
     low: 'bi-shield-check',
@@ -10,6 +12,7 @@ const ICON = {
 // Tenant payment-risk badge. Clicking it explains the reasons and offers to
 // ask Rony for a deeper read.
 export default function RiskBadge({ risk, onAskRony }) {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const ref = useRef(null)
 
@@ -32,13 +35,13 @@ export default function RiskBadge({ risk, onAskRony }) {
                     setOpen((v) => !v)
                 }}
                 aria-expanded={open}
-                title="Why this rating?"
+                title={t('riskBadge.why')}
             >
                 <i className={`bi ${ICON[risk.level]}`}></i> {risk.label}
             </button>
             {open && (
                 <span className="ns-risk-pop" role="dialog" onClick={(e) => e.stopPropagation()}>
-                    <strong>Payment risk: {risk.label}</strong>
+                    <strong>{t('riskBadge.title', { label: risk.label })}</strong>
                     <ul>
                         {risk.reasons.map((r) => (
                             <li key={r}>{r}</li>
@@ -53,7 +56,7 @@ export default function RiskBadge({ risk, onAskRony }) {
                                 onAskRony()
                             }}
                         >
-                            <i className="bi bi-stars"></i> Ask Rony what to do
+                            <i className="bi bi-stars"></i> {t('riskBadge.ask', BRAND_VALUES)}
                         </button>
                     )}
                 </span>

@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
 import { supabase } from '../../lib/supabaseClient'
+import { propertyTypeLabel, serviceLabel } from '../../lib/displayValues'
+import { BRAND_VALUES } from '../../lib/brand'
+import { EN_DASH, QUOTE_CLOSE, QUOTE_OPEN, SQ_M } from '../../lib/symbols'
 import PropertyCard from './PropertyCard'
 import { PROPERTY_TYPES } from '../../lib/propertyTypes'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
@@ -15,10 +20,10 @@ import './listings.css'
 const PAGE_SIZE = 9
 
 const SORTS = [
-    { id: 'newest', label: 'Newest first' },
-    { id: 'price-asc', label: 'Price: low to high' },
-    { id: 'price-desc', label: 'Price: high to low' },
-    { id: 'size-desc', label: 'Size: largest first' },
+    { id: 'newest', label: 'marketplace.sort.newest' },
+    { id: 'price-asc', label: 'marketplace.sort.priceAsc' },
+    { id: 'price-desc', label: 'marketplace.sort.priceDesc' },
+    { id: 'size-desc', label: 'marketplace.sort.sizeDesc' },
 ]
 
 const EMPTY_FILTERS = { department: '', municipality: '', minPrice: '', maxPrice: '', minArea: '', maxArea: '', services: [] }
@@ -33,6 +38,7 @@ function matchesText(property, query) {
 // Marketplace: every listed space, with location/price/size/amenity filters,
 // sorting, and the active filters as chips you can remove one by one.
 export default function BusinessHome({ user, search, onSearchChange, onViewProperty, onAskRony, onNavigate }) {
+    const { t } = useTranslation()
     const [properties, setProperties] = useState([])
     const [serviceCatalog, setServiceCatalog] = useState([])
     const [savedIds, setSavedIds] = useState(() => new Set())
@@ -77,8 +83,8 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                 const message = error.message || ''
                 setLoadError(
                     message.toLowerCase().includes('fetch') || message.toLowerCase().includes('network')
-                        ? 'Could not reach the server. Check your internet connection and try again.'
-                        : message || 'Something went wrong while loading properties.'
+                        ? i18n.t('errors.network')
+                        : message || i18n.t('marketplace.loadError')
                 )
                 setLoading(false)
                 return
@@ -159,19 +165,20 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
     if (filters.minPrice || filters.maxPrice) {
         chips.push({
             id: 'price',
-            label: `$${filters.minPrice || '0'} – ${filters.maxPrice ? `$${filters.maxPrice}` : 'any'}`,
+            label: `$${filters.minPrice || '0'} ${EN_DASH} ${filters.maxPrice ? `$${filters.maxPrice}` : t('marketplace.any')}`,
             clear: () => setFilters((p) => ({ ...p, minPrice: '', maxPrice: '' })),
         })
     }
     if (filters.minArea || filters.maxArea) {
         chips.push({
             id: 'area',
-            label: `${filters.minArea || '0'} – ${filters.maxArea || 'any'} m²`,
+            label: `${filters.minArea || '0'} ${EN_DASH} ${filters.maxArea || t('marketplace.any')} ${SQ_M}`,
             clear: () => setFilters((p) => ({ ...p, minArea: '', maxArea: '' })),
         })
     }
     for (const id of filters.services) {
-        const name = serviceCatalog.find((s) => s.service_id === id)?.service_name || 'Amenity'
+        const found = serviceCatalog.find((s) => s.service_id === id)?.service_name
+        const name = found ? serviceLabel(found) : t('marketplace.amenity')
         chips.push({ id: `svc-${id}`, label: name, clear: () => setFilter('services', filters.services.filter((x) => x !== id)) })
     }
 
@@ -220,14 +227,15 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
             filters.services.length
     )
     const serviceNames = Object.fromEntries(serviceCatalog.map((sv) => [sv.service_id, sv.service_name]))
+    const serviceLabels = Object.fromEntries(serviceCatalog.map((sv) => [sv.service_id, serviceLabel(sv.service_name)]))
     const sameSearch = (a, b) => JSON.stringify(a) === JSON.stringify(b)
     const alreadySaved = savedSearches.some((sv) => sameSearch(sv.filters, currentSearch))
 
     const saveCurrentSearch = async () => {
         try {
-            const created = await createSavedSearch(describeSearch(currentSearch, serviceNames), currentSearch)
+            const created = await createSavedSearch(describeSearch(currentSearch, serviceNames, { stored: true }), currentSearch)
             setSavedSearches((prev) => [created, ...prev])
-            setNotice("Search saved. We'll notify you when a new space matches it.")
+            setNotice(t('marketplace.searchSaved'))
         } catch (err) {
             setNotice(err.message)
         }
@@ -270,11 +278,11 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
             <>
                 <div className="ns-dash-header">
                     <div>
-                        <h1>Marketplace</h1>
-                        <p>Commercial spaces for rent across El Salvador.</p>
+                        <h1>{t('marketplace.title')}</h1>
+                        <p>{t('marketplace.subtitleShort')}</p>
                     </div>
                 </div>
-                <div className="ns-mk-grid" aria-busy="true" aria-label="Loading spaces">
+                <div className="ns-mk-grid" aria-busy="true" aria-label={t('marketplace.loading')}>
                     {Array.from({ length: 6 }, (_, i) => (
                         <div key={i} className="ns-mk-skeleton">
                             <div className="ns-sk-media" />
@@ -295,8 +303,8 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
         <>
             <div className="ns-dash-header">
                 <div>
-                    <h1>Marketplace</h1>
-                    <p>Commercial spaces for rent across El Salvador. Request a lease and the owner answers in Contracts.</p>
+                    <h1>{t('marketplace.title')}</h1>
+                    <p>{t('marketplace.subtitle')}</p>
                 </div>
                 <div className="ns-dash-header-actions">
                     <div className="ns-mk-alerts">
@@ -306,25 +314,25 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                             onClick={() => setAlertsOpen((v) => !v)}
                             aria-expanded={alertsOpen}
                         >
-                            <i className="bi bi-bell"></i> Alerts
+                            <i className="bi bi-bell"></i> {t('marketplace.alerts')}
                             {savedSearches.length > 0 && <span className="ns-filter-badge">{savedSearches.length}</span>}
                         </button>
                         {alertsOpen && (
                             <div className="ns-mk-alerts-panel">
-                                <strong>Saved searches</strong>
-                                <p>You get a notification when a new space matches one of these.</p>
+                                <strong>{t('marketplace.savedSearches')}</strong>
+                                <p>{t('marketplace.savedSearchesHint')}</p>
                                 {savedSearches.length === 0 ? (
                                     <p className="ns-pay-muted mb-0">
-                                        None yet. Set filters or a category and tap <em>Notify me</em>.
+                                        {t('marketplace.noSavedSearches')} <em>{t('marketplace.notifyMeShort')}</em>.
                                     </p>
                                 ) : (
                                     <ul>
                                         {savedSearches.map((sv) => (
                                             <li key={sv.search_id}>
                                                 <button type="button" className="ns-mk-alert-apply" onClick={() => applySearch(sv)}>
-                                                    <i className="bi bi-search"></i> {sv.label}
+                                                    <i className="bi bi-search"></i> {describeSearch(sv.filters || {}, serviceLabels)}
                                                 </button>
-                                                <button type="button" className="ns-mk-alert-del" aria-label="Delete saved search" onClick={() => removeSearch(sv)}>
+                                                <button type="button" className="ns-mk-alert-del" aria-label={t('marketplace.deleteSavedSearch')} onClick={() => removeSearch(sv)}>
                                                     <i className="bi bi-trash"></i>
                                                 </button>
                                             </li>
@@ -340,7 +348,7 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                         onClick={() => setShowFilters((v) => !v)}
                         aria-expanded={showFilters}
                     >
-                        <i className="bi bi-sliders"></i> Filters
+                        <i className="bi bi-sliders"></i> {t('marketplace.filters')}
                         {chips.length > 0 && <span className="ns-filter-badge">{chips.length}</span>}
                     </button>
                 </div>
@@ -355,12 +363,12 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
             {notice && (
                 <div className="alert alert-success d-flex justify-content-between align-items-center gap-2 py-2" role="status">
                     <span>{notice}</span>
-                    <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setNotice('')} />
+                    <button type="button" className="btn-close" aria-label={t('common.dismiss')} onClick={() => setNotice('')} />
                 </div>
             )}
 
-            <div className="ns-mk-cats" role="tablist" aria-label="Type of space">
-                {[{ id: 'all', label: 'All spaces', icon: 'bi-grid' }, ...PROPERTY_TYPES.map((t) => ({ id: t, label: t, icon: typeIcon(t) }))].map(
+            <div className="ns-mk-cats" role="tablist" aria-label={t('marketplace.typeOfSpace')}>
+                {[{ id: 'all', label: t('marketplace.allSpaces'), icon: 'bi-grid' }, ...PROPERTY_TYPES.map((type) => ({ id: type, label: propertyTypeLabel(type), icon: typeIcon(type) }))].map(
                     (cat) => (
                         <button
                             type="button"
@@ -382,9 +390,9 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
             </div>
 
             {showFilters && (
-                <section className="ns-mk-filters" aria-label="Filters">
+                <section className="ns-mk-filters" aria-label={t('marketplace.filters')}>
                     <div className="ns-mk-filter">
-                        <label htmlFor="mkDept">Location</label>
+                        <label htmlFor="mkDept">{t('marketplace.location')}</label>
                         <div className="ns-mk-filter-row">
                             <select
                                 id="mkDept"
@@ -392,7 +400,7 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                                 value={filters.department}
                                 onChange={(e) => setFilters((p) => ({ ...p, department: e.target.value, municipality: '' }))}
                             >
-                                <option value="">Any department</option>
+                                <option value="">{t('marketplace.anyDepartment')}</option>
                                 {EL_SALVADOR_DEPARTMENT_NAMES.map((d) => (
                                     <option key={d} value={d}>
                                         {d}
@@ -401,12 +409,12 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                             </select>
                             <select
                                 className="form-select"
-                                aria-label="Municipality"
+                                aria-label={t('marketplace.municipality')}
                                 value={filters.municipality}
                                 onChange={(e) => setFilter('municipality', e.target.value)}
                                 disabled={!filters.department}
                             >
-                                <option value="">Any municipality</option>
+                                <option value="">{t('marketplace.anyMunicipality')}</option>
                                 {municipalities.map((m) => (
                                     <option key={m} value={m}>
                                         {m}
@@ -416,14 +424,14 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                         </div>
                     </div>
                     <div className="ns-mk-filter">
-                        <label>Monthly rent (USD)</label>
+                        <label>{t('marketplace.monthlyRentUsd')}</label>
                         <div className="ns-mk-filter-row">
                             <input
                                 type="number"
                                 min="0"
                                 className="form-control"
-                                placeholder="Min"
-                                aria-label="Minimum rent"
+                                placeholder={t('marketplace.min')}
+                                aria-label={t('marketplace.minRent')}
                                 value={filters.minPrice}
                                 onChange={(e) => setFilter('minPrice', e.target.value)}
                             />
@@ -431,22 +439,22 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                                 type="number"
                                 min="0"
                                 className="form-control"
-                                placeholder="Max"
-                                aria-label="Maximum rent"
+                                placeholder={t('marketplace.max')}
+                                aria-label={t('marketplace.maxRent')}
                                 value={filters.maxPrice}
                                 onChange={(e) => setFilter('maxPrice', e.target.value)}
                             />
                         </div>
                     </div>
                     <div className="ns-mk-filter">
-                        <label>Size (m²)</label>
+                        <label>{t('marketplace.size', { unit: SQ_M })}</label>
                         <div className="ns-mk-filter-row">
                             <input
                                 type="number"
                                 min="0"
                                 className="form-control"
-                                placeholder="Min"
-                                aria-label="Minimum size"
+                                placeholder={t('marketplace.min')}
+                                aria-label={t('marketplace.minSize')}
                                 value={filters.minArea}
                                 onChange={(e) => setFilter('minArea', e.target.value)}
                             />
@@ -454,8 +462,8 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                                 type="number"
                                 min="0"
                                 className="form-control"
-                                placeholder="Max"
-                                aria-label="Maximum size"
+                                placeholder={t('marketplace.max')}
+                                aria-label={t('marketplace.maxSize')}
                                 value={filters.maxArea}
                                 onChange={(e) => setFilter('maxArea', e.target.value)}
                             />
@@ -463,7 +471,7 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                     </div>
                     {serviceCatalog.length > 0 && (
                         <div className="ns-mk-filter ns-mk-filter-wide">
-                            <label>Must have</label>
+                            <label>{t('marketplace.mustHave')}</label>
                             <div className="ns-mk-amenities">
                                 {serviceCatalog
                                     .filter((s) => s.service_name !== 'Others')
@@ -475,7 +483,7 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                                             aria-pressed={filters.services.includes(s.service_id)}
                                             onClick={() => toggleService(s.service_id)}
                                         >
-                                            <i className={`bi ${SERVICE_ICON[s.service_name] || 'bi-check2'}`}></i> {s.service_name}
+                                            <i className={`bi ${SERVICE_ICON[s.service_name] || 'bi-check2'}`}></i> {serviceLabel(s.service_name)}
                                         </button>
                                     ))}
                             </div>
@@ -487,36 +495,36 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
             <div className="ns-mk-resultbar">
                 <div className="ns-mk-resultbar-left">
                     <strong>
-                        {results.length} {results.length === 1 ? 'space' : 'spaces'}
+                        {t('marketplace.spaces', { count: results.length })}
                     </strong>
-                    {search.trim() && <span className="ns-mk-searching">for “{search.trim()}”</span>}
+                    {search.trim() && <span className="ns-mk-searching">{t('marketplace.forQuery', { query: `${QUOTE_OPEN}${search.trim()}${QUOTE_CLOSE}` })}</span>}
                     {chips.map((chip) => (
-                        <button type="button" key={chip.id} className="ns-mk-chip" onClick={chip.clear} aria-label={`Remove filter ${chip.label}`}>
+                        <button type="button" key={chip.id} className="ns-mk-chip" onClick={chip.clear} aria-label={t('marketplace.removeFilter', { label: chip.label })}>
                             {chip.label} <i className="bi bi-x"></i>
                         </button>
                     ))}
                     {(chips.length > 0 || category !== 'all') && (
                         <button type="button" className="ns-link-btn" onClick={clearAll}>
-                            Clear all
+                            {t('marketplace.clearAll')}
                         </button>
                     )}
                     {hasCriteria &&
                         (alreadySaved ? (
                             <span className="ns-mk-notify is-on">
-                                <i className="bi bi-bell-fill"></i> Alert on
+                                <i className="bi bi-bell-fill"></i> {t('marketplace.alertOn')}
                             </span>
                         ) : (
                             <button type="button" className="ns-mk-notify" onClick={saveCurrentSearch}>
-                                <i className="bi bi-bell"></i> Notify me of new matches
+                                <i className="bi bi-bell"></i> {t('marketplace.notifyMe')}
                             </button>
                         ))}
                 </div>
                 <label className="ns-mk-sort">
-                    <span>Sort</span>
+                    <span>{t('marketplace.sortLabel')}</span>
                     <select className="form-select" value={sort} onChange={(e) => setSort(e.target.value)}>
                         {SORTS.map((s) => (
                             <option key={s.id} value={s.id}>
-                                {s.label}
+                                {t(s.label)}
                             </option>
                         ))}
                     </select>
@@ -526,21 +534,21 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
             {visible.length === 0 ? (
                 <div className="ns-empty-state">
                     <i className="bi bi-search"></i>
-                    <h3>No spaces match</h3>
-                    <p>Try another area or remove a filter.</p>
+                    <h3>{t('marketplace.empty.title')}</h3>
+                    <p>{t('marketplace.empty.text')}</p>
                     <div className="d-flex gap-2 justify-content-center flex-wrap">
                         {(chips.length > 0 || category !== 'all') && (
                             <button type="button" className="ns-outline-btn" onClick={clearAll}>
-                                Clear filters
+                                {t('marketplace.clearFilters')}
                             </button>
                         )}
                         {onAskRony && (
                             <button
                                 type="button"
                                 className="ns-filled-btn"
-                                onClick={() => onAskRony({ text: search.trim() ? `Find me a space: ${search.trim()}` : 'Help me find a commercial space for my business.' })}
+                                onClick={() => onAskRony({ text: search.trim() ? t('marketplace.askRonyQuery', { query: search.trim() }) : t('marketplace.askRonyDefault') })}
                             >
-                                <i className="bi bi-stars"></i> Describe it to Rony
+                                <i className="bi bi-stars"></i> {t('marketplace.describeToRony', BRAND_VALUES)}
                             </button>
                         )}
                     </div>
@@ -568,33 +576,33 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
             {visibleCount < results.length && (
                 <div className="ns-load-more">
                     <button type="button" className="ns-outline-btn" onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}>
-                        Show more spaces <i className="bi bi-chevron-down"></i>
+                        {t('marketplace.showMore')} <i className="bi bi-chevron-down"></i>
                     </button>
                     <span>
-                        Showing {visible.length} of {results.length}
+                        {t('marketplace.showing', { shown: visible.length, total: results.length })}
                     </span>
                 </div>
             )}
 
             {compared.length > 0 && (
-                <div className="ns-cmp-tray" role="region" aria-label="Spaces to compare">
+                <div className="ns-cmp-tray" role="region" aria-label={t('marketplace.compare.tray')}>
                     <div className="ns-cmp-tray-items">
                         {compared.map((p) => (
                             <span key={p.property_id}>
                                 {p.property_name}
-                                <button type="button" aria-label={`Remove ${p.property_name}`} onClick={() => toggleCompare(p)}>
+                                <button type="button" aria-label={t('marketplace.compare.remove', { name: p.property_name })} onClick={() => toggleCompare(p)}>
                                     <i className="bi bi-x"></i>
                                 </button>
                             </span>
                         ))}
-                        {compared.length < 2 && <em>Add one more to compare</em>}
+                        {compared.length < 2 && <em>{t('marketplace.compare.addOne')}</em>}
                     </div>
                     <div className="ns-cmp-tray-actions">
                         <button type="button" className="ns-link-btn" onClick={() => setCompareIds([])}>
-                            Clear
+                            {t('marketplace.compare.clear')}
                         </button>
                         <button type="button" className="ns-filled-btn" disabled={compared.length < 2} onClick={() => setCompareOpen(true)}>
-                            Compare {compared.length}
+                            {t('marketplace.compare.button', { count: compared.length })}
                         </button>
                     </div>
                 </div>

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Trans, useTranslation } from 'react-i18next'
+import { DOT, SQ_M } from '../../lib/symbols'
 import { supabase } from '../../lib/supabaseClient'
 import { useOwnerProperties } from '../../hooks/useOwnerProperties'
 import NewPropertyModal from './NewPropertyModal'
@@ -9,10 +11,10 @@ import { money, offerExpiresIn, personName } from '../../lib/contracts'
 import './listings.css'
 
 const TABS = [
-    { id: 'all', label: 'All' },
-    { id: 'leased', label: 'Leased' },
-    { id: 'available', label: 'Not leased' },
-    { id: 'attention', label: 'Needs attention' },
+    { id: 'all', label: 'ownerHome.tabs.all' },
+    { id: 'leased', label: 'ownerHome.tabs.leased' },
+    { id: 'available', label: 'ownerHome.tabs.available' },
+    { id: 'attention', label: 'ownerHome.tabs.attention' },
 ]
 
 // What is going on with one space right now, from its contracts.
@@ -41,21 +43,26 @@ function needsAttention(row) {
 }
 
 function StatusLine({ property, status, onOpenContracts }) {
+    const { t } = useTranslation()
     const { active, offered, pending } = status
     if (active) {
         const flag = active.termination_requested_at
-            ? 'Early end requested'
+            ? t('ownerHome.flags.earlyEnd')
             : active.renewal_requested_at
-              ? 'Renewal requested'
+              ? t('ownerHome.flags.renewalRequested')
               : active.renewal_offered_at
-                ? 'Renewal offered'
+                ? t('ownerHome.flags.renewalOffered')
                 : null
         return (
             <button type="button" className="ns-own-status tone-info" onClick={() => onOpenContracts(active.contract_id)}>
                 <i className="bi bi-key"></i>
                 <span>
-                    Leased to <strong>{personName(active.users)}</strong> until {formatDueDate(active.end_date)}
-                    {flag && <em> · {flag}</em>}
+                    <Trans
+                        i18nKey="ownerHome.leasedTo"
+                        values={{ name: personName(active.users), date: formatDueDate(active.end_date) }}
+                        components={{ strong: <strong /> }}
+                    />
+                    {flag && <em> {DOT} {flag}</em>}
                 </span>
                 <i className="bi bi-chevron-right"></i>
             </button>
@@ -66,7 +73,12 @@ function StatusLine({ property, status, onOpenContracts }) {
             <button type="button" className="ns-own-status tone-warning" onClick={() => onOpenContracts(offered.contract_id)}>
                 <i className="bi bi-pen"></i>
                 <span>
-                    Offer awaiting <strong>{personName(offered.users)}</strong>’s signature · {offerExpiresIn(offered)?.text}
+                    <Trans
+                        i18nKey="ownerHome.offerAwaiting"
+                        values={{ name: personName(offered.users) }}
+                        components={{ strong: <strong /> }}
+                    />{' '}
+                    {DOT} {offerExpiresIn(offered)?.text}
                 </span>
                 <i className="bi bi-chevron-right"></i>
             </button>
@@ -77,10 +89,7 @@ function StatusLine({ property, status, onOpenContracts }) {
             <button type="button" className="ns-own-status tone-hot" onClick={() => onOpenContracts(pending.length === 1 ? pending[0].contract_id : null)}>
                 <i className="bi bi-inbox"></i>
                 <span>
-                    <strong>
-                        {pending.length} {pending.length === 1 ? 'request' : 'requests'}
-                    </strong>{' '}
-                    waiting for your answer
+                    <Trans i18nKey="ownerHome.requestsWaiting" count={pending.length} components={{ strong: <strong /> }} />
                 </span>
                 <i className="bi bi-chevron-right"></i>
             </button>
@@ -90,20 +99,21 @@ function StatusLine({ property, status, onOpenContracts }) {
         return (
             <p className="ns-own-status tone-neutral">
                 <i className="bi bi-pause-circle"></i>
-                <span>Paused · hidden from the Marketplace</span>
+                <span>{t('ownerHome.paused')}</span>
             </p>
         )
     }
         return (
         <p className={`ns-own-status ${status.vacantDays >= 30 ? 'tone-warning' : 'tone-neutral'}`}>
             <i className="bi bi-hourglass"></i>
-            <span>Listed · vacant {status.vacantDays === 0 ? 'since today' : `for ${status.vacantDays} ${status.vacantDays === 1 ? 'day' : 'days'}`}</span>
+            <span>{status.vacantDays === 0 ? t('ownerHome.vacantToday') : t('ownerHome.vacantFor', { count: status.vacantDays })}</span>
         </p>
     )
 }
 
 // The basics at a glance; everything else lives in the space's own page.
 function OwnerListingCard({ property, status, views, onOpen, onEdit, onOpenContracts }) {
+    const { t } = useTranslation()
     const meta = LISTING_STATUS[property.availability] || LISTING_STATUS.Available
     const area = areaOf(property)
     const score = listingScore(property)
@@ -111,7 +121,7 @@ function OwnerListingCard({ property, status, views, onOpen, onEdit, onOpenContr
 
     return (
         <article className="ns-own-card">
-            <button type="button" className="ns-own-media" onClick={() => onOpen(property)} aria-label={`Open ${property.property_name}`}>
+            <button type="button" className="ns-own-media" onClick={() => onOpen(property)} aria-label={t('propertyCard.open', { name: property.property_name })}>
                 {property.photo_url ? (
                     <img src={property.photo_url} alt="" loading="lazy" />
                 ) : (
@@ -129,14 +139,14 @@ function OwnerListingCard({ property, status, views, onOpen, onEdit, onOpenContr
                     <button type="button" onClick={() => onOpen(property)}>
                         {property.property_name}
                     </button>
-                    <span className="ns-own-rent">{property.monthly_rent != null ? `${money(property.monthly_rent)}/mo` : 'No rent set'}</span>
+                    <span className="ns-own-rent">{property.monthly_rent != null ? t('ownerHome.rentPerMonth', { rent: money(property.monthly_rent) }) : t('ownerHome.noRent')}</span>
                 </div>
                 <p className="ns-own-meta">
-                    <i className="bi bi-geo-alt"></i> {locationOf(property) || 'No location'}
+                    <i className="bi bi-geo-alt"></i> {locationOf(property) || t('ownerHome.noLocation')}
                     {area && (
                         <>
-                            <span className="ns-pay-dot">•</span>
-                            {area} m²
+                            <span className="ns-pay-dot">{DOT}</span>
+                            {area} {SQ_M}
                         </>
                     )}
                 </p>
@@ -145,21 +155,21 @@ function OwnerListingCard({ property, status, views, onOpen, onEdit, onOpenContr
 
                 <div className="ns-own-foot">
                     <span className="ns-own-foot-stats">
-                        <span title="Views in the last 30 days">
+                        <span title={t('ownerHome.views30')}>
                             <i className="bi bi-eye"></i> {views ?? 0}
                         </span>
                         {score < 100 && !status.active && (
-                            <span className={`ns-own-chip ${score < 60 ? 'is-bad' : ''}`} title="Listing quality">
-                                Listing {score}%
+                            <span className={`ns-own-chip ${score < 60 ? 'is-bad' : ''}`} title={t('ownerHome.listingQuality')}>
+                                {t('ownerHome.listingScore', { score })}
                             </span>
                         )}
                     </span>
                     <span className="ns-own-foot-actions">
                         <button type="button" onClick={() => onEdit(property)}>
-                            <i className="bi bi-pencil"></i> Edit
+                            <i className="bi bi-pencil"></i> {t('common.edit')}
                         </button>
                         <button type="button" className="is-primary" onClick={() => onOpen(property)}>
-                            Manage <i className="bi bi-arrow-right"></i>
+                            {t('ownerHome.manage')} <i className="bi bi-arrow-right"></i>
                         </button>
                     </span>
                 </div>
@@ -169,6 +179,7 @@ function OwnerListingCard({ property, status, views, onOpen, onEdit, onOpenContr
 }
 
 export default function OwnerHome({ user, firstName, search, onViewProperty, onNavigate }) {
+    const { t } = useTranslation()
     const { ownerDui, properties, loading, error: loadError, reload } = useOwnerProperties(user)
     const [contracts, setContracts] = useState([])
     const [views, setViews] = useState(() => new Map())
@@ -231,7 +242,7 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading your properties...</p>
+                <p>{t('ownerHome.loading')}</p>
             </div>
         )
     }
@@ -240,12 +251,12 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
         <>
             <div className="ns-dash-header">
                 <div>
-                    <h1>My Properties</h1>
-                    <p>Your spaces and what each one needs, {firstName}. Open one to manage it.</p>
+                    <h1>{t('dashboard.nav.myProperties')}</h1>
+                    <p>{t('ownerHome.subtitle', { name: firstName })}</p>
                 </div>
                 <div className="ns-dash-header-actions">
                     <button type="button" className="ns-filled-btn" onClick={openCreateModal}>
-                        <i className="bi bi-plus-lg"></i> Publish new space
+                        <i className="bi bi-plus-lg"></i> {t('ownerHome.publish')}
                     </button>
                 </div>
             </div>
@@ -257,17 +268,17 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
             )}
 
             {properties.length > 0 && (
-                <div className="ns-own-tabs" role="tablist" aria-label="Filter properties">
-                    {TABS.map((t) => (
+                <div className="ns-own-tabs" role="tablist" aria-label={t('ownerHome.filterLabel')}>
+                    {TABS.map((tabItem) => (
                         <button
                             type="button"
-                            key={t.id}
+                            key={tabItem.id}
                             role="tab"
-                            aria-selected={tab === t.id}
-                            className={`${tab === t.id ? 'active' : ''} ${t.id === 'attention' && counts.attention > 0 ? 'is-hot' : ''}`}
-                            onClick={() => setTab(t.id)}
+                            aria-selected={tab === tabItem.id}
+                            className={`${tab === tabItem.id ? 'active' : ''} ${tabItem.id === 'attention' && counts.attention > 0 ? 'is-hot' : ''}`}
+                            onClick={() => setTab(tabItem.id)}
                         >
-                            {t.label} <em>{counts[t.id]}</em>
+                            {t(tabItem.label)} <em>{counts[tabItem.id]}</em>
                         </button>
                     ))}
                 </div>
@@ -278,21 +289,21 @@ export default function OwnerHome({ user, firstName, search, onViewProperty, onN
                     <i className="bi bi-buildings"></i>
                     <h3>
                         {properties.length === 0
-                            ? "You haven't published any spaces yet"
+                            ? t('ownerHome.empty.noneTitle')
                             : tab === 'attention'
-                              ? 'Nothing needs your attention'
-                              : 'No properties here'}
+                              ? t('ownerHome.empty.attentionTitle')
+                              : t('ownerHome.empty.tabTitle')}
                     </h3>
                     <p>
                         {properties.length === 0
-                            ? 'List your first commercial space and start reaching entrepreneurs across El Salvador.'
+                            ? t('ownerHome.empty.noneText')
                             : tab === 'attention'
-                              ? 'Every listing is complete and no requests are waiting.'
-                              : 'Try another tab or a different keyword.'}
+                              ? t('ownerHome.empty.attentionText')
+                              : t('ownerHome.empty.tabText')}
                     </p>
                     {properties.length === 0 && (
                         <button type="button" className="ns-filled-btn" onClick={openCreateModal}>
-                            <i className="bi bi-plus-lg"></i> Publish new space
+                            <i className="bi bi-plus-lg"></i> {t('ownerHome.publish')}
                         </button>
                     )}
                 </div>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { typeColors, typeIcon } from '../../../lib/listings'
 
 // Mosaic (one large + two small) when there are 3+ photos, a single photo
 // otherwise. Any photo opens a full-size viewer with arrows.
 export default function PropertyGallery({ property, badge }) {
+    const { t } = useTranslation()
     const photos = property.photos || (property.photo_url ? [{ photo_url: property.photo_url }] : [])
     const [viewer, setViewer] = useState(null)
     const [bg, fg] = typeColors(property.property_type)
@@ -23,7 +25,7 @@ export default function PropertyGallery({ property, badge }) {
         return (
             <div className="ns-pg ns-pg-empty" style={{ background: bg, color: fg }}>
                 <i className={`bi ${typeIcon(property.property_type)}`}></i>
-                <span>No photos yet</span>
+                <span>{t('gallery.noPhotos')}</span>
                 {badge}
             </div>
         )
@@ -33,13 +35,13 @@ export default function PropertyGallery({ property, badge }) {
     return (
         <>
             <div className={`ns-pg ${mosaic ? 'is-mosaic' : ''}`}>
-                <button type="button" className="ns-pg-main" onClick={() => setViewer(0)} aria-label="Open photos">
+                <button type="button" className="ns-pg-main" onClick={() => setViewer(0)} aria-label={t('gallery.open')}>
                     <img src={photos[0].photo_url} alt={property.property_name} />
                 </button>
                 {mosaic && (
                     <div className="ns-pg-side">
                         {photos.slice(1, 3).map((ph, i) => (
-                            <button type="button" key={ph.photo_url} onClick={() => setViewer(i + 1)} aria-label={`Photo ${i + 2}`}>
+                            <button type="button" key={ph.photo_url} onClick={() => setViewer(i + 1)} aria-label={t('listingForm.photos.alt', { n: i + 2 })}>
                                 <img src={ph.photo_url} alt="" />
                                 {i === 1 && photos.length > 3 && <span className="ns-pg-more">+{photos.length - 3}</span>}
                             </button>
@@ -49,23 +51,23 @@ export default function PropertyGallery({ property, badge }) {
                 {badge}
                 {photos.length > 1 && (
                     <button type="button" className="ns-pg-all" onClick={() => setViewer(0)}>
-                        <i className="bi bi-images"></i> {photos.length} photos
+                        <i className="bi bi-images"></i> {t('gallery.count', { count: photos.length })}
                     </button>
                 )}
             </div>
 
             {viewer != null && (
-                <div className="ns-pg-viewer" role="dialog" aria-modal="true" aria-label="Photos" onClick={() => setViewer(null)}>
-                    <button type="button" className="ns-pg-viewer-close" aria-label="Close" onClick={() => setViewer(null)}>
+                <div className="ns-pg-viewer" role="dialog" aria-modal="true" aria-label={t('listingForm.photos.title')} onClick={() => setViewer(null)}>
+                    <button type="button" className="ns-pg-viewer-close" aria-label={t('common.close')} onClick={() => setViewer(null)}>
                         <i className="bi bi-x-lg"></i>
                     </button>
-                    <img src={photos[viewer].photo_url} alt={`Photo ${viewer + 1}`} onClick={(e) => e.stopPropagation()} />
+                    <img src={photos[viewer].photo_url} alt={t('listingForm.photos.alt', { n: viewer + 1 })} onClick={(e) => e.stopPropagation()} />
                     {photos.length > 1 && (
                         <>
                             <button
                                 type="button"
                                 className="ns-pg-viewer-nav is-prev"
-                                aria-label="Previous photo"
+                                aria-label={t('gallery.previous')}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setViewer((i) => (i - 1 + photos.length) % photos.length)
@@ -76,7 +78,7 @@ export default function PropertyGallery({ property, badge }) {
                             <button
                                 type="button"
                                 className="ns-pg-viewer-nav is-next"
-                                aria-label="Next photo"
+                                aria-label={t('gallery.next')}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setViewer((i) => (i + 1) % photos.length)

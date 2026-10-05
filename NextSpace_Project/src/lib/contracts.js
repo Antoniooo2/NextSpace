@@ -2,23 +2,37 @@
 // Mirrors supabase/migrations/*_contracts_v2.sql: every change goes through
 // an RPC that checks who is calling and whether the step is allowed.
 import { supabase } from './supabaseClient'
+import i18n from '../i18n'
 import { daysUntil, formatDueDate, todayInElSalvador } from './rentSchedule'
 import { money } from './money'
 import { contractRate, feeSplit, formatRate } from './platformFee'
+import { contractStatusLabel } from './displayValues'
+import { BRAND_VALUES } from './brand'
+import { DASH } from './symbols'
+
+function statusEntry(status, tone, icon) {
+    return {
+        get label() {
+            return contractStatusLabel(status)
+        },
+        tone,
+        icon,
+    }
+}
 
 export const CONTRACT_STATUS_META = {
-    Pending: { label: 'Requested', tone: 'info', icon: 'bi-inbox' },
-    Offered: { label: 'Awaiting signature', tone: 'warning', icon: 'bi-pen' },
-    Active: { label: 'Active', tone: 'success', icon: 'bi-check-circle-fill' },
-    Declined: { label: 'Declined', tone: 'neutral', icon: 'bi-x-circle' },
-    Withdrawn: { label: 'Withdrawn', tone: 'neutral', icon: 'bi-arrow-counterclockwise' },
-    Expired: { label: 'Ended', tone: 'neutral', icon: 'bi-flag' },
-    Cancelled: { label: 'Cancelled', tone: 'neutral', icon: 'bi-slash-circle' },
+    Pending: statusEntry('Pending', 'info', 'bi-inbox'),
+    Offered: statusEntry('Offered', 'warning', 'bi-pen'),
+    Active: statusEntry('Active', 'success', 'bi-check-circle-fill'),
+    Declined: statusEntry('Declined', 'neutral', 'bi-x-circle'),
+    Withdrawn: statusEntry('Withdrawn', 'neutral', 'bi-arrow-counterclockwise'),
+    Expired: statusEntry('Expired', 'neutral', 'bi-flag'),
+    Cancelled: statusEntry('Cancelled', 'neutral', 'bi-slash-circle'),
 }
 
 export function statusMeta(contract) {
     if (contract.status === 'Expired' && contract.end_reason === 'terminated') {
-        return { label: 'Ended early', tone: 'neutral', icon: 'bi-flag' }
+        return { label: i18n.t('values.contractStatus.endedEarly'), tone: 'neutral', icon: 'bi-flag' }
     }
     return CONTRACT_STATUS_META[contract.status] || { label: contract.status, tone: 'neutral', icon: 'bi-file-earmark' }
 }
@@ -26,15 +40,14 @@ export function statusMeta(contract) {
 export { money }
 
 export function personName(person) {
-    return [person?.first_name, person?.last_name].filter(Boolean).join(' ') || '—'
+    return [person?.first_name, person?.last_name].filter(Boolean).join(' ') || DASH
 }
 
 // Day of the month rent is due (the lease's start day), as "15th".
 export function dueDayLabel(startDate) {
-    if (!startDate) return '—'
+    if (!startDate) return DASH
     const day = Number(startDate.slice(8, 10))
-    const suffix = day % 10 === 1 && day !== 11 ? 'st' : day % 10 === 2 && day !== 12 ? 'nd' : day % 10 === 3 && day !== 13 ? 'rd' : 'th'
-    return `${day}${suffix}`
+    return i18n.t('contracts.dueDay', { count: day, ordinal: true })
 }
 
 export function addMonths(ymd, months) {
@@ -50,17 +63,23 @@ export function addDays(ymd, days) {
     return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10)
 }
 
+function expiresInText(hours) {
+    if (hours < 24) return i18n.t('contracts.expiresInHours', { count: Math.max(1, Math.round(hours)) })
+    return i18n.t('contracts.expiresInDays', { count: Math.round(hours / 24) })
+}
+
 export function offerExpiresIn(contract) {
     if (contract.status !== 'Offered' || !contract.offer_expires_at) return null
     const hours = (new Date(contract.offer_expires_at).getTime() - Date.now()) / 3600000
-    if (hours <= 0) return { expired: true, text: 'Offer expired' }
-    if (hours < 24) return { expired: false, text: `Expires in ${Math.max(1, Math.round(hours))} hours` }
-    return { expired: false, text: `Expires in ${Math.round(hours / 24)} days` }
+    if (hours <= 0) return { expired: true, text: i18n.t('contracts.offerExpired') }
+    return { expired: false, withinDay: hours < 24, text: expiresInText(hours) }
 }
 
 export function daysLeft(contract, today = todayInElSalvador()) {
     return contract.end_date ? daysUntil(contract.end_date, today) : null
 }
+
+const LONG_DATE = { month: 'long', day: 'numeric', year: 'numeric' }
 
 // The standard terms every NextSpace lease carries, filled with this
 // contract's numbers. Special clauses from the owner are added after these.
@@ -70,58 +89,61 @@ export function standardClauses(contract) {
     const months = contract.duration_months
     const deposit = Number(contract.deposit || 0)
     const fee = feeSplit(contract.monthly_rent, contractRate(contract))
+    const t = (key, values) => i18n.t(`contracts.clauses.${key}`, { ...BRAND_VALUES, ...values })
 
     return [
         {
-            title: 'Premises',
-            body: `The owner leases to the tenant the commercial space "${property.property_name || 'the property'}"${
-                property.municipality ? ` in ${[property.municipality, property.department].filter(Boolean).join(', ')}` : ''
-            }, as listed on NextSpace, for the tenant's business use.`,
+            title: t('premises.title'),
+            body: t('premises.body', {
+                name: property.property_name || t('premises.fallbackName'),
+                location: property.municipality
+                    ? t('premises.location', { place: [property.municipality, property.department].filter(Boolean).join(', ') })
+                    : '',
+            }),
         },
         {
-            title: 'Term',
-            body: `The lease runs from ${formatDueDate(contract.start_date, { month: 'long', day: 'numeric', year: 'numeric' })} to ${formatDueDate(contract.end_date, { month: 'long', day: 'numeric', year: 'numeric' })}${
-                months ? ` (${months} ${months === 1 ? 'month' : 'months'})` : ''
-            }.`,
+            title: t('term.title'),
+            body: t('term.body', {
+                start: formatDueDate(contract.start_date, LONG_DATE),
+                end: formatDueDate(contract.end_date, LONG_DATE),
+                length: months ? t('term.length', { count: months }) : '',
+            }),
         },
         {
-            title: 'Rent and payment',
-            body: `The monthly rent is ${rent}, due on the ${dueDayLabel(contract.start_date)} of each month starting on the start date. Rent is paid online through NextSpace (Wompi), which collects it on the owner's behalf; it can be paid from 7 days before each due date and is applied to the oldest unpaid month first. Each payment produces a receipt.`,
+            title: t('rent.title'),
+            body: t('rent.body', { rent, day: dueDayLabel(contract.start_date) }),
         },
         {
-            title: 'NextSpace service fee',
-            body: `NextSpace keeps ${formatRate(fee.rate)} of each monthly rent payment (${money(fee.fee)} of ${rent}) as its service fee and transfers the rest (${money(fee.net)}) to the owner's bank account. The fee comes out of the owner's rent: the tenant pays exactly the monthly rent above and nothing more. The deposit carries no fee.`,
+            title: t('fee.title'),
+            body: t('fee.body', { rate: formatRate(fee.rate), fee: money(fee.fee), rent, net: money(fee.net) }),
         },
         {
-            title: 'Deposit',
-            body:
-                deposit > 0
-                    ? `The tenant gives the owner a security deposit of ${money(deposit)} before the start date. It is returned at the end of the lease, minus the cost of documented damages beyond normal wear.`
-                    : 'No security deposit is required for this lease.',
+            title: t('deposit.title'),
+            body: deposit > 0 ? t('deposit.body', { deposit: money(deposit) }) : t('deposit.none'),
         },
         {
-            title: 'Use of the space',
-            body: 'The tenant will use the space only for lawful commercial activity, keep the permits its business requires, and not sublet it without the owner’s written consent.',
+            title: t('use.title'),
+            body: t('use.body'),
         },
         {
-            title: 'Maintenance',
-            body: 'The owner is responsible for structural repairs and the building’s main installations. The tenant is responsible for day-to-day upkeep and for damage caused by its use of the space.',
+            title: t('maintenance.title'),
+            body: t('maintenance.body'),
         },
         {
-            title: 'Late payment',
-            body: 'If rent is not paid by its due date, NextSpace sends reminders on the due date and after 7 and 15 days. No late fee applies unless one is stated in the special clauses.',
+            title: t('latePayment.title'),
+            body: t('latePayment.body'),
         },
         {
-            title: 'Ending the lease early',
-            body: 'Either party may ask to end the lease early through NextSpace, stating a date and a reason. It only takes effect if the other party accepts; rent after the agreed end date is then removed.',
+            title: t('earlyEnd.title'),
+            body: t('earlyEnd.body'),
         },
         {
-            title: 'Renewal',
-            body: 'In the last 90 days of the lease either party may propose a renewal through NextSpace. It takes effect when the owner’s renewal offer is signed by the tenant; the new rent applies from the current end date. Otherwise the lease ends on the end date and the space becomes available again.',
+            title: t('renewal.title'),
+            body: t('renewal.body'),
         },
         {
-            title: 'Electronic signature',
-            body: 'Both parties accept that typing their full name and confirming through NextSpace, recorded with the date and time, is their signature of this lease.',
+            title: t('signature.title'),
+            body: t('signature.body'),
         },
     ]
 }
@@ -136,7 +158,7 @@ export function contractStage(contract) {
 
 async function rpc(name, args) {
     const { data, error } = await supabase.rpc(name, args)
-    if (error) throw new Error(error.message || 'Something went wrong. Please try again.')
+    if (error) throw new Error(error.message || i18n.t('common.genericError'))
     return data
 }
 
@@ -203,9 +225,8 @@ export function renewalState(contract) {
 export function renewalExpiresIn(contract) {
     if (!contract.renewal_expires_at) return null
     const hours = (new Date(contract.renewal_expires_at).getTime() - Date.now()) / 3600000
-    if (hours <= 0) return 'Expired'
-    if (hours < 24) return `Expires in ${Math.max(1, Math.round(hours))} hours`
-    return `Expires in ${Math.round(hours / 24)} days`
+    if (hours <= 0) return i18n.t('contracts.expired')
+    return expiresInText(hours)
 }
 
 // The applicant's record on NextSpace (aggregates only), keyed by DUI.
@@ -219,11 +240,11 @@ export async function loadApplicantRecords(duis) {
 
 export function recordSummary(record) {
     if (!record || record.leases === 0 || record.months_due === 0) {
-        return { tone: 'neutral', short: 'New on NextSpace', pct: null }
+        return { tone: 'neutral', short: i18n.t('contracts.record.newOnBrand', BRAND_VALUES), pct: null }
     }
     const pct = Math.round((record.months_on_time / record.months_due) * 100)
     const tone = record.months_late_now > 0 || pct < 70 ? 'danger' : pct < 90 ? 'warning' : 'success'
-    return { tone, short: `${pct}% on time`, pct }
+    return { tone, short: i18n.t('contracts.record.onTimePct', { pct }), pct }
 }
 
 // Ranking for "who should I accept": on-time rate smoothed by how much history
@@ -237,34 +258,43 @@ export function recordScore(record) {
 // Why a record ranks where it does, in one short phrase.
 export function recordReason(record) {
     const summary = recordSummary(record)
-    if (summary.pct == null) return 'no payment history on NextSpace yet'
-    const months = `${record.months_on_time} of ${record.months_due} months on time`
+    if (summary.pct == null) return i18n.t('contracts.record.noHistory', BRAND_VALUES)
+    const months = i18n.t('contracts.record.monthsOnTime', { count: record.months_due, onTime: record.months_on_time })
     if (record.months_late_now > 0) {
-        return `${months}, but ${record.months_late_now} ${record.months_late_now === 1 ? 'month' : 'months'} late right now`
+        return i18n.t('contracts.record.lateNow', { months, count: record.months_late_now })
     }
-    return `${months} and nothing late right now`
+    return i18n.t('contracts.record.nothingLate', { months })
+}
+
+function eventEntry(icon, key) {
+    return {
+        icon,
+        get label() {
+            return i18n.t(`contracts.events.${key}`)
+        },
+    }
 }
 
 export const EVENT_META = {
-    requested: { icon: 'bi-inbox-fill', label: 'Lease requested' },
-    invited: { icon: 'bi-envelope-paper-fill', label: 'Invitation sent' },
-    offered: { icon: 'bi-pen-fill', label: 'Offer sent and signed by the owner' },
-    signed: { icon: 'bi-patch-check-fill', label: 'Signed by the tenant — lease active' },
-    declined: { icon: 'bi-x-circle-fill', label: 'Declined' },
-    auto_declined: { icon: 'bi-x-circle', label: 'Closed automatically' },
-    withdrawn: { icon: 'bi-arrow-counterclockwise', label: 'Withdrawn by the business' },
-    termination_requested: { icon: 'bi-hourglass-split', label: 'Early end requested' },
-    termination_accepted: { icon: 'bi-check2-circle', label: 'Early end accepted' },
-    termination_declined: { icon: 'bi-slash-circle', label: 'Early end declined' },
-    expired: { icon: 'bi-flag-fill', label: 'Lease ended' },
-    renewal_offer: { icon: 'bi-arrow-repeat', label: 'Renewal offered and signed by the owner' },
-    renewal_request: { icon: 'bi-arrow-repeat', label: 'Renewal requested by the business' },
-    reminder: { icon: 'bi-send-fill', label: 'Rent reminder sent' },
-    auto_reminder: { icon: 'bi-bell-fill', label: 'Automatic rent reminder' },
-    renewed: { icon: 'bi-arrow-repeat', label: 'Renewal signed — lease extended' },
-    renewal_declined: { icon: 'bi-slash-circle', label: 'Renewal not going ahead' },
-    renewal_expired: { icon: 'bi-hourglass-bottom', label: 'Renewal offer expired' },
-    offer_expired: { icon: 'bi-hourglass-bottom', label: 'Offer expired' },
-    request_reminder: { icon: 'bi-bell', label: 'Owner reminded about the request' },
-    offer_reminder: { icon: 'bi-bell', label: 'Business reminded to sign' },
+    requested: eventEntry('bi-inbox-fill', 'requested'),
+    invited: eventEntry('bi-envelope-paper-fill', 'invited'),
+    offered: eventEntry('bi-pen-fill', 'offered'),
+    signed: eventEntry('bi-patch-check-fill', 'signed'),
+    declined: eventEntry('bi-x-circle-fill', 'declined'),
+    auto_declined: eventEntry('bi-x-circle', 'autoDeclined'),
+    withdrawn: eventEntry('bi-arrow-counterclockwise', 'withdrawn'),
+    termination_requested: eventEntry('bi-hourglass-split', 'terminationRequested'),
+    termination_accepted: eventEntry('bi-check2-circle', 'terminationAccepted'),
+    termination_declined: eventEntry('bi-slash-circle', 'terminationDeclined'),
+    expired: eventEntry('bi-flag-fill', 'expired'),
+    renewal_offer: eventEntry('bi-arrow-repeat', 'renewalOffer'),
+    renewal_request: eventEntry('bi-arrow-repeat', 'renewalRequest'),
+    reminder: eventEntry('bi-send-fill', 'reminder'),
+    auto_reminder: eventEntry('bi-bell-fill', 'autoReminder'),
+    renewed: eventEntry('bi-arrow-repeat', 'renewed'),
+    renewal_declined: eventEntry('bi-slash-circle', 'renewalDeclined'),
+    renewal_expired: eventEntry('bi-hourglass-bottom', 'renewalExpired'),
+    offer_expired: eventEntry('bi-hourglass-bottom', 'offerExpired'),
+    request_reminder: eventEntry('bi-bell', 'requestReminder'),
+    offer_reminder: eventEntry('bi-bell', 'offerReminder'),
 }
