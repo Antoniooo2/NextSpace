@@ -12,9 +12,12 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
     "bootstrap": "^5.3.8",
+    "i18next": "^26.4.2",
+    "i18next-browser-languagedetector": "^8.2.1",
     "jspdf": "^3.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-i18next": "^17.0.15",
     "react-router-dom": "^7.18.2",
     "write-excel-file": "^2.3.10"
   },
