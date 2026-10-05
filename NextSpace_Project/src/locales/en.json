@@ -31,7 +31,7 @@
   },
   "heroCards": {
     "property": {
-      "zone": "Antiguo Cuscatl\u00e1n",
+      "zone": "Antiguo Cuscatlán",
       "price": "{{price}}/month"
     },
     "notice": {
@@ -65,7 +65,17 @@
     "spaces_one": "{{count}} space available",
     "spaces_other": "{{count}} spaces available",
     "noSpaces": "No spaces available yet",
-    "capital": "Capital: {{capital}}"
+    "capital": "Capital: {{capital}}",
+    "viewDetails": "View details",
+    "priceOnRequest": "Price on request",
+    "noPins": "No spaces with a map pin match these filters.",
+    "missing_one": "{{count}} space has no map pin yet; see it in List view.",
+    "missing_other": "{{count}} spaces have no map pin yet; see them in List view.",
+    "picker": {
+      "hint": "Tap the map to drop a pin",
+      "useMine": "Use my location",
+      "remove": "Remove pin"
+    }
   },
   "pricing": {
     "title": "How {{brand}} earns: {{rate}} of each rent, and only when it's paid",
@@ -847,6 +857,11 @@
       "addOne": "Add one more to compare",
       "clear": "Clear",
       "button": "Compare {{count}}"
+    },
+    "view": {
+      "label": "View",
+      "list": "List",
+      "map": "Map"
     }
   },
   "propertyCard": {
@@ -1101,7 +1116,9 @@
     "completeHint": "Complete listings get more requests.",
     "stepOf": "Step {{step}} of {{total}}",
     "publishSpace": "Publish space",
-    "savePaused": "Save paused"
+    "savePaused": "Save paused",
+    "pinLabel": "Pin on the map",
+    "pinHelp": "Optional. Businesses will see your space on the Marketplace map. Drag the pin to adjust it."
   },
   "propertyDetail": {
     "listedToday": "Listed today",

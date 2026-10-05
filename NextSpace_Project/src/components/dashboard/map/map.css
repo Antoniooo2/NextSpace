@@ -1,0 +1,170 @@
+/* ---------- Leaflet base ---------- */
+.ns-leaflet {
+  width: 100%;
+  height: 100%;
+  isolation: isolate; /* keep Leaflet's z-indexes below the topbar and modals */
+  background: #e8ecf4;
+  font-family: inherit;
+  touch-action: pan-x pan-y;
+}
+
+.ns-leaflet .leaflet-control-attribution { font-size: 10px; }
+.ns-leaflet .leaflet-bar a { width: 34px; height: 34px; line-height: 34px; }
+
+/* ---------- Markers ---------- */
+.ns-map-pin-wrap,
+.ns-map-price-wrap { background: none; border: 0; }
+
+.ns-map-pin {
+  display: block;
+  color: var(--ns-blue-accent);
+  font-size: 40px;
+  line-height: 1;
+  text-align: center;
+  filter: drop-shadow(0 2px 3px rgba(15, 28, 63, 0.4));
+}
+
+.ns-map-price {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  background: var(--ns-surface);
+  color: var(--ns-navy);
+  border: 1.5px solid var(--ns-navy);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 2px 6px rgba(15, 28, 63, 0.25);
+  cursor: pointer;
+}
+
+.ns-map-price.is-selected {
+  background: var(--ns-navy);
+  color: #fff;
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+/* ---------- Marketplace map ---------- */
+.ns-lmap-frame {
+  position: relative;
+  height: clamp(420px, calc(100dvh - 300px), 720px);
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ns-lmap-empty {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  background: var(--ns-surface);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(15, 28, 63, 0.2);
+}
+
+.ns-lmap-note { margin: 10px 2px 0; font-size: 12.5px; color: var(--ns-text-muted); }
+
+.ns-lmap-card {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  width: min(380px, calc(100% - 24px));
+  z-index: 500;
+  display: flex;
+  background: var(--ns-surface);
+  border-radius: 14px;
+  box-shadow: 0 8px 28px rgba(15, 28, 63, 0.3);
+  overflow: hidden;
+}
+
+.ns-lmap-media { flex: 0 0 112px; background: var(--ns-blue-bg); }
+.ns-lmap-media img,
+.ns-lmap-media span { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; object-fit: cover; font-size: 30px; }
+
+.ns-lmap-info { min-width: 0; padding: 12px 14px 12px 12px; display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.ns-lmap-info strong { font-size: 18px; color: var(--ns-navy); }
+.ns-lmap-info h3 { font-size: 14.5px; margin: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ns-lmap-info p { margin: 0; font-size: 12.5px; color: var(--ns-text-muted); }
+.ns-lmap-info .ns-filled-btn { margin-top: 8px; padding: 8px 14px; }
+
+.ns-lmap-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ns-navy);
+  cursor: pointer;
+  z-index: 1;
+}
+
+/* ---------- List / Map toggle ---------- */
+.ns-view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--ns-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--ns-surface);
+}
+
+.ns-view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--ns-navy);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+.ns-view-toggle button.active { background: var(--ns-navy); color: #fff; }
+
+/* ---------- Owner pin picker ---------- */
+.ns-picker-map {
+  height: 280px;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ns-picker-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-picker-bar .is-set { color: var(--ns-navy); font-weight: 600; }
+.ns-picker-bar > div { display: flex; gap: 14px; flex-wrap: wrap; }
+
+@media (max-width: 575px) {
+  .ns-lmap-frame { height: calc(100dvh - 260px); min-height: 380px; }
+  .ns-lmap-card { left: 8px; right: 8px; bottom: 8px; width: auto; }
+  .ns-lmap-media { flex-basis: 96px; }
+  .ns-view-toggle { width: 100%; }
+  .ns-view-toggle button { flex: 1; justify-content: center; }
+  .ns-picker-map { height: 240px; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import { money } from '../../lib/money'
 import { propertyTypeLabel, serviceLabel } from '../../lib/displayValues'
@@ -18,6 +18,8 @@ import usePlatformFee from '../../hooks/usePlatformFee'
 import './listings.css'
 import './property/property.css'
 import './listingForm.css'
+
+const LocationPicker = lazy(() => import('./map/LocationPicker'))
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024
@@ -60,6 +62,9 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
     const [department, setDepartment] = useState(base?.department || '')
     const [municipality, setMunicipality] = useState(base?.municipality || '')
     const [address, setAddress] = useState(base?.address || '')
+    const [pin, setPin] = useState(() =>
+        base?.latitude != null && base?.longitude != null ? { lat: Number(base.latitude), lng: Number(base.longitude) } : null
+    )
     // Up to 6 photos; the first one is the cover. Existing photos keep their
     // row id, new ones carry the file to upload.
     const [photoItems, setPhotoItems] = useState(() =>
@@ -362,6 +367,8 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
             department: department || null,
             municipality: municipality || null,
             address: address.trim() || null,
+            latitude: pin ? Number(pin.lat.toFixed(6)) : null,
+            longitude: pin ? Number(pin.lng.toFixed(6)) : null,
         }
 
         const query = isEditMode
@@ -606,6 +613,14 @@ export default function NewPropertyModal({ property, template, ownerDui, onClose
                                         onChange={(e) => setAddress(e.target.value)}
                                     />
                                 </div>
+
+                                <span className="ns-lf-label">
+                                    {t('listingForm.pinLabel')} <span className="ns-lf-optional">{t('listingForm.optional')}</span>
+                                </span>
+                                <small className="ns-lf-help d-block mb-2">{t('listingForm.pinHelp')}</small>
+                                <Suspense fallback={<div className="ns-picker-map" aria-busy="true" />}>
+                                    <LocationPicker value={pin} onChange={setPin} department={department} />
+                                </Suspense>
                             </section>
                         )}
 

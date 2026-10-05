@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n'
 import { supabase } from '../../lib/supabaseClient'
@@ -16,6 +16,9 @@ import { loadMarketStats, priceInsight } from '../../lib/market'
 import { createSavedSearch, deleteSavedSearch, describeSearch, loadSavedSearches } from '../../lib/savedSearches'
 import CompareModal from './CompareModal'
 import './listings.css'
+import './map/map.css'
+
+const ListingsMap = lazy(() => import('./map/ListingsMap'))
 
 const PAGE_SIZE = 9
 
@@ -56,6 +59,7 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
     const [notice, setNotice] = useState('')
     const [compareIds, setCompareIds] = useState([])
     const [compareOpen, setCompareOpen] = useState(false)
+    const [view, setView] = useState('list')
 
     useEffect(() => {
         let cancelled = false
@@ -519,6 +523,16 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                             </button>
                         ))}
                 </div>
+                <div className="ns-view-toggle" role="group" aria-label={t('marketplace.view.label')}>
+                    {[
+                        { id: 'list', icon: 'bi-grid', label: t('marketplace.view.list') },
+                        { id: 'map', icon: 'bi-map', label: t('marketplace.view.map') },
+                    ].map((v) => (
+                        <button type="button" key={v.id} className={view === v.id ? 'active' : ''} aria-pressed={view === v.id} onClick={() => setView(v.id)}>
+                            <i className={`bi ${v.icon}`}></i> {v.label}
+                        </button>
+                    ))}
+                </div>
                 <label className="ns-mk-sort">
                     <span>{t('marketplace.sortLabel')}</span>
                     <select className="form-select" value={sort} onChange={(e) => setSort(e.target.value)}>
@@ -531,7 +545,11 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                 </label>
             </div>
 
-            {visible.length === 0 ? (
+            {view === 'map' && results.length > 0 ? (
+                <Suspense fallback={<div className="ns-lmap-frame" aria-busy="true" />}>
+                    <ListingsMap properties={results} onOpen={onViewProperty} />
+                </Suspense>
+            ) : visible.length === 0 ? (
                 <div className="ns-empty-state">
                     <i className="bi bi-search"></i>
                     <h3>{t('marketplace.empty.title')}</h3>
@@ -573,7 +591,7 @@ export default function BusinessHome({ user, search, onSearchChange, onViewPrope
                 </div>
             )}
 
-            {visibleCount < results.length && (
+            {view === 'list' && visibleCount < results.length && (
                 <div className="ns-load-more">
                     <button type="button" className="ns-outline-btn" onClick={() => setVisibleCount((v) => v + PAGE_SIZE)}>
                         {t('marketplace.showMore')} <i className="bi bi-chevron-down"></i>
