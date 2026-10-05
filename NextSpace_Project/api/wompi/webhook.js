@@ -8,6 +8,7 @@ export const config = {
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const WOMPI_API_SECRET = process.env.WOMPI_CLIENT_SECRET
+const WOMPI_MODE = process.env.WOMPI_MODE
 
 function readRawBody(req) {
     return new Promise((resolve, reject) => {
@@ -25,6 +26,7 @@ export default async function handler(req, res) {
     }
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !WOMPI_API_SECRET) {
+        console.error('Wompi webhook: missing server configuration (Wompi/Supabase env vars)')
         res.status(500).end()
         return
     }
@@ -42,6 +44,9 @@ export default async function handler(req, res) {
         crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
 
     if (!isValidSignature) {
+        // A missing header (rather than a wrong one) points at the request
+        // path dropping wompi_hash, not at a wrong WOMPI_CLIENT_SECRET.
+        console.error(`Wompi webhook: rejected signature (header ${signature ? 'present' : 'missing'})`)
         res.status(401).json({ error: 'Invalid signature.' })
         return
     }
@@ -64,6 +69,19 @@ export default async function handler(req, res) {
     }
 
     const paymentId = Number(match[1])
+
+    // Wompi flags sandbox transactions with EsProductiva: false. Once the
+    // deployment runs on live credentials (WOMPI_MODE=production), a test
+    // transaction must never mark real rent as paid.
+    if (WOMPI_MODE === 'production' && payload.EsProductiva === false) {
+        console.error(
+            `Wompi webhook: ignored sandbox transaction ${payload.IdTransaccion || '?'} for payment ` +
+                `${paymentId} while WOMPI_MODE=production.`
+        )
+        res.status(200).json({ received: true, updated: false })
+        return
+    }
+
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
     // The NextSpace fee and the owner's share are computed from payment.amount
