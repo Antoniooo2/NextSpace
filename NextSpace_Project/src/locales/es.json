@@ -29,6 +29,16 @@
     "listSpace": "Publicar mi espacio",
     "ratingText": "de calificación según más de 500 reseñas"
   },
+  "heroCards": {
+    "property": {
+      "zone": "Antiguo Cuscatl\u00e1n",
+      "price": "{{price}}/mes"
+    },
+    "notice": {
+      "title": "Contrato aceptado",
+      "time": "Justo ahora"
+    }
+  },
   "stats": {
     "activeSpaces": "Espacios activos",
     "businessesBoosted": "Negocios impulsados",
@@ -51,8 +61,6 @@
     }
   },
   "map": {
-    "title": "Encuentra espacios en El Salvador",
-    "subtitle": "De occidente a oriente, mira d\u00f3nde tiene {{brand}} espacios comerciales disponibles. Pasa el mouse o toca un pin para ver el departamento.",
     "ariaLabel": "Mapa de El Salvador y sus 14 departamentos",
     "spaces_one": "{{count}} espacio disponible",
     "spaces_other": "{{count}} espacios disponibles",

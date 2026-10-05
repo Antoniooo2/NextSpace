@@ -1,37 +1,13 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { AnimatePresence, motion, useInView } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import ElSalvadorMap from '../ElSalvadorMap.jsx'
 import { MAP_PINS } from '../../lib/mapPins'
 import { departmentKey, loadDepartmentCounts } from '../../lib/departmentSpaces'
-import { BRAND_NAME } from '../../lib/brand'
-import { revealProps } from './landingMotion'
-import './mapSection.css'
+import './animatedMap.css'
 
 const EASE = [0.22, 1, 0.36, 1]
-const OUTLINE_SECONDS = 2.2
-const PINS_START = 1.9
-const PIN_STEP = 0.14
-
-const departmentVariants = {
-    hidden: { opacity: 0 },
-    visible: (index = 0) => ({
-        opacity: 1,
-        transition: { duration: 0.5, ease: EASE, delay: 0.9 + index * 0.06 },
-    }),
-}
-
-const CROWDED_PINS = new Set(
-    MAP_PINS.filter((pin) =>
-        MAP_PINS.some(
-            (other) =>
-                other !== pin &&
-                other.left - pin.left > 0 &&
-                other.left - pin.left < 6 &&
-                Math.abs(other.top - pin.top) < 8,
-        ),
-    ).map((pin) => pin.department),
-)
+const PIN_STEP = 0.08
 
 function tooltipShift(left) {
     if (left < 25) return '-15%'
@@ -55,16 +31,15 @@ function useDepartmentCounts() {
     return counts
 }
 
-function MapPin({ pin, index, count, hasData, animated, shown, active, onShow, onHide }) {
+function MapPin({ pin, count, hasData, animated, shown, delay, active, onShow, onHide }) {
     const { t } = useTranslation()
-    const delay = PINS_START + index * PIN_STEP
     const detail = hasData ? (count > 0 ? t('map.spaces', { count }) : t('map.noSpaces')) : null
     const label = detail ? `${pin.department}. ${detail}` : pin.department
 
     const dropProps = animated
         ? {
-              initial: { opacity: 0, y: -36 },
-              animate: shown ? { opacity: 1, y: 0 } : { opacity: 0, y: -36 },
+              initial: { opacity: 0, y: -28 },
+              animate: shown ? { opacity: 1, y: 0 } : { opacity: 0, y: -28 },
               transition: { type: 'spring', bounce: 0.35, duration: 0.8, delay },
           }
         : {}
@@ -110,11 +85,6 @@ function MapPin({ pin, index, count, hasData, animated, shown, active, onShow, o
                 {...dropProps}
             >
                 <i className="bi bi-geo-alt-fill" aria-hidden="true"></i>
-                {hasData && count > 0 && (
-                    <span className={`ns-map-pin-count${CROWDED_PINS.has(pin.department) ? ' is-left' : ''}`}>
-                        {count}
-                    </span>
-                )}
             </motion.button>
             <AnimatePresence>
                 {active && (
@@ -134,13 +104,11 @@ function MapPin({ pin, index, count, hasData, animated, shown, active, onShow, o
     )
 }
 
-export default function MapSection({ animated }) {
+export default function AnimatedMap({ animated, shown, drawDelay = 0, drawSeconds = 2 }) {
     const { t } = useTranslation()
     const counts = useDepartmentCounts()
-    const canvasRef = useRef(null)
-    const inView = useInView(canvasRef, { once: true, margin: '0px 0px -120px 0px' })
-    const shown = !animated || inView
     const [activePin, setActivePin] = useState(null)
+    const pinsStart = drawDelay + drawSeconds - 0.2
 
     useEffect(() => {
         if (!activePin) return undefined
@@ -160,13 +128,24 @@ export default function MapSection({ animated }) {
         }
     }, [activePin])
 
+    const departmentVariants = useMemo(
+        () => ({
+            hidden: { opacity: 0 },
+            visible: (index = 0) => ({
+                opacity: 1,
+                transition: { duration: 0.5, ease: EASE, delay: drawDelay + 0.4 + index * 0.05 },
+            }),
+        }),
+        [drawDelay],
+    )
+
     const outlineProps = animated
         ? {
               initial: { pathLength: 0, opacity: 0 },
               animate: shown ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 },
               transition: {
-                  pathLength: { duration: OUTLINE_SECONDS, ease: 'easeInOut' },
-                  opacity: { duration: 0.2 },
+                  pathLength: { duration: drawSeconds, ease: 'easeInOut', delay: drawDelay },
+                  opacity: { duration: 0.2, delay: drawDelay },
               },
           }
         : {}
@@ -176,36 +155,28 @@ export default function MapSection({ animated }) {
         : {}
 
     return (
-        <section className="ns-map" aria-labelledby="ns-map-title">
-            <motion.h2 className="ns-steps-title" id="ns-map-title" {...revealProps(animated)}>
-                {t('map.title')}
-            </motion.h2>
-            <motion.p className="ns-map-subtitle" {...revealProps(animated)}>
-                {t('map.subtitle', { brand: BRAND_NAME })}
-            </motion.p>
-            <div className="ns-map-canvas" ref={canvasRef}>
-                <ElSalvadorMap
-                    className="ns-map-svg"
-                    role="img"
-                    aria-label={t('map.ariaLabel')}
-                    outlineProps={outlineProps}
-                    departmentProps={departmentProps}
+        <div className={`ns-map-canvas${activePin ? ' has-active' : ''}`}>
+            <ElSalvadorMap
+                className="ns-map-svg"
+                role="img"
+                aria-label={t('map.ariaLabel')}
+                outlineProps={outlineProps}
+                departmentProps={departmentProps}
+            />
+            {MAP_PINS.map((pin, index) => (
+                <MapPin
+                    key={pin.department}
+                    pin={pin}
+                    count={counts ? counts.get(departmentKey(pin.department)) || 0 : 0}
+                    hasData={Boolean(counts)}
+                    animated={animated}
+                    shown={shown}
+                    delay={pinsStart + index * PIN_STEP}
+                    active={activePin === pin.department}
+                    onShow={() => setActivePin(pin.department)}
+                    onHide={() => setActivePin((current) => (current === pin.department ? null : current))}
                 />
-                {MAP_PINS.map((pin, index) => (
-                    <MapPin
-                        key={pin.department}
-                        pin={pin}
-                        index={index}
-                        count={counts ? counts.get(departmentKey(pin.department)) || 0 : 0}
-                        hasData={Boolean(counts)}
-                        animated={animated}
-                        shown={shown}
-                        active={activePin === pin.department}
-                        onShow={() => setActivePin(pin.department)}
-                        onHide={() => setActivePin((current) => (current === pin.department ? null : current))}
-                    />
-                ))}
-            </div>
-        </section>
+            ))}
+        </div>
     )
 }

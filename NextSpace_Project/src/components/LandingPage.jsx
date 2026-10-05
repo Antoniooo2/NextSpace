@@ -8,12 +8,11 @@ import { ADVISOR_NAME, BRAND_NAME, PAYMENT_PROVIDER } from '../lib/brand'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
 import AccessibilityMenu from './AccessibilityMenu.jsx'
 import CountUp from './landing/CountUp.jsx'
-import MapSection from './landing/MapSection.jsx'
+import HeroVisual from './landing/HeroVisual.jsx'
 import {
     buttonHover,
     buttonTap,
     fadeUp,
-    heroMockupCard,
     heroVisual,
     hoverProps,
     nestedProps,
@@ -135,22 +134,7 @@ export default function LandingPage({ onLogin, onSignup }) {
                         </motion.div>
 
                         <motion.div className="ns-hero-visual" {...revealProps(animated, heroVisual)}>
-                            <div className="ns-hero-mockup">
-                                <motion.i
-                                    className="bi bi-geo-alt-fill ns-mockup-pin"
-                                    animate={animated ? { y: [0, -8, 0] } : undefined}
-                                    transition={{ duration: 3.2, ease: 'easeInOut', repeat: Infinity }}
-                                ></motion.i>
-                                <motion.div className="ns-mockup-card" {...nestedProps(animated, heroMockupCard)}>
-                                    <span className="ns-avatar ns-avatar-sm">LF</span>
-                                    <div>
-                                        <div className="ns-mockup-card-title">Las Cascadas Mall</div>
-                                        <div className="ns-mockup-card-rating">
-                                            <i className="bi bi-star-fill"></i> 5.0
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            </div>
+                            <HeroVisual animated={animated} />
                         </motion.div>
                     </div>
                 </section>
@@ -169,8 +153,6 @@ export default function LandingPage({ onLogin, onSignup }) {
                         ))}
                     </div>
                 </motion.section>
-
-                <MapSection animated={animated} />
 
                 <section className="ns-steps">
                     <motion.h2 className="ns-steps-title" {...revealProps(animated)}>

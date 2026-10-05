@@ -29,6 +29,16 @@
     "listSpace": "List my space",
     "ratingText": "rating based on +500 reviews"
   },
+  "heroCards": {
+    "property": {
+      "zone": "Antiguo Cuscatl\u00e1n",
+      "price": "{{price}}/month"
+    },
+    "notice": {
+      "title": "Contract accepted",
+      "time": "Just now"
+    }
+  },
   "stats": {
     "activeSpaces": "Active Spaces",
     "businessesBoosted": "Businesses Boosted",
@@ -51,8 +61,6 @@
     }
   },
   "map": {
-    "title": "Find spaces across El Salvador",
-    "subtitle": "From west to east, see where {{brand}} has commercial spaces available. Hover over or tap a pin to see the department.",
     "ariaLabel": "Map of El Salvador and its 14 departments",
     "spaces_one": "{{count}} space available",
     "spaces_other": "{{count}} spaces available",

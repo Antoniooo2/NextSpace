@@ -39,13 +39,8 @@ export const heroVisual = {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: { duration: 0.9, ease: EASE, delay: 0.25, delayChildren: 0.75 },
+        transition: { duration: 0.9, ease: EASE, delay: 0.25 },
     },
-}
-
-export const heroMockupCard = {
-    hidden: { opacity: 0, x: -24, y: 16 },
-    visible: { opacity: 1, x: 0, y: 0, transition: { duration: 0.6, ease: EASE } },
 }
 
 export const listItem = {
