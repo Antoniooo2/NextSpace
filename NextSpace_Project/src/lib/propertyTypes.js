@@ -1,12 +1,6 @@
 import { listingStatusLabel } from './displayValues'
 
-export const PROPERTY_TYPES = [
-    'Café/Restaurant',
-    'Store/Boutique',
-    'Beauty Salon',
-    'Pharmacy/Healthcare',
-    'Other',
-]
+export { PROPERTY_TYPES } from './propertyTypeList'
 
 // How a listing's availability reads to its owner. 'Occupied' is set by the
 // lease flow only; owners switch between listed and paused.
