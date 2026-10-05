@@ -35,24 +35,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.ns-icon-badge {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 20px;
-  border-radius: 50%;
-  background: linear-gradient(155deg, #1c2d52, #4c7ba8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 24px rgba(28, 45, 82, 0.28);
-}
-
-.ns-icon-badge svg {
-  width: 26px;
-  height: 26px;
-  stroke: #ffffff;
-}
-
 .ns-logo-img {
   height: 70px;
   width: auto;

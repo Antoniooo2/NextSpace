@@ -6,7 +6,6 @@ import SignupForm from './components/SignUpForm.jsx'
 import ForgotPassword from './pages/ForgotPassword'
 import NewPassword from './pages/NewPassword'
 import Dashboard from './pages/Dashboard.jsx'
-import {supabase} from './lib/supabaseClient.js'
 
 function MainFlow() {
   const [view, setView] = useState('landing')

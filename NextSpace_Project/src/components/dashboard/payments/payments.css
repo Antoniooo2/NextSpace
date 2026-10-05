@@ -1,0 +1,1737 @@
+/* Payments v2: shared pieces (panels, KPIs, Rony card, ring, timeline,
+   risk badge, lease cards, lease detail, notice composer). */
+
+.ns-panel {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  min-width: 0;
+}
+
+.ns-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.ns-panel-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1f2b;
+}
+
+.ns-panel-head > span {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-pay-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+.ns-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 0 14px;
+}
+
+/* KPIs with trend */
+.ns-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ns-kpi {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ns-kpi-label {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ns-navy);
+}
+
+.ns-kpi.is-alert .ns-kpi-value {
+  color: #c9292f;
+}
+
+.ns-trend {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ns-trend.is-good {
+  color: #1a8a4a;
+}
+
+.ns-trend.is-bad {
+  color: #c9292f;
+}
+
+/* Segmented control */
+.ns-segmented {
+  display: inline-flex;
+  background: #f1f3f7;
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.ns-segmented button {
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5b6474;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ns-segmented button.active {
+  background: #fff;
+  color: var(--ns-navy);
+  box-shadow: 0 1px 3px rgba(15, 28, 63, 0.12);
+}
+
+/* Rony insight card */
+.ns-rony-card {
+  background: linear-gradient(135deg, #f4f7ff 0%, #ffffff 60%);
+  border: 1px solid #d7ddfb;
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.ns-rony-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ns-rony-card-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1f2b;
+}
+
+.ns-rony-card-head span {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-rony-ask {
+  margin-left: auto;
+}
+
+.ns-rony-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ns-rony-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  color: #1a1f2b;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+
+.ns-rony-list li > i {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.ns-rony-list li > span {
+  flex: 1;
+}
+
+.ns-rony-list .tone-danger > i {
+  color: #c9292f;
+}
+
+.ns-rony-list .tone-warning > i {
+  color: #b25e00;
+}
+
+.ns-rony-list .tone-success > i {
+  color: #1a8a4a;
+}
+
+.ns-rony-list .tone-info > i {
+  color: var(--ns-blue-accent);
+}
+
+.ns-rony-action {
+  border: none;
+  background: var(--ns-navy);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ns-rony-action:hover {
+  background: var(--ns-blue-accent);
+}
+
+/* Progress ring */
+.ns-ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.ns-ring svg {
+  display: block;
+}
+
+.ns-ring-track {
+  stroke: #eef0f3;
+}
+
+.ns-ring-fill {
+  stroke: #1a8a4a;
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.ns-ring.tone-warning .ns-ring-fill {
+  stroke: #d98b00;
+}
+
+.ns-ring.tone-danger .ns-ring-fill {
+  stroke: #c9292f;
+}
+
+.ns-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: #1a1f2b;
+}
+
+.ns-ring-center strong {
+  font-size: 18px;
+}
+
+.ns-ring-center small {
+  font-size: 11px;
+  font-weight: 600;
+  color: #4a5263;
+}
+
+/* Risk badge */
+.ns-risk-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.ns-risk-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.ns-risk-badge.risk-low {
+  background: #e3f6ea;
+  color: #1a8a4a;
+}
+
+.ns-risk-badge.risk-medium {
+  background: #fff4e0;
+  color: #9a5200;
+}
+
+.ns-risk-badge.risk-high {
+  background: #fdecec;
+  color: #c9292f;
+}
+
+.ns-risk-badge.risk-new {
+  background: #eef0f3;
+  color: #5b6474;
+}
+
+.ns-risk-pop {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+  width: 280px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(15, 28, 63, 0.16);
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: #4a5263;
+  cursor: default;
+}
+
+.ns-risk-pop strong {
+  display: block;
+  color: #1a1f2b;
+  margin-bottom: 6px;
+}
+
+.ns-risk-pop ul {
+  margin: 0 0 8px;
+  padding-left: 16px;
+}
+
+.ns-risk-ask {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--ns-blue-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Rent timeline */
+.ns-timeline-track {
+  position: relative;
+  display: flex;
+  gap: 4px;
+  padding-top: 18px;
+}
+
+.ns-timeline-seg {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.ns-timeline-bar {
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 14px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.ns-timeline-seg:hover .ns-timeline-bar,
+.ns-timeline-seg:focus-visible .ns-timeline-bar {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+}
+
+.ns-timeline-label {
+  font-size: 11px;
+  color: var(--ns-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ns-timeline-seg.status-paid .ns-timeline-bar,
+.ns-timeline-legend i.status-paid {
+  background: #1a8a4a;
+}
+
+.ns-timeline-seg.status-paid.paid-late .ns-timeline-bar {
+  background: repeating-linear-gradient(135deg, #1a8a4a 0 6px, #2ea464 6px 10px);
+}
+
+.ns-timeline-seg.status-pending .ns-timeline-bar,
+.ns-timeline-legend i.status-pending {
+  background: #2f5fe0;
+}
+
+.ns-timeline-seg.status-late .ns-timeline-bar,
+.ns-timeline-legend i.status-late {
+  background: #c9292f;
+}
+
+.ns-timeline-seg.status-scheduled .ns-timeline-bar,
+.ns-timeline-legend i.status-scheduled {
+  background: #d5d9e0;
+}
+
+.ns-timeline-today {
+  position: absolute;
+  top: 0;
+  bottom: 18px;
+  width: 0;
+  border-left: 2px dashed var(--ns-navy);
+  transform: translateX(-2px);
+  pointer-events: none;
+}
+
+.ns-timeline-today span {
+  position: absolute;
+  top: -2px;
+  left: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ns-navy);
+}
+
+.ns-timeline-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: #4a5263;
+}
+
+.ns-timeline-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ns-timeline-legend i {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Next 30 days */
+.ns-upcoming {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ns-upcoming button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--ns-border);
+  background: #fff;
+  border-radius: 10px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-upcoming button:hover {
+  border-color: var(--ns-blue-accent);
+}
+
+.ns-upcoming-date {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 38px;
+  line-height: 1.1;
+}
+
+.ns-upcoming-date small {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ns-text-muted);
+}
+
+.ns-upcoming-date strong {
+  font-size: 17px;
+  color: #1a1f2b;
+}
+
+.ns-upcoming-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-upcoming-info strong {
+  font-size: 13px;
+  color: #1a1f2b;
+}
+
+.ns-upcoming-info small {
+  font-size: 11.5px;
+  color: var(--ns-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns-upcoming-amount {
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #1a1f2b;
+}
+
+/* Projection */
+.ns-projection-flag {
+  font-size: 10.5px;
+  font-weight: 700;
+  fill: #b25e00;
+}
+
+.ns-projection-endings {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  font-size: 12.5px;
+  color: #4a5263;
+}
+
+.ns-projection-endings li {
+  padding: 4px 0;
+}
+
+.ns-projection-endings i {
+  color: #b25e00;
+  margin-right: 4px;
+}
+
+/* Lease cards */
+.ns-lease-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ns-lease-card {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  overflow: visible;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ns-lease-card:hover,
+.ns-lease-card:focus-visible {
+  border-color: var(--ns-blue-accent);
+  box-shadow: 0 8px 24px rgba(15, 28, 63, 0.08);
+  transform: translateY(-2px);
+  outline: none;
+}
+
+.ns-lease-card.status-late {
+  border-color: #f3c1c3;
+}
+
+.ns-lease-card-photo {
+  position: relative;
+  height: 110px;
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  border-radius: 14px 14px 0 0;
+  overflow: hidden;
+}
+
+.ns-lease-card-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ns-lease-card-status {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fff;
+  color: #1a8a4a;
+}
+
+.ns-lease-card-status.status-late {
+  background: #c9292f;
+  color: #fff;
+}
+
+.ns-lease-card-status.status-due {
+  background: #2f5fe0;
+  color: #fff;
+}
+
+.ns-lease-card-body {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ns-lease-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ns-lease-card-top h4 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 2px;
+  color: #1a1f2b;
+}
+
+.ns-lease-card-top span {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-lease-card-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #f7f9fc;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.ns-lease-card-facts div {
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-lease-card-facts small {
+  font-size: 10.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-lease-card-facts strong {
+  font-size: 13px;
+  color: #1a1f2b;
+}
+
+.is-bad {
+  color: #c9292f !important;
+}
+
+.ns-lease-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Recent payments */
+.ns-recent {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ns-recent li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--ns-border);
+  font-size: 13px;
+  color: #4a5263;
+}
+
+.ns-recent li:last-child {
+  border-bottom: none;
+}
+
+.ns-recent li > i {
+  color: #1a8a4a;
+}
+
+.ns-recent li > span:first-of-type {
+  flex: 1;
+}
+
+.ns-recent time {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+  width: 52px;
+  text-align: right;
+}
+
+/* Lease detail */
+.ns-lease-hero {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 16px;
+  padding: 16px;
+  margin: 12px 0 20px;
+  flex-wrap: wrap;
+}
+
+.ns-lease-hero-photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--ns-blue-bg);
+  color: var(--ns-blue-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+}
+
+.ns-lease-hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ns-lease-hero-info {
+  flex: 1;
+  min-width: 240px;
+}
+
+.ns-lease-hero-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ns-lease-hero-title h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1f2b;
+}
+
+.ns-lease-hero-info p {
+  font-size: 13px;
+  color: #4a5263;
+  margin: 6px 0 10px;
+}
+
+.ns-lease-time {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-lease-time .ns-pay-progress-track {
+  flex: 1;
+  max-width: 320px;
+}
+
+.ns-fill-navy {
+  background: var(--ns-navy) !important;
+}
+
+.ns-lease-hero-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ns-lease-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ns-lease-kpi {
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ns-lease-kpi > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-lease-kpi-big {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ns-navy);
+  min-width: 64px;
+}
+
+.ns-lease-kpi-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1f2b;
+}
+
+.ns-lease-kpi-label {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-activity {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.ns-activity li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ns-border);
+}
+
+.ns-activity li:last-child {
+  border-bottom: none;
+}
+
+.ns-activity li > i {
+  font-size: 15px;
+  margin-top: 1px;
+  color: #8a93a3;
+}
+
+.ns-activity .tone-success > i {
+  color: #1a8a4a;
+}
+
+.ns-activity .tone-danger > i {
+  color: #c9292f;
+}
+
+.ns-activity .tone-info > i {
+  color: var(--ns-blue-accent);
+}
+
+.ns-activity li > div {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-activity-text {
+  font-size: 13.5px;
+  color: #1a1f2b;
+  font-weight: 600;
+}
+
+.ns-activity-sub {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.ns-activity time {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+  white-space: nowrap;
+}
+
+/* Notice composer */
+.ns-notice-modal {
+  max-width: 560px;
+}
+
+.ns-tone-toggle {
+  display: inline-flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.ns-tone-toggle button {
+  border: 1.5px solid var(--ns-border);
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5263;
+  cursor: pointer;
+}
+
+.ns-tone-toggle button.active {
+  border-color: var(--ns-navy);
+  background: var(--ns-navy);
+  color: #fff;
+}
+
+.ns-notice-text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.ns-notice-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0 6px;
+  font-size: 12px;
+}
+
+.ns-rony-write {
+  border: 1px solid #d7ddfb;
+  background: #f4f7ff;
+  color: var(--ns-blue-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ns-rony-write:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.ns-notice-note {
+  font-size: 12.5px;
+  color: #4a5263;
+  background: #f7f9fc;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 900px) {
+  .ns-pay-grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .ns-lease-hero-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+/* Payment history feed */
+.ns-history-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.ns-history-search {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--ns-border);
+  border-radius: 10px;
+  padding: 7px 12px;
+  background: #fff;
+}
+
+.ns-history-search:focus-within {
+  border-color: var(--ns-blue-accent);
+}
+
+.ns-history-search i {
+  color: var(--ns-text-muted);
+}
+
+.ns-history-search input {
+  border: none;
+  outline: none;
+  flex: 1;
+  font-size: 13.5px;
+  background: transparent;
+}
+
+.ns-history-select {
+  width: auto;
+  font-size: 13px;
+  border-radius: 10px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.ns-history-group {
+  margin-bottom: 14px;
+}
+
+.ns-history-group header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 2px;
+  border-bottom: 1px solid var(--ns-border);
+  margin-bottom: 4px;
+}
+
+.ns-history-group h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1f2b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ns-history-group header span {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-history-group ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ns-history-group li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ns-history-row {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: none;
+  padding: 10px 8px;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-history-row:hover,
+.ns-history-row:focus-visible {
+  background: #f5f7fb;
+}
+
+.ns-history-row > i {
+  font-size: 16px;
+  color: var(--ns-text-muted);
+}
+
+.status-paid .ns-history-row > i {
+  color: #1a8a4a;
+}
+
+.status-late .ns-history-row > i {
+  color: #c9292f;
+}
+
+.status-pending .ns-history-row > i {
+  color: #2f5fe0;
+}
+
+.ns-history-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-history-main strong {
+  font-size: 13.5px;
+  color: #1a1f2b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ns-history-main small {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-history-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1a1f2b;
+}
+
+.ns-history-amount small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ns-text-muted);
+}
+
+.status-late .ns-history-amount small {
+  color: #c9292f;
+}
+
+.status-paid .ns-history-amount small {
+  color: #1a8a4a;
+}
+
+.ns-history-more {
+  width: 100%;
+  justify-content: center;
+}
+
+.ns-history-empty {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.ns-detail-ask-rony {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  border: 1px solid #d7ddfb;
+  background: #f4f7ff;
+  color: var(--ns-blue-accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.ns-detail-ask-rony:hover {
+  background: #eaf0ff;
+}
+
+/* Tenant pay card with countdown ring */
+.ns-pay-due-card-v2 {
+  justify-content: center;
+}
+
+.ns-due-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.ns-due-hero .ns-pay-countdown {
+  margin-bottom: 4px;
+}
+
+.ns-due-hero .ns-pay-due-amount {
+  margin: 0;
+}
+
+.ns-due-hero .ns-pay-due-desc {
+  margin: 2px 0 0;
+}
+
+.ns-due-ring-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+}
+
+.ns-due-ring-text strong {
+  font-size: 22px;
+  color: #1a1f2b;
+}
+
+.ns-due-ring-text small {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--ns-text-muted);
+}
+
+.ns-due-ring-text.is-late strong,
+.ns-due-ring-text.is-late small {
+  color: #c9292f;
+}
+
+.ns-due-check {
+  font-size: 30px;
+  color: #1a8a4a;
+}
+
+/* Lease card keeps its own height instead of stretching to the pay card. */
+.ns-pay-top-grid-v2 {
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+/* Export menu */
+.ns-export {
+  position: relative;
+}
+
+.ns-export-caret {
+  font-size: 11px;
+}
+
+.ns-export-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  width: 300px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(15, 28, 63, 0.16);
+  padding: 6px;
+}
+
+.ns-export-menu button {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  border: none;
+  background: none;
+  padding: 9px 10px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ns-export-menu button:hover:not(:disabled) {
+  background: #f5f7fb;
+}
+
+.ns-export-menu button > i {
+  font-size: 18px;
+  color: var(--ns-blue-accent);
+  margin-top: 1px;
+}
+
+.ns-export-menu span {
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-export-menu strong {
+  font-size: 13px;
+  color: #1a1f2b;
+}
+
+.ns-export-menu small {
+  font-size: 11.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-export-error {
+  font-size: 12px;
+  color: #c9292f;
+  margin: 4px 10px 6px;
+}
+
+.ns-report-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #f7f9fc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+
+.ns-report-check input {
+  margin-top: 4px;
+}
+
+.ns-report-check span {
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-report-check strong {
+  font-size: 13px;
+  color: #1a1f2b;
+}
+
+.ns-report-check small {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+   Page structure shared by Payments and Contracts: sticky section nav and
+   titled groups, so both screens read top to bottom in the same order.
+   --------------------------------------------------------------------------- */
+.ns-section-nav {
+  position: sticky;
+  top: 71px;
+  z-index: 4;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--ns-page-bg);
+  padding: 10px 0;
+  margin: -6px 0 18px;
+  border-bottom: 1px solid var(--ns-border);
+}
+
+.ns-section-nav::-webkit-scrollbar { display: none; }
+
+.ns-section-nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #4a5263;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.ns-section-nav button:hover { background: #fff; border-color: var(--ns-border); }
+
+.ns-section-nav button.active {
+  background: var(--ns-navy);
+  border-color: var(--ns-navy);
+  color: #fff;
+}
+
+.ns-section-nav-count {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(15, 28, 63, 0.08);
+  border-radius: 999px;
+  padding: 0 7px;
+}
+
+.ns-section-nav button.active .ns-section-nav-count { background: rgba(255, 255, 255, 0.2); }
+
+.ns-page-group {
+  scroll-margin-top: 136px;
+  margin-bottom: 30px;
+}
+
+.ns-page-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ns-border);
+}
+
+.ns-page-group-head h2 {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ns-blue-accent);
+  margin: 0;
+}
+
+.ns-page-group-head > span {
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-page-group-action { margin-left: auto; }
+
+.ns-page-group > :last-child { margin-bottom: 0; }
+
+/* Next 30 days as a two-column list when it has the full width. */
+.ns-upcoming-wide {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 16px;
+}
+
+@media (max-width: 767px) {
+  .ns-upcoming-wide { grid-template-columns: minmax(0, 1fr); }
+  .ns-section-nav { top: 64px; }
+}
+
+/* Business: the pay card leads, the lease info sits beside it (wide
+   screens only; below 900px the two cards stack). */
+@media (min-width: 901px) {
+  .ns-pay-top-grid-v3 {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .ns-pay-top-grid-v3 { gap: 14px; }
+}
+
+/* Phone: give the pay card and the lease card room to breathe. */
+@media (max-width: 575px) {
+  .ns-pay-top-grid-v3 .ns-due-hero { gap: 14px; }
+  .ns-pay-top-grid-v3 .ns-pay-due-amount { font-size: 26px; }
+
+  .ns-pay-top-grid-v3 .ns-pay-lease-head {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 10px;
+    align-items: start;
+  }
+  .ns-pay-top-grid-v3 .ns-pay-lease-thumb { width: 52px; height: 52px; }
+  .ns-pay-top-grid-v3 .ns-pay-rent {
+    grid-column: 1 / -1;
+    padding-top: 10px;
+    border-top: 1px dashed var(--ns-border);
+  }
+  .ns-pay-top-grid-v3 .ns-pay-lease-meta { line-height: 1.5; }
+  .ns-pay-top-grid-v3 .ns-pay-progress-labels { flex-direction: column; gap: 2px; }
+  .ns-pay-top-grid-v3 .ns-pay-lease-footer { gap: 10px; }
+}
+
+/* Breadcrumb on detail pages */
+.ns-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ns-text-muted);
+  margin-bottom: 14px;
+}
+
+.ns-breadcrumb button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--ns-blue-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ns-breadcrumb strong { color: #1a1f2b; font-weight: 600; }
+
+/* Secondary actions shown as quiet links next to the main decision. */
+.ns-quiet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  align-items: center;
+}
+
+.ns-quiet-actions button {
+  border: none;
+  background: none;
+  padding: 4px 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4a5263;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.ns-quiet-actions button:hover { color: var(--ns-blue-accent); }
+.ns-quiet-actions button:disabled { opacity: 0.6; cursor: progress; }
+
+.ns-pay-grid-even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.ns-pay-grid-even > .ns-panel { margin-bottom: 0; }
+@media (max-width: 991px) { .ns-pay-grid-even { grid-template-columns: minmax(0, 1fr); } }
+
+.ns-lease-hero-actions { align-items: flex-end; }
+@media (max-width: 767px) { .ns-lease-hero-actions { align-items: flex-start; } }
+
+/* NextSpace fee and transfers to owners */
+.ns-fee-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--ns-border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+
+.ns-fee-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f5f6f8;
+  min-width: 0;
+}
+
+.ns-fee-step > i {
+  font-size: 18px;
+  color: var(--ns-navy);
+}
+
+.ns-fee-step span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.ns-fee-step small {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+}
+
+.ns-fee-step strong {
+  font-size: 16px;
+  color: var(--ns-navy);
+}
+
+.ns-fee-step.is-fee strong {
+  color: #6b4bd6;
+}
+
+.ns-fee-step.is-net {
+  background: #e8f6ee;
+}
+
+.ns-fee-step.is-net strong,
+.ns-fee-step.is-net > i {
+  color: #1a8a4a;
+}
+
+.ns-fee-arrow {
+  color: var(--ns-text-muted);
+}
+
+.ns-fee-flow-note {
+  flex-basis: 100%;
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--ns-text-muted);
+}
+
+.ns-kpi.is-highlight {
+  border-color: #b9e2c9;
+  background: #f4fbf7;
+}
+
+.ns-kpi.is-highlight .ns-kpi-value {
+  color: #1a8a4a;
+}
+
+.ns-kpi-sub {
+  font-size: 12px;
+  color: #1a8a4a;
+  font-weight: 600;
+}
+
+.ns-transfer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ns-transfer-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--ns-border);
+}
+
+.ns-transfer-list li:first-child {
+  border-top: none;
+}
+
+.ns-transfer-list.is-compact li {
+  padding: 8px 0;
+}
+
+.ns-transfer-icon {
+  flex: 0 0 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #e8f6ee;
+  color: #1a8a4a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ns-transfer-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ns-transfer-main strong {
+  font-size: 13.5px;
+  color: #1a1f2b;
+}
+
+.ns-transfer-main small {
+  font-size: 12px;
+  color: var(--ns-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.ns-transfer-amount {
+  font-weight: 700;
+  color: #1a8a4a;
+  white-space: nowrap;
+}
+
+.ns-transfer-subhead {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 18px 0 4px;
+  color: #1a1f2b;
+}
+
+.ns-payout-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ns-payout-account > i {
+  font-size: 22px;
+  color: var(--ns-navy);
+}
+
+.ns-payout-account span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ns-payout-account small {
+  color: var(--ns-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.ns-payout-account.is-missing {
+  display: block;
+  background: #fff8ec;
+  border: 1px solid #f3dcae;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+}
+
+.ns-payout-account.is-missing i {
+  color: #b7791f;
+}
+
+.ns-fee-breakdown {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #f5f6f8;
+  font-size: 13px;
+}
+
+.ns-fee-breakdown div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 3px 0;
+}
+
+.ns-fee-breakdown dt {
+  font-weight: 400;
+  color: #4a5263;
+}
+
+.ns-fee-breakdown dd {
+  margin: 0;
+  font-weight: 600;
+  color: #1a1f2b;
+}
+
+.ns-fee-breakdown .is-net {
+  border-top: 1px solid var(--ns-border);
+  margin-top: 4px;
+  padding-top: 7px;
+}
+
+.ns-fee-breakdown .is-net dd {
+  color: #1a8a4a;
+}
+
+.ns-fee-breakdown .ns-fee-breakdown-note {
+  display: block;
+  color: var(--ns-text-muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+@media (max-width: 575px) {
+  .ns-fee-arrow {
+    display: none;
+  }
+
+  .ns-fee-step {
+    flex: 1 1 100%;
+  }
+}
