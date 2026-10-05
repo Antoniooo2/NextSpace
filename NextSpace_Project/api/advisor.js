@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { PROPERTY_TYPES } from '../src/lib/propertyTypes.js'
+import { PROPERTY_TYPES } from '../src/lib/propertyTypeList.js'
 
 export const config = {
     maxDuration: 30,
