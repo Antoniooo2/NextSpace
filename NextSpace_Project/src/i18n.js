@@ -19,8 +19,10 @@ i18n
     nonExplicitSupportedLngs: true,
     load: 'languageOnly',
     fallbackLng: 'en',
+    // Only honour a language the user picked explicitly; never the browser's
+    // language, so first-time visitors always land on English.
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
       lookupLocalStorage: LANGUAGE_STORAGE_KEY,
       caches: [],
     },
