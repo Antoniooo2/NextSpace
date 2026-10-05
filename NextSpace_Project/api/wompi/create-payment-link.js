@@ -164,7 +164,8 @@ export default async function handler(req, res) {
     let wompiToken
     try {
         wompiToken = await getWompiAccessToken()
-    } catch {
+    } catch (err) {
+        console.error('Wompi create-payment-link: token request failed', err)
         res.status(502).json({ error: 'Could not reach Wompi.' })
         return
     }
@@ -179,10 +180,19 @@ export default async function handler(req, res) {
             identificadorEnlaceComercio: `payment-${payment.payment_id}`,
             monto: Number(payment.amount),
             nombreProducto: `Renta - ${propertyName}`,
+            // Wompi requires every payment method flag, not only the enabled
+            // one; a missing flag makes it reject the whole request.
             formaPago: {
                 permitirTarjetaCreditoDebido: true,
+                permitirPagoConPuntoAgricola: false,
+                permitirPagoEnCuotasAgricola: false,
+                permitirPagoEnBitcoin: false,
+                permitePagoQuickPay: false,
             },
             configuracion: {
+                // The rent is fixed: the webhook refuses any other amount.
+                esMontoEditable: false,
+                esCantidadEditable: false,
                 urlRedirect: `${baseUrl}/dashboard?section=payments&wompi=return&paymentId=${payment.payment_id}`,
                 urlWebhook: `${baseUrl}/api/wompi/webhook`,
                 notificarTransaccionCliente: true,
@@ -195,6 +205,11 @@ export default async function handler(req, res) {
     })
 
     if (!wompiRes.ok) {
+        // Wompi says which field it didn't like; keep that in the Vercel logs.
+        console.error(
+            `Wompi create-payment-link: EnlacePago rejected for payment ${payment.payment_id}: ` +
+                `${wompiRes.status} ${await wompiRes.text().catch(() => '')}`
+        )
         res.status(502).json({ error: 'Wompi rejected the payment link request.' })
         return
     }
