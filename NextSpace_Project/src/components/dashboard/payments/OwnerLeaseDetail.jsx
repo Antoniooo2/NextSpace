@@ -1,4 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n, { currentLocale } from '../../../i18n'
+import { BRAND_VALUES } from '../../../lib/brand'
+import { paymentMethodLabel } from '../../../lib/displayValues'
+import { ARROW_RIGHT, DASH, DOT } from '../../../lib/symbols'
 import { daysUntil, formatDueDate, todayInElSalvador } from '../../../lib/rentSchedule'
 import { daysLate, leaseTimeProgress, money, tenantName } from '../../../lib/leaseInsights'
 import PaymentDetailModal from '../PaymentDetailModal'
@@ -15,6 +20,7 @@ const ACTIVITY_PAGE = 8
 
 function activityFor(lease, events, today) {
     const { contract, installments } = lease
+    const t = (key, values) => i18n.t(`leaseDetail.activity.${key}`, values)
     const items = []
 
     for (const p of installments) {
@@ -25,9 +31,9 @@ function activityFor(lease, events, today) {
                 at: p.paid_at || p.payment_date,
                 icon: 'bi-check-circle-fill',
                 tone: 'success',
-                text: `Paid ${money(p.amount)} for ${month} rent`,
-                sub: `${p.payment_method || 'Wompi'} · ${late > 0 ? `${late} days late` : 'on time'}${
-                    p.wompi_transaction_id ? ` · Tx ${p.wompi_transaction_id.slice(0, 8)}…` : ''
+                text: t('paid', { amount: money(p.amount), month }),
+                sub: `${paymentMethodLabel(p.payment_method || 'Wompi')} ${DOT} ${late > 0 ? i18n.t('rent.daysLate', { count: late }) : t('onTime')}${
+                    p.wompi_transaction_id ? ` ${DOT} ${t('tx', { id: p.wompi_transaction_id.slice(0, 8) })}` : ''
                 }`,
             })
         } else if (p.status === 'Late') {
@@ -35,8 +41,8 @@ function activityFor(lease, events, today) {
                 at: p.payment_date,
                 icon: 'bi-exclamation-octagon-fill',
                 tone: 'danger',
-                text: `${month} rent (${money(p.amount)}) became late`,
-                sub: `${daysLate(p, today)} days overdue`,
+                text: t('becameLate', { month, amount: money(p.amount) }),
+                sub: t('overdue', { count: daysLate(p, today) }),
             })
         }
     }
@@ -49,18 +55,20 @@ function activityFor(lease, events, today) {
             tone: e.kind === 'renewal_request' || e.kind === 'signed' ? 'success' : e.kind === 'renewal_offer' ? 'info' : 'neutral',
             text:
                 e.kind === 'renewal_request'
-                    ? `${contract.users?.first_name || 'Your tenant'} asked to renew`
+                    ? t('askedRenew', { name: contract.users?.first_name || t('yourTenant') })
                     : e.kind === 'renewal_offer'
-                      ? 'You offered a renewal'
+                      ? t('youOffered')
                       : e.kind === 'reminder'
-                        ? `You sent a ${e.tone || ''} reminder`.replace('  ', ' ')
+                        ? e.tone === 'friendly' || e.tone === 'firm'
+                            ? t(`reminder_${e.tone}`)
+                            : t('reminder')
                         : meta.label,
             sub: e.message,
         })
     }
 
     if (contract.start_date) {
-        items.push({ at: contract.start_date, icon: 'bi-flag-fill', tone: 'neutral', text: 'Lease started' })
+        items.push({ at: contract.start_date, icon: 'bi-flag-fill', tone: 'neutral', text: t('started') })
     }
 
     return items.sort((a, b) => String(b.at).localeCompare(String(a.at)))
@@ -68,7 +76,7 @@ function activityFor(lease, events, today) {
 
 function formatWhen(at) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(at)) return formatDueDate(at)
-    return new Date(at).toLocaleDateString('en-US', {
+    return new Date(at).toLocaleDateString(currentLocale(), {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -88,6 +96,7 @@ export default function OwnerLeaseDetail({
     onNoticeSent,
     onOpenContract,
 }) {
+    const { t } = useTranslation()
     const today = todayInElSalvador()
     const { contract, installments, stats, risk } = lease
     const property = contract.add_business || {}
@@ -123,17 +132,17 @@ export default function OwnerLeaseDetail({
 
     const askRony = () =>
         onAskRony?.({
-            text: `How is ${tenant} doing with rent on ${property.property_name || 'this property'}? What should I do next?`,
+            text: t('ownerPayments.askTenant', { tenant, name: property.property_name || t('leaseDetail.thisProperty') }),
         })
 
     return (
         <>
-            <nav className="ns-breadcrumb" aria-label="Breadcrumb">
+            <nav className="ns-breadcrumb" aria-label={t('contractDetail.breadcrumb')}>
                 <button type="button" onClick={onBack} ref={topRef}>
-                    <i className="bi bi-arrow-left"></i> Payments
+                    <i className="bi bi-arrow-left"></i> {t('dashboard.nav.payments')}
                 </button>
                 <i className="bi bi-chevron-right"></i>
-                <strong>{property.property_name || 'Property'}</strong>
+                <strong>{property.property_name || t('common.property')}</strong>
             </nav>
 
             <section className="ns-lease-hero">
@@ -142,15 +151,15 @@ export default function OwnerLeaseDetail({
                 </div>
                 <div className="ns-lease-hero-info">
                     <div className="ns-lease-hero-title">
-                        <h1>{property.property_name || 'Property'}</h1>
+                        <h1>{property.property_name || t('common.property')}</h1>
                         <RiskBadge risk={risk} onAskRony={onAskRony ? askRony : undefined} />
                     </div>
                     <p>
                         <i className="bi bi-person"></i> {tenant}
-                        <span className="ns-pay-dot">•</span>
-                        {money(contract.monthly_rent)}/month ({money(monthlyNet)} to you after the {formatRate(rate)} fee)
-                        <span className="ns-pay-dot">•</span>
-                        {formatDueDate(contract.start_date)} → {formatDueDate(contract.end_date)}
+                        <span className="ns-pay-dot">{DOT}</span>
+                        {t('leaseDetail.rentLine', { rent: money(contract.monthly_rent), net: money(monthlyNet), rate: formatRate(rate) })}
+                        <span className="ns-pay-dot">{DOT}</span>
+                        {formatDueDate(contract.start_date)} {ARROW_RIGHT} {formatDueDate(contract.end_date)}
                     </p>
                     <div className="ns-lease-time">
                         <div className="ns-pay-progress-track">
@@ -158,22 +167,22 @@ export default function OwnerLeaseDetail({
                         </div>
                         <span>
                             {daysToEnd == null
-                                ? 'No end date'
+                                ? t('leaseDetail.noEndDate')
                                 : daysToEnd >= 0
-                                  ? `${daysToEnd} days left on the lease`
-                                  : 'Lease ended'}
+                                  ? t('payments.daysLeftLease', { count: daysToEnd })
+                                  : t('contracts.events.expired')}
                         </span>
                     </div>
                 </div>
                 <div className="ns-lease-hero-actions">
                     {stats.lateMonths > 0 && (
                         <button type="button" className="ns-filled-btn" onClick={() => setComposer('reminder')}>
-                            <i className="bi bi-bell"></i> Send reminder
+                            <i className="bi bi-bell"></i> {t('leaseDetail.sendReminder')}
                         </button>
                     )}
                     {canOfferRenewal && renewal === 'requested' && (
                         <button type="button" className="ns-filled-btn" onClick={() => onOpenContract(contract.contract_id)}>
-                            <i className="bi bi-arrow-repeat"></i> Answer renewal request
+                            <i className="bi bi-arrow-repeat"></i> {t('insights.owner.answerRenewal')}
                         </button>
                     )}
                     <ExportMenu
@@ -181,16 +190,16 @@ export default function OwnerLeaseDetail({
                             {
                                 id: 'statement',
                                 icon: 'bi-file-earmark-pdf',
-                                label: 'Statement (PDF)',
-                                description: 'Every month of this lease, totals and receipts',
+                                label: t('payments.export.statement'),
+                                description: t('payments.export.statementDesc', { name: t('payments.export.thisLease') }),
                                 onSelect: () =>
                                     downloadLeaseStatementPdf({ contract, installments, tenant: tenantInfo, ownerName }),
                             },
                             {
                                 id: 'xlsx',
                                 icon: 'bi-file-earmark-spreadsheet',
-                                label: 'Excel (.xlsx)',
-                                description: 'Lease summary and every payment',
+                                label: t('payments.export.excel'),
+                                description: t('payments.export.excelDesc'),
                                 onSelect: () => downloadLeaseWorkbook({ contract, installments, tenant: tenantInfo, ownerName }),
                             },
                         ]}
@@ -198,17 +207,17 @@ export default function OwnerLeaseDetail({
                     <div className="ns-quiet-actions">
                         {canOfferRenewal && renewal !== 'requested' && (
                             <button type="button" onClick={() => onOpenContract(contract.contract_id)}>
-                                <i className="bi bi-arrow-repeat"></i> {renewal === 'offered' ? 'Renewal offered' : 'Offer renewal'}
+                                <i className="bi bi-arrow-repeat"></i> {renewal === 'offered' ? t('ownerHome.flags.renewalOffered') : t('insights.owner.offerRenewal')}
                             </button>
                         )}
                         {onOpenContract && (
                             <button type="button" onClick={() => onOpenContract(contract.contract_id)}>
-                                <i className="bi bi-file-earmark-text"></i> View contract
+                                <i className="bi bi-file-earmark-text"></i> {t('payments.viewContract')}
                             </button>
                         )}
                         {onAskRony && (
                             <button type="button" onClick={askRony}>
-                                <i className="bi bi-stars"></i> Ask Rony
+                                <i className="bi bi-stars"></i> {t('insights.owner.askRony', BRAND_VALUES)}
                             </button>
                         )}
                     </div>
@@ -220,7 +229,7 @@ export default function OwnerLeaseDetail({
                     <span>
                         <i className="bi bi-check-circle-fill"></i> {sentNotice}
                     </span>
-                    <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setSentNotice('')} />
+                    <button type="button" className="btn-close" aria-label={t('common.dismiss')} onClick={() => setSentNotice('')} />
                 </div>
             )}
 
@@ -228,36 +237,36 @@ export default function OwnerLeaseDetail({
                 <div className="ns-lease-kpi">
                     <ProgressRing
                         value={stats.monthsTotal > 0 ? stats.monthsPaid / stats.monthsTotal : 0}
-                        label={`${stats.monthsPaid} of ${stats.monthsTotal} months paid`}
+                        label={t('ownerPayments.card.monthsPaid', { paid: stats.monthsPaid, count: stats.monthsTotal })}
                     >
                         <strong>{stats.monthsPaid}</strong>
                         <small>/{stats.monthsTotal}</small>
                     </ProgressRing>
                     <div>
-                        <span className="ns-lease-kpi-value">Months paid</span>
+                        <span className="ns-lease-kpi-value">{t('docs.reports.monthsPaid')}</span>
                         <span className="ns-lease-kpi-label">
-                            {money(stats.collectedTotal)} of {money(stats.leaseTotal)}
-                            {collected.gross > 0 ? ` · ${money(collected.net)} to you` : ''}
+                            {t('leaseDetail.collectedOf', { collected: money(stats.collectedTotal), total: money(stats.leaseTotal) })}
+                            {collected.gross > 0 ? ` ${DOT} ${t('ownerPayments.next30.toYou', { amount: money(collected.net) })}` : ''}
                         </span>
                     </div>
                 </div>
                 <div className="ns-lease-kpi">
                     <span className={`ns-lease-kpi-big ${onTimePct != null && onTimePct < 85 ? 'is-bad' : ''}`}>
-                        {onTimePct == null ? '—' : `${onTimePct}%`}
+                        {onTimePct == null ? DASH : `${onTimePct}%`}
                     </span>
                     <div>
-                        <span className="ns-lease-kpi-value">On time</span>
+                        <span className="ns-lease-kpi-value">{t('docs.reports.onTime')}</span>
                         <span className="ns-lease-kpi-label">
-                            {stats.monthsDue > 0 ? `${stats.paidOnTime} of ${stats.monthsDue} months due` : 'Nothing due yet'}
+                            {stats.monthsDue > 0 ? t('leaseDetail.ofMonthsDue', { paid: stats.paidOnTime, count: stats.monthsDue }) : t('payments.kpi.nothingDue')}
                         </span>
                     </div>
                 </div>
                 <div className="ns-lease-kpi">
                     <span className={`ns-lease-kpi-big ${stats.lateMonths > 0 ? 'is-bad' : ''}`}>{money(stats.owedNow)}</span>
                     <div>
-                        <span className="ns-lease-kpi-value">Owed now</span>
+                        <span className="ns-lease-kpi-value">{t('docs.reports.owedNow')}</span>
                         <span className="ns-lease-kpi-label">
-                            {money(stats.remainingTotal)} left on the lease ({stats.remainingMonths} months)
+                            {t('leaseDetail.leftOnLease', { amount: money(stats.remainingTotal), count: stats.remainingMonths })}
                         </span>
                     </div>
                 </div>
@@ -265,19 +274,19 @@ export default function OwnerLeaseDetail({
 
             <section className="ns-panel">
                 <div className="ns-panel-head">
-                    <h3>Rent timeline</h3>
-                    <span>Tap a month for details</span>
+                    <h3>{t('payments.timeline.title')}</h3>
+                    <span>{t('leaseDetail.tapMonth')}</span>
                 </div>
                 <LeaseTimeline installments={installments} today={today} onSelect={(p) => setDetailId(p.payment_id)} />
             </section>
 
             <section className="ns-panel">
                 <div className="ns-panel-head">
-                    <h3>Activity</h3>
-                    <span>Payments, reminders and offers</span>
+                    <h3>{t('leaseDetail.activityTitle')}</h3>
+                    <span>{t('leaseDetail.activityHint')}</span>
                 </div>
                 {activity.length === 0 ? (
-                    <p className="ns-pay-muted mb-0">No activity yet.</p>
+                    <p className="ns-pay-muted mb-0">{t('leaseDetail.noActivity')}</p>
                 ) : (
                     <>
                         <ol className="ns-activity">
@@ -294,7 +303,7 @@ export default function OwnerLeaseDetail({
                         </ol>
                         {activity.length > shown && (
                             <button type="button" className="ns-link-btn" onClick={() => setShown((n) => n + ACTIVITY_PAGE)}>
-                                Show more
+                                {t('leaseDetail.showMore')}
                             </button>
                         )}
                     </>
@@ -311,8 +320,8 @@ export default function OwnerLeaseDetail({
                     onSent={() => {
                         setSentNotice(
                             composer === 'reminder'
-                                ? `Reminder sent to ${contract.users?.first_name || 'your tenant'}.`
-                                : `Renewal offer sent to ${contract.users?.first_name || 'your tenant'}.`
+                                ? t('leaseDetail.reminderSent', { name: contract.users?.first_name || t('leaseDetail.yourTenant') })
+                                : t('leaseDetail.renewalSent', { name: contract.users?.first_name || t('leaseDetail.yourTenant') })
                         )
                         setComposer(null)
                         onNoticeSent?.()

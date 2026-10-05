@@ -69,5 +69,2047 @@
       "youReceive": "You receive",
       "note": "Deposits carry no fee. No monthly plans, no listing costs."
     }
+  },
+  "values": {
+    "propertyType": {
+      "cafeRestaurant": "Cafe/Restaurant",
+      "storeBoutique": "Store/Boutique",
+      "beautySalon": "Beauty Salon",
+      "pharmacyHealthcare": "Pharmacy/Healthcare",
+      "other": "Other"
+    },
+    "service": {
+      "parking": "Parking",
+      "airConditioning": "Air Conditioning",
+      "fiberInternet": "Fiber Optic Internet",
+      "security": "24/7 Security",
+      "elevator": "Elevator",
+      "electricalPanel": "Electrical Panel",
+      "others": "Others"
+    },
+    "paymentStatus": {
+      "scheduled": "Upcoming",
+      "pending": "Due",
+      "paid": "Paid",
+      "late": "Late",
+      "cancelled": "Cancelled"
+    },
+    "contractStatus": {
+      "pending": "Requested",
+      "offered": "Awaiting signature",
+      "active": "Active",
+      "declined": "Declined",
+      "withdrawn": "Withdrawn",
+      "expired": "Ended",
+      "cancelled": "Cancelled",
+      "endedEarly": "Ended early"
+    },
+    "listingStatus": {
+      "available": "Listed",
+      "reserved": "Paused",
+      "occupied": "Leased"
+    },
+    "paymentMethod": {
+      "wompi": "Wompi",
+      "cash": "Cash"
+    },
+    "accountType": {
+      "savings": "Savings",
+      "checking": "Checking"
+    },
+    "process": {
+      "payments": "Payments",
+      "contracts": "Contracts",
+      "marketplace": "Space alerts"
+    },
+    "availability": {
+      "available": "Available",
+      "reserved": "Reserved",
+      "occupied": "Occupied"
+    }
+  },
+  "common": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "saving": "Saving...",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "retry": "Try again",
+    "edit": "Edit",
+    "delete": "Delete",
+    "remove": "Remove",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "send": "Send",
+    "sending": "Sending...",
+    "done": "Done",
+    "yes": "Yes",
+    "no": "No",
+    "none": "None",
+    "all": "All",
+    "property": "Property",
+    "tenant": "Tenant",
+    "owner": "Owner",
+    "genericError": "Something went wrong. Please try again.",
+    "month_one": "{{count}} month",
+    "month_other": "{{count}} months",
+    "day_one": "{{count}} day",
+    "day_other": "{{count}} days",
+    "perMonth": "/month",
+    "perMonthLong": "per month",
+    "sections": "Sections",
+    "dismiss": "Dismiss"
+  },
+  "errors": {
+    "notAllowedValue": "One of the values you entered is not allowed by the database (check the property type, availability, or size/rent values).",
+    "noPermission": "You don't have permission to perform this action on this property.",
+    "network": "Could not reach the server. Check your internet connection and try again.",
+    "auth": {
+      "invalidCredentials": "The email or password is incorrect.",
+      "emailNotConfirmed": "Confirm your email before signing in. Check your inbox.",
+      "alreadyRegistered": "An account with this email already exists. Sign in instead.",
+      "weakPassword": "Password must be at least 6 characters.",
+      "invalidEmail": "Enter a valid email address.",
+      "tooManyRequests": "Too many attempts. Wait a moment and try again.",
+      "samePassword": "The new password must be different from your current one.",
+      "sessionExpired": "Your session expired. Request a new code and try again.",
+      "missingFields": "Enter your email and password.",
+      "codeExpired": "The code is invalid or has expired. Request a new one."
+    },
+    "noAccountRecord": "We couldn't find your account record. Please contact support."
+  },
+  "rent": {
+    "dueToday": "Due today",
+    "dueTomorrow": "Due tomorrow",
+    "dueInDays_one": "Due in {{count}} day",
+    "dueInDays_other": "Due in {{count}} days",
+    "daysLate_one": "{{count}} day late",
+    "daysLate_other": "{{count}} days late"
+  },
+  "contracts": {
+    "dueDay_ordinal_one": "{{count}}st",
+    "dueDay_ordinal_two": "{{count}}nd",
+    "dueDay_ordinal_few": "{{count}}rd",
+    "dueDay_ordinal_other": "{{count}}th",
+    "expiresInHours_one": "Expires in {{count}} hour",
+    "expiresInHours_other": "Expires in {{count}} hours",
+    "expiresInDays_one": "Expires in {{count}} day",
+    "expiresInDays_other": "Expires in {{count}} days",
+    "offerExpired": "Offer expired",
+    "expired": "Expired",
+    "record": {
+      "newOnBrand": "New on {{brand}}",
+      "onTimePct": "{{pct}}% on time",
+      "noHistory": "no payment history on {{brand}} yet",
+      "monthsOnTime_one": "{{onTime}} of {{count}} month on time",
+      "monthsOnTime_other": "{{onTime}} of {{count}} months on time",
+      "lateNow_one": "{{months}}, but {{count}} month late right now",
+      "lateNow_other": "{{months}}, but {{count}} months late right now",
+      "nothingLate": "{{months}} and nothing late right now"
+    },
+    "events": {
+      "requested": "Lease requested",
+      "invited": "Invitation sent",
+      "offered": "Offer sent and signed by the owner",
+      "signed": "Signed by the tenant — lease active",
+      "declined": "Declined",
+      "autoDeclined": "Closed automatically",
+      "withdrawn": "Withdrawn by the business",
+      "terminationRequested": "Early end requested",
+      "terminationAccepted": "Early end accepted",
+      "terminationDeclined": "Early end declined",
+      "expired": "Lease ended",
+      "renewalOffer": "Renewal offered and signed by the owner",
+      "renewalRequest": "Renewal requested by the business",
+      "reminder": "Rent reminder sent",
+      "autoReminder": "Automatic rent reminder",
+      "renewed": "Renewal signed — lease extended",
+      "renewalDeclined": "Renewal not going ahead",
+      "renewalExpired": "Renewal offer expired",
+      "offerExpired": "Offer expired",
+      "requestReminder": "Owner reminded about the request",
+      "offerReminder": "Business reminded to sign"
+    },
+    "clauses": {
+      "premises": {
+        "title": "Premises",
+        "body": "The owner leases to the tenant the commercial space \"{{name}}\"{{location}}, as listed on {{brand}}, for the tenant's business use.",
+        "fallbackName": "the property",
+        "location": " in {{place}}"
+      },
+      "term": {
+        "title": "Term",
+        "body": "The lease runs from {{start}} to {{end}}{{length}}.",
+        "length_one": " ({{count}} month)",
+        "length_other": " ({{count}} months)"
+      },
+      "rent": {
+        "title": "Rent and payment",
+        "body": "The monthly rent is {{rent}}, due on the {{day}} of each month starting on the start date. Rent is paid online through {{brand}} ({{provider}}), which collects it on the owner's behalf; it can be paid from 7 days before each due date and is applied to the oldest unpaid month first. Each payment produces a receipt."
+      },
+      "fee": {
+        "title": "{{brand}} service fee",
+        "body": "{{brand}} keeps {{rate}} of each monthly rent payment ({{fee}} of {{rent}}) as its service fee and transfers the rest ({{net}}) to the owner's bank account. The fee comes out of the owner's rent: the tenant pays exactly the monthly rent above and nothing more. The deposit carries no fee."
+      },
+      "deposit": {
+        "title": "Deposit",
+        "body": "The tenant gives the owner a security deposit of {{deposit}} before the start date. It is returned at the end of the lease, minus the cost of documented damages beyond normal wear.",
+        "none": "No security deposit is required for this lease."
+      },
+      "use": {
+        "title": "Use of the space",
+        "body": "The tenant will use the space only for lawful commercial activity, keep the permits its business requires, and not sublet it without the owner's written consent."
+      },
+      "maintenance": {
+        "title": "Maintenance",
+        "body": "The owner is responsible for structural repairs and the building's main installations. The tenant is responsible for day-to-day upkeep and for damage caused by its use of the space."
+      },
+      "latePayment": {
+        "title": "Late payment",
+        "body": "If rent is not paid by its due date, {{brand}} sends reminders on the due date and after 7 and 15 days. No late fee applies unless one is stated in the special clauses."
+      },
+      "earlyEnd": {
+        "title": "Ending the lease early",
+        "body": "Either party may ask to end the lease early through {{brand}}, stating a date and a reason. It only takes effect if the other party accepts; rent after the agreed end date is then removed."
+      },
+      "renewal": {
+        "title": "Renewal",
+        "body": "In the last 90 days of the lease either party may propose a renewal through {{brand}}. It takes effect when the owner's renewal offer is signed by the tenant; the new rent applies from the current end date. Otherwise the lease ends on the end date and the space becomes available again."
+      },
+      "signature": {
+        "title": "Electronic signature",
+        "body": "Both parties accept that typing their full name and confirming through {{brand}}, recorded with the date and time, is their signature of this lease."
+      }
+    }
+  },
+  "notifications": {
+    "actions": {
+      "answerRequest": "Answer request",
+      "reviewOffer": "Review offer",
+      "answer": "Answer",
+      "reviewRenewal": "Review renewal",
+      "askToRenew": "Ask to renew",
+      "offerRenewal": "Offer renewal",
+      "payNow": "Pay now",
+      "viewRent": "View rent"
+    },
+    "time": {
+      "justNow": "Just now",
+      "minAgo_one": "{{count}} min ago",
+      "minAgo_other": "{{count}} min ago"
+    },
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "thisWeek": "This week",
+      "earlier": "Earlier"
+    },
+    "titles": {
+      "newContractRequest": "New contract request",
+      "contractAccepted": "Contract accepted",
+      "leaseOffer": "Lease offer",
+      "updatedLeaseOffer": "Updated lease offer",
+      "offerExpiresSoon": "Offer expires soon",
+      "offerExpired": "Offer expired",
+      "offerTurnedDown": "Offer turned down",
+      "offer": "Offer",
+      "leaseSigned": "Lease signed",
+      "leaseRenewed": "Lease renewed",
+      "leaseEnded": "Lease ended",
+      "requestDeclined": "Request declined",
+      "requestClosed": "Request closed",
+      "requestWithdrawn": "Request withdrawn",
+      "requestEndEarly": "Request to end lease early",
+      "earlyEndAccepted": "Early end accepted",
+      "earlyEndDeclined": "Early end declined",
+      "renewalRequest": "Renewal request",
+      "renewalOffer": "Renewal offer",
+      "renewalOfferExpiresSoon": "Renewal offer expires soon",
+      "renewalOfferExpired": "Renewal offer expired",
+      "renewalNotGoingAhead": "Renewal not going ahead",
+      "rentDueToday": "Rent due today",
+      "rentDueTomorrow": "Rent due tomorrow",
+      "rentOverdue": "Rent overdue",
+      "lateRent": "Late rent",
+      "rentReminderFromOwner": "Rent reminder from your owner",
+      "paymentReceived": "Payment received",
+      "paymentConfirmed": "Payment confirmed",
+      "paymentRecorded": "Payment recorded",
+      "transferSent": "Transfer sent",
+      "headsUpFromRony": "Heads up from {{advisor}}",
+      "newSpaceForSearch": "New space for your search",
+      "thisWeek": "This week",
+      "messageFromOwner": "Message from your property owner",
+      "rentDueInDays_one": "Rent due in {{count}} day",
+      "rentDueInDays_other": "Rent due in {{count}} days",
+      "leaseEndingInDays_one": "Lease ending in {{count}} day",
+      "leaseEndingInDays_other": "Lease ending in {{count}} days",
+      "rentDaysOverdue_one": "Rent {{count}} day overdue",
+      "rentDaysOverdue_other": "Rent {{count}} days overdue",
+      "stillUnpaidAfterDays_one": "Still unpaid after {{count}} day",
+      "stillUnpaidAfterDays_other": "Still unpaid after {{count}} days",
+      "requestWaitingDays_one": "Request waiting {{count}} day",
+      "requestWaitingDays_other": "Request waiting {{count}} days",
+      "fallback": {
+        "yourProperty": "your property",
+        "yourLease": "your lease",
+        "aSpace": "a space"
+      }
+    },
+    "title": "Notifications",
+    "loading": "Loading notifications...",
+    "unread": "Unread",
+    "unreadCount_one": "{{count}} unread",
+    "unreadCount_other": "{{count}} unread",
+    "bell": {
+      "label": "Notifications",
+      "labelUnread_one": "Notifications, {{count}} unread",
+      "labelUnread_other": "Notifications, {{count}} unread",
+      "latest": "Latest notifications",
+      "caughtUp": "You're all caught up.",
+      "seeAll": "See all notifications"
+    },
+    "filters": {
+      "all": "All",
+      "unread": "Unread",
+      "action": "Needs action"
+    },
+    "filterLabel": "Filter notifications",
+    "needAction_one": "{{count}} thing needs your action. Everything else is for your records.",
+    "needAction_other": "{{count}} things need your action. Everything else is for your records.",
+    "nothingToDo": "Updates on your contracts and payments. Nothing needs your action right now.",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "empty": {
+      "title": "You're all caught up",
+      "text": "New activity on your contracts and payments will show up here as it happens."
+    },
+    "emptyFilter": {
+      "noAction": "Nothing needs your action",
+      "nothing": "Nothing here",
+      "allRead": "You have read everything.",
+      "tryAnother": "Try another filter."
+    }
+  },
+  "market": {
+    "similarIn": "similar in {{place}}",
+    "similarType": "similar {{type}} spaces",
+    "below": "{{pct}}% below similar",
+    "above": "{{pct}}% above similar",
+    "fair": "Fair price"
+  },
+  "listings": {
+    "checklist": {
+      "photos": "Photos",
+      "morePhotos": "3+ photos",
+      "rent": "Monthly rent",
+      "description": "Description",
+      "location": "Location",
+      "services": "Amenities"
+    }
+  },
+  "savedSearch": {
+    "anySpace": "Any space",
+    "inPlace": "{{what}} in {{place}}",
+    "upTo": "up to {{amount}}",
+    "from": "from {{amount}}"
+  },
+  "payouts": {
+    "errors": {
+      "holderName": "Write the full name on the account.",
+      "bankName": "Choose or write the bank.",
+      "accountNumber": "Use only numbers (dashes are fine), at least 6 digits."
+    }
+  },
+  "risk": {
+    "new": "New lease",
+    "high": "High risk",
+    "medium": "Watch",
+    "low": "Reliable",
+    "reasons": {
+      "noHistory": "No rent has come due yet, so there is no payment history.",
+      "paidOnTime_one": "{{paid}} of {{count}} month paid on time ({{pct}}%).",
+      "paidOnTime_other": "{{paid}} of {{count}} months paid on time ({{pct}}%).",
+      "lateMonths_one": "{{count}} month unpaid and late, the oldest {{days}} days.",
+      "lateMonths_other": "{{count}} months unpaid and late, the oldest {{days}} days.",
+      "avgLate": "On average rent arrives {{days}} days late."
+    }
+  },
+  "insights": {
+    "overMonths_one": " over {{count}} month",
+    "overMonths_other": " over {{count}} months",
+    "owner": {
+      "theirLease": "their lease",
+      "late_one": "{{tenant}} is {{count}} day late on {{name}} — {{owed}} owed{{over}}.",
+      "late_other": "{{tenant}} is {{count}} days late on {{name}} — {{owed}} owed{{over}}.",
+      "sendReminder": "Send a reminder",
+      "collected": "This month you've collected {{collected}} of {{expected}} expected ({{pct}}%).",
+      "dueThisWeek_one": "{{amount}} is due in the next 7 days from {{count}} tenant.",
+      "dueThisWeek_other": "{{amount}} is due in the next 7 days from {{count}} tenants.",
+      "leaseEnds_one": "{{name}}'s lease ends in {{count}} day — your expected rent drops by {{rent}}/month after that.",
+      "leaseEnds_other": "{{name}}'s lease ends in {{count}} days — your expected rent drops by {{rent}}/month after that.",
+      "goodCandidate": " The tenant has paid on time, a good candidate to renew.",
+      "answerRenewal": "Answer renewal request",
+      "offerRenewal": "Offer renewal",
+      "askRony": "Ask {{advisor}}",
+      "askRonyText": "{{name}}'s lease ends on {{date}}. Should I offer a renewal or re-list it, and at what rent?",
+      "noneLate": "No tenant is late on rent."
+    },
+    "tenant": {
+      "yourLease": "your lease",
+      "late_one": "Your rent for {{name}} is {{count}} day late — {{owed}} owed{{over}}. Months are paid oldest first.",
+      "late_other": "Your rent for {{name}} is {{count}} days late — {{owed}} owed{{over}}. Months are paid oldest first.",
+      "payNow": "Pay now",
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "inDays_one": "in {{count}} day",
+      "inDays_other": "in {{count}} days",
+      "due": "{{amount}} for {{name}} is due {{when}}.",
+      "totalOwed_one": "In total you owe {{total}} right now across {{count}} lease.",
+      "totalOwed_other": "In total you owe {{total}} right now across {{count}} leases.",
+      "renewalOffered": "The owner offered to renew {{name}} at {{rent}}/month. Review and sign it in Contracts.",
+      "reviewRenewal": "Review renewal",
+      "renewalRequested": "You asked to renew {{name}}. The owner will answer with an offer to sign.",
+      "strongRecord_one": " You've paid all {{count}} month on time, a strong case for renewing.",
+      "strongRecord_other": " You've paid all {{count}} months on time, a strong case for renewing.",
+      "leaseEnds_one": "Your lease for {{name}} ends in {{count}} day ({{date}}).",
+      "leaseEnds_other": "Your lease for {{name}} ends in {{count}} days ({{date}}).",
+      "askToRenew": "Ask to renew",
+      "upToDateNext": "You're up to date on every lease. Next payment: {{amount}} for {{name}} on {{date}}.",
+      "allPaid": "You're up to date and every month of your leases is paid.",
+      "streak_one": "{{count}} month in a row paid on time for {{name}}. Nice record.",
+      "streak_other": "{{count}} months in a row paid on time for {{name}}. Nice record."
+    }
+  },
+  "docs": {
+    "receipt": {
+      "title": "Rent payment receipt",
+      "issued": "Issued {{date}}",
+      "amountPaid": "AMOUNT PAID",
+      "paidStamp": "PAID",
+      "rentPeriod": "Rent period",
+      "dueDate": "Due date",
+      "paidOn": "Paid on",
+      "paymentMethod": "Payment method",
+      "transactionId": "Transaction ID",
+      "property": "Property",
+      "contract": "Contract",
+      "tenant": "Tenant",
+      "propertyOwner": "Property owner",
+      "footer": "This receipt was generated by {{brand}} from the payment confirmed through {{provider}}. {{brand}} collects the rent on the property owner's behalf, so this payment settles the rent for this period. Keep it as proof of payment.",
+      "fileName": "receipt"
+    },
+    "lease": {
+      "title": "Commercial lease · {{name}}",
+      "subtitle": "Contract #{{id}} · {{status}}",
+      "parties": "Parties",
+      "owner": "Owner",
+      "tenant": "Tenant",
+      "space": "Space",
+      "location": "Location",
+      "keyTerms": "Key terms",
+      "monthlyRent": "Monthly rent",
+      "rentChange": "{{rent}} from {{date}} (was {{previous}})",
+      "rentDue": "Rent due",
+      "rentDueValue": "The {{day}} of each month",
+      "start": "Start",
+      "end": "End",
+      "length": "Length",
+      "deposit": "Deposit",
+      "fee": "{{brand}} fee",
+      "feeValue": "{{rate}} of each rent, paid by owner",
+      "clauses": "Clauses",
+      "specialClauses": "Special clauses",
+      "signatures": "Signatures",
+      "notSigned": "Not signed yet",
+      "signedElectronically": "{{role}} · signed electronically {{date}}",
+      "renewed_one": "Renewed {{count}} time. Last renewal signed electronically {{date}} by {{owner}} (owner) and {{tenant}} (tenant), extending the lease to {{end}}.",
+      "renewed_other": "Renewed {{count}} times. Last renewal signed electronically {{date}} by {{owner}} (owner) and {{tenant}} (tenant), extending the lease to {{end}}.",
+      "verificationCode": "Verification code: {{code}}",
+      "endedEarly": "Ended early by mutual agreement on {{date}}.",
+      "ended": "The lease ended on {{date}}.",
+      "footer": "Signed electronically through {{brand}}. The verification code identifies this exact version of the lease.",
+      "fileName": "lease"
+    },
+    "reports": {
+      "generated": "Generated {{date}}",
+      "page": "Page {{page}} of {{pages}}",
+      "expected": "Expected",
+      "collected": "Collected",
+      "wholeLease": "Whole lease",
+      "year": "Year {{year}}",
+      "statementTitle": "Rent statement · {{name}}",
+      "lease": "Lease",
+      "property": "Property",
+      "contract": "Contract",
+      "tenant": "Tenant",
+      "owner": "Owner",
+      "monthlyRent": "Monthly rent",
+      "totalInPeriod": "Total in period",
+      "paid": "Paid",
+      "owedNow": "Owed now",
+      "onTime": "On time",
+      "monthByMonth": "Month by month",
+      "period": "Period",
+      "due": "Due",
+      "status": "Status",
+      "paidOn": "Paid on",
+      "daysLate": "Days late",
+      "amount": "Amount",
+      "receipt": "Receipt",
+      "providerTransactions": "{{provider}} transactions",
+      "transactionId": "Transaction ID",
+      "statementFooter": "Generated by {{brand}} from the rent schedule and payments confirmed through {{provider}}.",
+      "statementFile": "statement",
+      "monthlyTitle": "Monthly rent report · {{month}}",
+      "ronyAnalysis": "{{advisor}}'s analysis",
+      "collectionRate": "Collection rate",
+      "overdueToday": "Overdue today",
+      "collectedFromTenants": "Collected from tenants",
+      "feeLabel": "{{brand}} fee ({{rate}})",
+      "youReceive": "You receive",
+      "expectedVsCollected": "Expected vs collected, last 6 months",
+      "byProperty": "By property",
+      "dueInMonth": "Due in month",
+      "toYou": "To you",
+      "risk": "Risk",
+      "lateRent": "Late rent (as of today)",
+      "month": "Month",
+      "comingUp": "Coming up",
+      "leasesEnding": "Leases ending in the next 3 months",
+      "ends": "Ends",
+      "monthlyFooter": "Generated by {{brand}}. Rent is paid by tenants online through {{provider}}; amounts reflect confirmed payments. {{brand}} keeps a {{rate}} fee on each rent payment and transfers the rest to you.",
+      "monthlyFile": "rent-report",
+      "rentPeriod": "Rent period",
+      "dueDate": "Due date",
+      "amountUsd": "Amount (USD)",
+      "feeUsd": "{{brand}} fee (USD)",
+      "toYouUsd": "To you (USD)",
+      "transfer": "Transfer",
+      "method": "Method",
+      "providerTransaction": "{{provider}} transaction",
+      "transferSent": "Sent",
+      "transferPending": "Pending",
+      "leaseStart": "Lease start",
+      "leaseEnd": "Lease end",
+      "monthsPaid": "Months paid",
+      "monthsInLease": "Months in lease",
+      "onTimePct": "On-time %",
+      "avgDaysLate": "Avg. days late",
+      "fee": "{{brand}} fee",
+      "leftOnLease": "Left on lease",
+      "expectedRentUsd": "Expected rent (USD)",
+      "toYouAfterFee": "To you after {{rate}} fee (USD)",
+      "leasesPaying": "Leases paying",
+      "leaseEndsThisMonth": "Lease ends this month",
+      "sheetSummary": "Summary",
+      "sheetPayments": "Payments",
+      "sheetProjection": "Projection",
+      "sheetLease": "Lease",
+      "rentFile": "rent",
+      "item": "Item",
+      "value": "Value",
+      "paidOnTime": "Paid on time",
+      "paidSoFar": "Paid so far",
+      "contractFile": "contract"
+    }
+  },
+  "app": {
+    "crashed": "The app crashed while rendering.",
+    "failedToStart": "The app failed to start."
+  },
+  "auth": {
+    "goHome": "Go to homepage",
+    "emailPlaceholder": "example@nextspace.com",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "login": {
+      "tagline": "Simple rental management for entrepreneurs",
+      "welcome": "Welcome to {{brand}}",
+      "email": "Your email address",
+      "password": "Your password",
+      "forgot": "Forgot it?",
+      "remember": "Keep me signed in",
+      "submit": "Enter my space",
+      "submitting": "Signing in...",
+      "noAccount": "Not part of {{brand}} yet?",
+      "createAccount": "Create my account"
+    },
+    "signup": {
+      "title": "Create your account",
+      "subtitle": "It's free and takes less than 2 minutes.",
+      "firstName": "First name",
+      "firstNamePlaceholder": "Ronaldo",
+      "lastName": "Last name",
+      "lastNamePlaceholder": "Mendoza",
+      "email": "Email address",
+      "dui": "DUI",
+      "password": "Password",
+      "accountType": "Account type",
+      "types": {
+        "business": {
+          "title": "Business",
+          "description": "I want to open or find my business"
+        },
+        "owner": {
+          "title": "Property Owner",
+          "description": "I want to rent my property"
+        }
+      },
+      "submit": "Create my account",
+      "submitting": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "duiFormat": "Enter your DUI as 8 digits, a dash and 1 digit (00000000-0).",
+      "couldNotCreate": "We could not create the account. Check your DUI, or sign in if you already have an account.",
+      "success": "Account created! Check your email to confirm."
+    },
+    "forgot": {
+      "title": "Forgot your password?",
+      "subtitle": "Enter your email and we'll send you a 6-digit code.",
+      "emailPlaceholder": "example@yourproperty.com",
+      "emailRequired": "Please enter your email address.",
+      "emailInvalid": "Please enter a valid email address.",
+      "requestFailed": "We could not process your request: {{message}}",
+      "sendCode": "Send code",
+      "backToSignIn": "Back to sign in",
+      "codeTitle": "Enter your code",
+      "codeSubtitle": "We sent a 6-digit code to {{email}}. Enter it below along with your new password.",
+      "codeLabel": "6-digit code",
+      "codeRequired": "Enter the 6-digit code from your email.",
+      "invalidCode": "Invalid or expired code: {{message}}",
+      "reset": "Reset password",
+      "differentEmail": "Use a different email"
+    },
+    "password": {
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "required": "Please enter a new password.",
+      "tooShort": "Password must be at least 6 characters.",
+      "confirmRequired": "Please confirm your new password.",
+      "mismatch": "Passwords do not match.",
+      "updateFailed": "We could not update your password: {{message}}",
+      "updated": "Password updated successfully. Redirecting..."
+    },
+    "newPassword": {
+      "title": "Set a new password",
+      "subtitle": "Choose a strong password for your account.",
+      "submit": "Save new password"
+    }
+  },
+  "dashboard": {
+    "loading": "Loading your space...",
+    "there": "there",
+    "user": "User",
+    "back": {
+      "listings": "Back to listings",
+      "profile": "Back to profile",
+      "advisor": "Back to {{advisor}}"
+    },
+    "navGroups": {
+      "main": "Main",
+      "manage": "Manage",
+      "account": "Account"
+    },
+    "nav": {
+      "myProperties": "My Properties",
+      "marketplace": "Marketplace",
+      "advisor": "AI Advisor",
+      "contracts": "Contracts",
+      "payments": "Payments",
+      "notifications": "Notifications",
+      "profile": "Profile"
+    },
+    "accountType": {
+      "business": "Business",
+      "owner": "Property Owner"
+    },
+    "attention": {
+      "business": {
+        "payments": "You have rent overdue",
+        "contracts": "A lease offer is waiting for you"
+      },
+      "owner": {
+        "payments": "A tenant is late on rent",
+        "contracts": "New lease requests to review"
+      }
+    },
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon",
+      "evening": "Good evening"
+    },
+    "brandHome": "{{brand}} home",
+    "closeMenu": "Close menu",
+    "openMenu": "Open menu",
+    "showMenu": "Show the menu",
+    "hideMenu": "Hide the menu",
+    "hideMenuTitle": "Hide the menu for more space",
+    "logout": "Log out",
+    "logoutConfirm": {
+      "title": "Log out of {{brand}}?",
+      "description": "You'll need to sign in again to access your dashboard."
+    },
+    "search": {
+      "owner": "Search your properties...",
+      "business": "Search spaces by name, type or location..."
+    }
+  },
+  "marketplace": {
+    "title": "Marketplace",
+    "subtitleShort": "Commercial spaces for rent across El Salvador.",
+    "subtitle": "Commercial spaces for rent across El Salvador. Request a lease and the owner answers in Contracts.",
+    "loading": "Loading spaces",
+    "loadError": "Something went wrong while loading properties.",
+    "any": "any",
+    "amenity": "Amenity",
+    "searchSaved": "Search saved. We'll notify you when a new space matches it.",
+    "alerts": "Alerts",
+    "savedSearches": "Saved searches",
+    "savedSearchesHint": "You get a notification when a new space matches one of these.",
+    "noSavedSearches": "None yet. Set filters or a category and tap",
+    "notifyMeShort": "Notify me",
+    "deleteSavedSearch": "Delete saved search",
+    "filters": "Filters",
+    "typeOfSpace": "Type of space",
+    "allSpaces": "All spaces",
+    "location": "Location",
+    "anyDepartment": "Any department",
+    "municipality": "Municipality",
+    "anyMunicipality": "Any municipality",
+    "monthlyRentUsd": "Monthly rent (USD)",
+    "min": "Min",
+    "max": "Max",
+    "minRent": "Minimum rent",
+    "maxRent": "Maximum rent",
+    "size": "Size ({{unit}})",
+    "minSize": "Minimum size",
+    "maxSize": "Maximum size",
+    "mustHave": "Must have",
+    "spaces_one": "{{count}} space",
+    "spaces_other": "{{count}} spaces",
+    "forQuery": "for {{query}}",
+    "removeFilter": "Remove filter {{label}}",
+    "clearAll": "Clear all",
+    "alertOn": "Alert on",
+    "notifyMe": "Notify me of new matches",
+    "sortLabel": "Sort",
+    "sort": {
+      "newest": "Newest first",
+      "priceAsc": "Price: low to high",
+      "priceDesc": "Price: high to low",
+      "sizeDesc": "Size: largest first"
+    },
+    "empty": {
+      "title": "No spaces match",
+      "text": "Try another area or remove a filter."
+    },
+    "clearFilters": "Clear filters",
+    "askRonyQuery": "Find me a space: {{query}}",
+    "askRonyDefault": "Help me find a commercial space for my business.",
+    "describeToRony": "Describe it to {{advisor}}",
+    "showMore": "Show more spaces",
+    "showing": "Showing {{shown}} of {{total}}",
+    "compare": {
+      "tray": "Spaces to compare",
+      "remove": "Remove {{name}}",
+      "addOne": "Add one more to compare",
+      "clear": "Clear",
+      "button": "Compare {{count}}"
+    }
+  },
+  "propertyCard": {
+    "badge": {
+      "requested": "Requested",
+      "offerWaiting": "Offer waiting",
+      "yourLease": "Your lease"
+    },
+    "open": "Open {{name}}",
+    "new": "New",
+    "unsave": "Remove from saved",
+    "saveThis": "Save this space",
+    "saved": "Saved",
+    "save": "Save",
+    "priceOnRequest": "Price on request",
+    "ppmVs": "{{ppm}} vs {{median}} for {{scope}}",
+    "noLocation": "Location not listed",
+    "amenities": "Amenities",
+    "noAmenities": "No amenities listed",
+    "comparing": "Comparing",
+    "compareMax": "Compare (3 max)",
+    "compare": "Compare"
+  },
+  "compare": {
+    "title": "Compare spaces",
+    "best": "Best",
+    "view": "View",
+    "monthlyRent": "Monthly rent",
+    "onRequest": "On request",
+    "size": "Size",
+    "pricePerM2": "Price per {{unit}}",
+    "type": "Type",
+    "location": "Location",
+    "amenities": "Amenities",
+    "amenityCount": "{{count}} of {{total}}"
+  },
+  "ownerHome": {
+    "tabs": {
+      "all": "All",
+      "leased": "Leased",
+      "available": "Not leased",
+      "attention": "Needs attention"
+    },
+    "flags": {
+      "earlyEnd": "Early end requested",
+      "renewalRequested": "Renewal requested",
+      "renewalOffered": "Renewal offered"
+    },
+    "leasedTo": "Leased to <strong>{{name}}</strong> until {{date}}",
+    "offerAwaiting": "Offer awaiting <strong>{{name}}</strong>'s signature",
+    "requestsWaiting_one": "<strong>{{count}} request</strong> waiting for your answer",
+    "requestsWaiting_other": "<strong>{{count}} requests</strong> waiting for your answer",
+    "paused": "Paused · hidden from the Marketplace",
+    "vacantToday": "Listed · vacant since today",
+    "vacantFor_one": "Listed · vacant for {{count}} day",
+    "vacantFor_other": "Listed · vacant for {{count}} days",
+    "rentPerMonth": "{{rent}}/mo",
+    "noRent": "No rent set",
+    "noLocation": "No location",
+    "views30": "Views in the last 30 days",
+    "listingQuality": "Listing quality",
+    "listingScore": "Listing {{score}}%",
+    "manage": "Manage",
+    "loading": "Loading your properties...",
+    "subtitle": "Your spaces and what each one needs, {{name}}. Open one to manage it.",
+    "publish": "Publish new space",
+    "filterLabel": "Filter properties",
+    "empty": {
+      "noneTitle": "You haven't published any spaces yet",
+      "attentionTitle": "Nothing needs your attention",
+      "tabTitle": "No properties here",
+      "noneText": "List your first commercial space and start reaching entrepreneurs across El Salvador.",
+      "attentionText": "Every listing is complete and no requests are waiting.",
+      "tabText": "Try another tab or a different keyword."
+    }
+  },
+  "profile": {
+    "subtitleOwner": "Your account and portfolio at a glance.",
+    "subtitleBusiness": "Your account, your record and the spaces you saved.",
+    "defaultName": "{{brand}} User",
+    "memberSince": "Member since {{date}}",
+    "email": "Email",
+    "showDui": "Show DUI",
+    "hideDui": "Hide DUI",
+    "edit": "Edit profile",
+    "chatDeleteError": "Could not delete the chat history. Please try again.",
+    "chatDeleted": "Your chat with {{advisor}} was deleted.",
+    "bankSaved": "Bank account saved.",
+    "record": {
+      "new": "New",
+      "pending": "You have rent pending",
+      "great": "Great payment record",
+      "improve": "Room to improve",
+      "title": "How owners see you",
+      "hint": "Shown when you request a space",
+      "loading": "Loading your record...",
+      "noHistory": "You have no rent history yet. Paying on time from your first month builds the record owners look at.",
+      "paidOnTime_one": "{{onTime}} of {{count}} month paid on time.",
+      "paidOnTime_other": "{{onTime}} of {{count}} months paid on time.",
+      "lateNow_one": "{{count}} month is late right now.",
+      "lateNow_other": "{{count}} months are late right now.",
+      "activeLeases_one": "active lease",
+      "activeLeases_other": "active leases",
+      "completed_one": "completed",
+      "completed_other": "completed"
+    },
+    "owner": {
+      "properties": "Properties",
+      "leasedFree": "{{leased}} leased {{dot}} {{free}} free",
+      "activeLeases": "Active leases",
+      "tenantsPaying": "Tenants paying rent",
+      "yoursIn": "Yours in {{year}}",
+      "collectedMinusFee": "{{gross}} collected {{minus}} {{rate}} {{brand}} fee"
+    },
+    "settings": {
+      "bankTitle": "Bank account for transfers",
+      "addBank": "Add your bank account",
+      "bankText": "{{account}} {{dot}} where {{brand}} sends your rent",
+      "addBankText": "Where {{brand}} sends your rent, minus its fee",
+      "password": "Change password",
+      "passwordText": "Update your access key for security",
+      "deleteChat": "Delete chat with {{advisor}}",
+      "deleteChatText": "Start the AI Advisor from a clean slate",
+      "signOut": "Sign out",
+      "signOutText": "Leave {{brand}} on this device"
+    },
+    "saved": {
+      "title": "Saved spaces",
+      "showLess": "Show less",
+      "viewAll": "View all",
+      "loading": "Loading your saved spaces...",
+      "empty": "Tap Save on a space in the Marketplace to keep it here.",
+      "browse": "Browse Marketplace",
+      "removeName": "Remove {{name}} from saved"
+    },
+    "confirmChat": {
+      "title": "Delete your chat with {{advisor}}?",
+      "description": "The whole conversation is removed. {{advisor}} still knows your {{brand}} data.",
+      "confirm": "Delete chat"
+    },
+    "confirmLogout": {
+      "title": "Sign out?",
+      "description": "You'll need your email and password to come back in."
+    },
+    "editModal": {
+      "nameRequired": "Please enter your first and last name.",
+      "saveError": "We could not save your changes. Check your connection and try again.",
+      "subtitleOwner": "Businesses see your name on your listings and leases.",
+      "subtitleBusiness": "Owners see your name when you apply for a space or sign a lease.",
+      "fixed": "Email and DUI can't be changed.",
+      "save": "Save changes"
+    },
+    "passwordModal": {
+      "subtitle": "Choose a new password for your account.",
+      "success": "Password updated. Use it next time you log in.",
+      "confirm": "Confirm password",
+      "submit": "Update password"
+    }
+  },
+  "listingForm": {
+    "steps": {
+      "basics": "Basics",
+      "location": "Location",
+      "price": "Price",
+      "details": "Photos & details"
+    },
+    "stepsLabel": "Steps",
+    "tips": {
+      "traffic": "Foot traffic and nearby businesses",
+      "condition": "Condition and finishes",
+      "access": "Access, parking and hours"
+    },
+    "copyName": "{{name}} (copy)",
+    "errors": {
+      "name": "Give your space a name.",
+      "width": "Enter the width in meters.",
+      "length": "Enter the length in meters.",
+      "rent": "The rent must be more than $0."
+    },
+    "yourSpace": "Your space",
+    "photos": {
+      "badType": "Please choose JPG, PNG, WEBP, or GIF images.",
+      "tooBig": "Each image must be 5MB or smaller.",
+      "tooMany": "A space can have up to {{max}} photos.",
+      "title": "Photos",
+      "coverHint": "the first one is the cover",
+      "drop": "Drag photos here or click to upload",
+      "dropHint": "Up to 6 {{dot}} JPG, PNG or WEBP {{dot}} 5MB each. Spaces with 3+ photos get more requests.",
+      "alt": "Photo {{n}}",
+      "cover": "Cover",
+      "makeCover": "Make cover",
+      "remove": "Remove photo",
+      "add": "Add"
+    },
+    "saveFailed": "We couldn't save your changes. Please try again.",
+    "publishFailed": "We couldn't publish this space. Please try again.",
+    "issues": {
+      "photos": "photos",
+      "amenities": "amenities",
+      "and": " and "
+    },
+    "partialSave": "The space was saved, but the {{items}} couldn't be updated. Open it again to retry.",
+    "titleEdit": "Edit space",
+    "titleSimilar": "Publish a similar space",
+    "titleNew": "Publish a new space",
+    "subtitleEdit": "Jump to any section, change what you need and save.",
+    "subtitleNew": "Four quick steps. You can change everything later.",
+    "preview": "Preview",
+    "name": "Name of the space",
+    "namePlaceholder": "Local Las Flores",
+    "kind": "What kind of space is it?",
+    "size": "Size",
+    "widthLabel": "Width in meters",
+    "wide": "m wide",
+    "lengthLabel": "Length in meters",
+    "long": "m long",
+    "locationIntro": "Businesses filter the Marketplace by department and municipality, so spaces with a location show up in more searches.",
+    "department": "Department",
+    "selectDepartment": "Select a department",
+    "selectMunicipality": "Select a municipality",
+    "address": "Address",
+    "optional": "optional",
+    "addressPlaceholder": "e.g., 125 El Mirador Street, Escalon",
+    "rent": "Monthly rent",
+    "perMonth": "/ month",
+    "noRentHelp": "Without a rent the space shows \"Price on request\" and gets fewer requests.",
+    "feeNote": "Listing is free. {{brand}} only keeps {{rate}} of each rent payment, when it's paid, and transfers the rest to your bank account. Deposits carry no fee.",
+    "suggest": {
+      "scopeLocal": "{{type}} spaces in {{place}}",
+      "scopeAll": "{{type}} spaces on {{brand}}",
+      "title": "Suggested: about {{rent}}/month",
+      "text": "{{scope}} rent for around {{ppm}}. For your {{area}} {{unit}} that is about {{rent}}.",
+      "use": "Use it",
+      "notEnough": "There are not enough similar spaces on {{brand}} yet to suggest a price.",
+      "needSize": "Add the size in Basics to get a suggested rent from similar spaces."
+    },
+    "loadingAmenities": "Loading amenities...",
+    "characters_one": "{{count}} character",
+    "characters_other": "{{count}} characters",
+    "recommended": "{{n}}+ recommended",
+    "descriptionPlaceholder": "What makes this space a good fit for a business?",
+    "ideas": "Ideas:",
+    "onMarketplace": "On the Marketplace",
+    "leasedNote": "Leased — it returns to the Marketplace when the lease ends.",
+    "publishNow": "Publish now",
+    "publishNowHint": "Businesses can find and request it",
+    "keepPaused": "Keep paused",
+    "keepPausedHint": "Hidden until you publish it",
+    "feeAgree": "I agree that {{brand}} keeps <strong>{{rate}} of each monthly rent</strong> my tenants pay through the app, and transfers the rest to my bank account. Publishing is free.",
+    "feeRequired": "Accept the {{brand}} fee to publish your first space.",
+    "howSeen": "How businesses will see it",
+    "completeHint": "Complete listings get more requests.",
+    "stepOf": "Step {{step}} of {{total}}",
+    "publishSpace": "Publish space",
+    "savePaused": "Save paused"
+  },
+  "propertyDetail": {
+    "listedToday": "Listed today",
+    "listedDaysAgo_one": "Listed {{count}} day ago",
+    "listedDaysAgo_other": "Listed {{count}} days ago",
+    "listedMonthsAgo_one": "Listed {{count}} month ago",
+    "listedMonthsAgo_other": "Listed {{count}} months ago",
+    "about": "About this space",
+    "noDescription": "The owner has not added a description yet. Ask {{advisor}} whether it fits your business, or request the lease to talk terms.",
+    "noAmenities": "No amenities listed.",
+    "locationOnRequest": "Location on request",
+    "loadError": "We couldn't load this property. It may have been removed.",
+    "noDui": "We couldn't find your account record (DUI), so you can't request a contract yet. Please contact support.",
+    "requestFailed": "The request could not be sent.",
+    "updateFailed": "The listing could not be updated.",
+    "deleteFailed": "The property could not be deleted.",
+    "loading": "Loading property...",
+    "notFound": "Property not found.",
+    "perMonth": "per month",
+    "perYear": "per year",
+    "perM2": "per {{unit}}",
+    "dimensions": "{{width}} × {{length}} m",
+    "amenitiesCount_one": "amenity",
+    "amenitiesCount_other": "amenities",
+    "cta": {
+      "leased": "You lease this space",
+      "reviewOffer": "Review the owner's offer",
+      "waiting": "Request sent {{dot}} waiting",
+      "request": "Request lease"
+    },
+    "steps": {
+      "request": "Request",
+      "offer": "Owner sends an offer",
+      "sign": "You sign",
+      "pay": "Pay rent in {{brand}}"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "price": "Price",
+      "performance": "Performance",
+      "listing": "Listing"
+    },
+    "requestSent": "Request sent. The owner answers with an offer in Contracts, and you'll get a notification.",
+    "noRent": "This space has no rent set yet, so it can't be requested.",
+    "notTaking": "This space isn't taking requests right now.",
+    "glance": "At a glance",
+    "rent": "Rent",
+    "onBrand": "On {{brand}}",
+    "ownerAnswers": "Owner {{dot}} answers requests in Contracts",
+    "howLeasing": "How leasing works",
+    "priceVsSimilar": "Price vs similar spaces",
+    "notEnoughSimilar": "Not enough similar spaces on {{brand}} to compare yet.",
+    "whatItCosts": "What it costs",
+    "offerHint": "The lease length, start date and deposit come in the owner's offer; you review them before signing.",
+    "ask": {
+      "fit": "Is \"{{name}}\" a good fit for my business?",
+      "goodPrice": "Is {{rent}}/month a good price for \"{{name}}\" ({{type}}, {{area}} {{unit}} in {{place}})?{{market}} What should I negotiate?",
+      "goodPriceMarket": " It's {{ppm}} while similar spaces go for about {{median}}.",
+      "whatRent": "What rent should I ask for \"{{name}}\" ({{type}}, {{area}} {{unit}} in {{place}})? It's listed at {{rent}}/month{{market}}. It had {{views}} views this month and {{requests}} requests in total.",
+      "whatRentMarket": " ({{ppm}}; similar spaces go for about {{median}})"
+    },
+    "askGoodPrice": "Ask {{advisor}} if it's a good price",
+    "askPrice": "Ask {{advisor}} for a price",
+    "similar": "Similar spaces",
+    "manage": "Manage this space",
+    "duplicate": "Duplicate",
+    "resume": "Resume",
+    "pause": "Pause",
+    "deleteListing": "Delete listing",
+    "now": {
+      "title": "Right now",
+      "leasedTo": "Leased to {{name}}",
+      "until": "Until {{date}}",
+      "contract": "Contract",
+      "offerSent": "Offer sent to {{name}}",
+      "waitingSignature": "Waiting for their signature",
+      "openOffer": "Open offer",
+      "wanted_one": "{{count}} business wants this space",
+      "wanted_other": "{{count}} businesses want this space",
+      "listedWaiting": "Listed, waiting for requests",
+      "pausedHint": "Hidden from the Marketplace. Resume it to get requests.",
+      "vacantToday": "Vacant since today",
+      "vacantFor_one": "Vacant for {{count}} day",
+      "vacantFor_other": "Vacant for {{count}} days",
+      "missed": "{{amount}} in rent missed"
+    },
+    "interest": {
+      "title": "Interest",
+      "views30": "views, last 30 days",
+      "saved": "saved it",
+      "requestsAll": "requests, all time",
+      "seePerformance": "See performance"
+    },
+    "performance": {
+      "views": "Views",
+      "saved": "businesses saved it",
+      "requests": "lease requests",
+      "viewsAll": "views, all time",
+      "lookNoRequest": "Businesses look but don't request: check the price and add photos.",
+      "noViews": "No views this month. Complete the listing so it shows up in more searches.",
+      "privacy": "Each business counts once per day; who viewed stays private.",
+      "yourPrice": "Your price",
+      "vacantMissed_one": "Vacant {{count}} day: {{amount}} in rent missed.",
+      "vacantMissed_other": "Vacant {{count}} days: {{amount}} in rent missed."
+    },
+    "previewNote": "This is what businesses read about your space.",
+    "complete": "Complete the listing",
+    "deleteConfirm": {
+      "title": "Delete this property?",
+      "description": "\"{{name}}\" will be permanently removed from your listings. This can't be undone.",
+      "deleting": "Deleting..."
+    }
+  },
+  "priceBar": {
+    "cheaper": "Cheaper",
+    "median": "Median {{value}}",
+    "pricier": "Pricier",
+    "compared": "Compared with {{scope}} on {{brand}}."
+  },
+  "gallery": {
+    "noPhotos": "No photos yet",
+    "open": "Open photos",
+    "count_one": "{{count}} photo",
+    "count_other": "{{count}} photos",
+    "previous": "Previous photo",
+    "next": "Next photo"
+  },
+  "viewsChart": {
+    "last30_one": "view in the last 30 days",
+    "last30_other": "views in the last 30 days",
+    "vsPrevious": "{{pct}}% vs previous 30",
+    "firstViews": "First views this month",
+    "before": "{{count}} the 30 days before",
+    "aria_one": "{{count}} view in the last 30 days",
+    "aria_other": "{{count}} views in the last 30 days",
+    "views_one": "view",
+    "views_other": "views"
+  },
+  "contractsBoard": {
+    "loading": "Loading contracts",
+    "subtitleOwner": "Answer requests with an offer, follow signatures and manage your leases.",
+    "subtitleTenant": "Review and sign offers, follow your requests and manage your leases.",
+    "allOccupied": "All your spaces are occupied",
+    "invite": "Invite a business",
+    "ronyTitle": "{{advisor}}’s take on your contracts",
+    "invitationSent": "Invitation sent. The business has 7 days to review and sign it.",
+    "empty": {
+      "title": "No contracts yet",
+      "owner": "When a business requests one of your spaces it shows up here. You can also invite a business directly.",
+      "tenant": "Find a space in the marketplace and request a lease. The owner answers here with an offer to sign."
+    },
+    "side": {
+      "owner": "owner",
+      "tenant": "tenant"
+    },
+    "sections": {
+      "owner": {
+        "requests": "Requests to answer",
+        "requestsEmpty": "No new requests.",
+        "offers": "Waiting for the tenant to sign",
+        "offersEmpty": "No offers waiting."
+      },
+      "tenant": {
+        "offers": "Offers to sign",
+        "offersEmpty": "No offers waiting for you.",
+        "requests": "My requests",
+        "requestsEmpty": "No open requests."
+      },
+      "ending": "Ending soon · renewals",
+      "active": "Active leases",
+      "activeEmpty": "No active leases yet."
+    },
+    "flow": {
+      "label": "Lease steps",
+      "active": "Active",
+      "ending": "Ending soon",
+      "closed": "Closed",
+      "closedHint": "History",
+      "owner": {
+        "requests": "Requests",
+        "requestsHint": "Answer with an offer",
+        "offers": "Awaiting signature",
+        "offersHint": "The business signs",
+        "activeHint": "Rent in Payments",
+        "endingHint": "Renew or let it end"
+      },
+      "tenant": {
+        "requests": "My requests",
+        "requestsHint": "The owner answers",
+        "offers": "Offers to sign",
+        "offersHint": "Review and sign",
+        "activeHint": "Pay in Payments",
+        "endingHint": "Ask to renew"
+      }
+    },
+    "card": {
+      "requested": "Requested {{date}}",
+      "earlyEnd": "Early end requested for {{date}}",
+      "endsIn_one": "Ends in {{count}} day",
+      "endsIn_other": "Ends in {{count}} days",
+      "closed": "Closed {{date}}",
+      "yourTurn": "Your turn"
+    },
+    "insights": {
+      "waitingOne": "{{person}} is waiting for your answer on {{name}} ({{record}}).",
+      "manyNew": "{{count}} businesses want {{name}}. None of them has a payment record on {{brand}} yet, so compare their requests and ask {{advisor}}.",
+      "manyBest": "{{count}} businesses want {{name}}. I'd go with {{person}}: {{reason}}.",
+      "reviewRequest": "Review request",
+      "reviewPersonRequest": "Review {{person}}’s request",
+      "offerReceived": "The owner of {{name}} sent you a lease offer. {{expiry}}.",
+      "reviewAndSign": "Review and sign",
+      "offerExpiring": "Your offer to {{person}} for {{name}} {{expiry}}.",
+      "open": "Open",
+      "endRequested": "The {{side}} of {{name}} asked to end the lease on {{date}}.",
+      "wantsRenew_one": "{{person}} wants to renew {{name}} for {{count}} more month.",
+      "wantsRenew_other": "{{person}} wants to renew {{name}} for {{count}} more months.",
+      "renewalOffer": "Renewal offer for {{name}}: {{rent}}/month. {{expiry}}.",
+      "endsOwner_one": "{{name}} ends in {{count}} day.",
+      "endsOwner_other": "{{name}} ends in {{count}} days.",
+      "goodCandidate": " {{person}} is {{record}}, a good candidate to renew.",
+      "endsTenant_one": "Your lease for {{name}} ends in {{count}} day.",
+      "endsTenant_other": "Your lease for {{name}} ends in {{count}} days.",
+      "nothing": "Nothing needs your attention in Contracts right now."
+    },
+    "ask": {
+      "noRequests": "Look at my contracts: which leases should I renew, and what should I do next?",
+      "line": "{{person}} for \"{{name}}\": {{record}}",
+      "record": "{{onTime}}/{{due}} months paid on time, {{late}} late now, {{leases}} leases signed",
+      "noHistory": "no payment history on {{brand}}",
+      "whoToAccept": "These businesses requested my spaces. Who should I accept for each space, and why?",
+      "tenant": "Look at my leases and offers: what should I do next?"
+    }
+  },
+  "contractDetail": {
+    "steps": {
+      "invited": "Invited",
+      "requested": "Requested",
+      "offer": "Offer signed by owner",
+      "signed": "Signed by business",
+      "starts": "Starts",
+      "active": "Active",
+      "endedEarly": "Ended early",
+      "ended": "Ended",
+      "renewedEnds": "Renewed · ends",
+      "ends": "Ends",
+      "declined": "Declined",
+      "withdrawn": "Withdrawn"
+    },
+    "actions": {
+      "makeOffer": "Make an offer",
+      "decline": "Decline",
+      "updateOffer": "Update offer",
+      "cancelOffer": "Cancel offer",
+      "withdrawRequest": "Withdraw request",
+      "reviewSign": "Review and sign",
+      "turnDown": "Turn down",
+      "updateRenewal": "Update renewal offer",
+      "withdrawRenewal": "Withdraw renewal",
+      "answerRenewal": "Answer with a renewal offer",
+      "offerRenewal": "Offer renewal",
+      "declineRenewal": "Decline renewal",
+      "reviewSignRenewal": "Review and sign renewal",
+      "turnDownRenewal": "Turn down renewal",
+      "cancelRenewalRequest": "Cancel renewal request",
+      "askRenew": "Ask to renew",
+      "askEndEarly": "Ask to end early",
+      "acceptEnd": "Accept early end",
+      "declineEnd": "Decline early end"
+    },
+    "done": {
+      "endAccepted": "Early end accepted. The rent schedule was updated.",
+      "endDeclined": "Early end declined. The lease continues.",
+      "offerSent": "Offer sent to {{person}}. They have 7 days to sign.",
+      "leaseSigned": "Lease signed. Verification code {{code}}. Your rent schedule is ready in Payments.",
+      "renewalOfferSent": "Renewal offer sent to {{person}}. They have 7 days to sign.",
+      "renewalRequestSent": "Renewal request sent. The owner will answer with an offer to sign.",
+      "renewalSigned": "Renewal signed. New verification code {{code}}. The new months are in Payments.",
+      "otherNotified": "Done. The other side was notified.",
+      "businessNotified": "Done. The business was notified.",
+      "ownerNotified": "Done. The owner was notified.",
+      "endRequestSent": "Request sent. You will be notified of the answer."
+    },
+    "banner": {
+      "pendingOwner": "{{person}} wants to lease this space. Answer with an offer (you sign it by sending it) or decline.",
+      "pendingTenant": "Your request was sent. The owner will answer with an offer to sign, or decline it.",
+      "offeredOwner": "Waiting for {{person}} to sign. {{expiry}}.",
+      "offerExpired": "This offer expired. Ask the owner to send it again.",
+      "offeredTenant": "The owner sent you an offer and signed it. Review it below and sign. {{expiry}}.",
+      "youAskedEnd": "You asked to end the lease on {{date}}. Waiting for the other side to answer.",
+      "otherAskedEnd": "The {{side}} asked to end the lease on {{date}}: {{reason}}",
+      "renewalOfferedOwner_one": "Renewal offer sent: {{count}} more month at {{rent}}/month. Waiting for {{person}} to sign. {{expiry}}.",
+      "renewalOfferedOwner_other": "Renewal offer sent: {{count}} more months at {{rent}}/month. Waiting for {{person}} to sign. {{expiry}}.",
+      "renewalOfferedTenant_one": "The owner offers to renew for {{count}} more month at {{rent}}/month. {{expiry}}.",
+      "renewalOfferedTenant_other": "The owner offers to renew for {{count}} more months at {{rent}}/month. {{expiry}}.",
+      "renewalRequestedOwner_one": "{{person}} asked to renew for {{count}} more month{{note}} Answer with a renewal offer.",
+      "renewalRequestedOwner_other": "{{person}} asked to renew for {{count}} more months{{note}} Answer with a renewal offer.",
+      "renewalRequestedTenant_one": "You asked to renew for {{count}} more month. The owner will answer with an offer to sign.",
+      "renewalRequestedTenant_other": "You asked to renew for {{count}} more months. The owner will answer with an offer to sign.",
+      "canRenewOwner_one": "This lease ends in {{count}} day. {{record}}Offer a renewal or plan to re-list the space.",
+      "canRenewOwner_other": "This lease ends in {{count}} days. {{record}}Offer a renewal or plan to re-list the space.",
+      "canRenewRecord": "{{person}} is {{record}} on {{brand}}. ",
+      "canRenewTenant_one": "Your lease ends in {{count}} day. If you want to stay, ask the owner to renew.",
+      "canRenewTenant_other": "Your lease ends in {{count}} days. If you want to stay, ask the owner to renew."
+    },
+    "quiet": {
+      "payments": "Rent in Payments",
+      "preparing": "Preparing...",
+      "pdf": "Download PDF"
+    },
+    "breadcrumb": "Breadcrumb",
+    "contractNumber": "Contract #{{id}}",
+    "daysLeft_one": "{{count}} day left",
+    "daysLeft_other": "{{count}} days left",
+    "ending": "Ending",
+    "progress": "Contract progress",
+    "nextStep": "Next step",
+    "doc": {
+      "title": "Commercial lease agreement",
+      "verification": "Verification code {{code}}"
+    },
+    "terms": {
+      "rentChange": "from {{date}} (was {{previous}})",
+      "requestedAt": "Requested at {{rent}}/month (the listing price). The terms appear here when the owner sends an offer."
+    },
+    "collapseAll": "Collapse all",
+    "expandAll": "Expand all",
+    "waitingSignature": "Waiting for signature",
+    "signedAt": "signed {{date}}",
+    "renewals": "Renewals",
+    "renewedLine_one": "Renewed {{count}} time. Last renewal signed {{date}} by {{owner}} (owner) and {{tenant}} (tenant). The lease now ends on {{end}}.",
+    "renewedLine_other": "Renewed {{count}} times. Last renewal signed {{date}} by {{owner}} (owner) and {{tenant}} (tenant). The lease now ends on {{end}}.",
+    "ask": {
+      "fairRent": "Is {{rent}}/month a fair rent for \"{{name}}\" compared with similar listings on {{brand}}?",
+      "clauses": "Suggest special clauses for this lease of \"{{name}}\".",
+      "accept": "{{person}} wants to lease \"{{name}}\". Their {{brand}} record: {{record}}{{detail}}. Should I accept, and on what terms?",
+      "acceptDetail": " ({{onTime}}/{{due}} months on time, {{leases}} leases)",
+      "renew": "How is {{person}} doing with rent, and should I renew this lease? Their record: {{record}}.",
+      "explain": "Explain my lease for \"{{name}}\" in simple words: rent {{rent}}/month, {{months}} months, deposit {{deposit}}.",
+      "check": "What should I check before signing a commercial lease for \"{{name}}\"?",
+      "goodPrice": "Is {{rent}}/month a good price for \"{{name}}\" compared with similar spaces on {{brand}}?"
+    },
+    "history": "History",
+    "requestedOn": "Requested {{date}}.",
+    "noHistory": "No history yet.",
+    "reason": {
+      "withdrawRenewal": "Withdraw the renewal offer",
+      "turnDownRenewal": "Turn down the renewal",
+      "declineRenewal": "Decline the renewal request",
+      "cancelRenewal": "Cancel your renewal request",
+      "renewalSubtitle": "The lease still ends on {{date}}. The other side is notified.",
+      "renewalPlaceholder": "E.g. I plan to use the space for something else",
+      "cancelOffer": "Cancel your offer",
+      "declineRequest": "Decline this request",
+      "declineSubtitle": "{{person}} will be notified with your reason.",
+      "declinePlaceholder": "E.g. the space is no longer available for this kind of business",
+      "declineRequestButton": "Decline request",
+      "turnDownOffer": "Turn down this offer",
+      "withdrawRequest": "Withdraw your request",
+      "ownerNotified": "The owner will be notified.",
+      "withdrawPlaceholder": "E.g. I found another space",
+      "turnDownOfferButton": "Turn down offer",
+      "endTitle": "Ask to end the lease early",
+      "endSubtitle": "The other side has to accept it. Rent after the new end date is then removed; anything already late stays owed.",
+      "endPlaceholder": "Explain why",
+      "sendRequest": "Send request"
+    }
+  },
+  "applicant": {
+    "title": "{{name}}’s record on {{brand}}",
+    "none": "No signed leases on {{brand}} yet, so there is no payment record to show.",
+    "firstRequest": "First request {{date}}.",
+    "onTime": "on time",
+    "monthsOnTime_one": "of {{count}} month paid on time",
+    "monthsOnTime_other": "of {{count}} months paid on time",
+    "leasesSigned_one": "lease signed",
+    "leasesSigned_other": "leases signed",
+    "activeCompleted": "{{active}} active {{dot}} {{completed}} completed",
+    "lateNow_one": "month late right now",
+    "lateNow_other": "months late right now",
+    "foot": "Totals across all their leases. Amounts and other owners are not shown.",
+    "footSince": "Totals across all their leases since {{date}}. Amounts and other owners are not shown."
+  },
+  "reasonModal": {
+    "newEndDate": "New end date",
+    "reason": "Reason"
+  },
+  "signModal": {
+    "title": "Sign the lease",
+    "confirmError": "Confirm that you have read and agree to the lease.",
+    "offeredBy": "offered and signed by {{name}}",
+    "dueDay": "the {{day}}",
+    "signWithName": "Sign with your full name",
+    "agree": "I have read the lease, including the standard and special clauses, and I agree to it. I understand the first rent is due on {{date}} and is paid in {{brand}}.",
+    "signing": "Signing...",
+    "sign": "Sign lease"
+  },
+  "offerModal": {
+    "identifierRequired": "Enter the business's email or DUI.",
+    "agreeRequired": "Confirm that you agree to the terms to sign the offer.",
+    "titleInvite": "Invite a business to lease",
+    "titleUpdate": "Update your offer",
+    "subtitleInvite": "They get a lease offer to review and sign. Nothing starts until they sign.",
+    "subtitleOffer": "{{person}} requested {{name}}. Set the terms; the lease starts once they sign.",
+    "yourSpace": "your space",
+    "identifier": "Business email or DUI",
+    "identifierPlaceholder": "name@business.com or 01234567-8",
+    "startDate": "Start date",
+    "depositUsd": "Deposit (USD)",
+    "clausesPlaceholder": "E.g. opening hours, signage, parking...",
+    "commercialSpace": "commercial space",
+    "askRonyText": "Suggest special clauses for leasing my {{type}} \"{{name}}\" and tell me if {{rent}}/month is reasonable compared with similar listings on {{brand}}.",
+    "askRony": "Ask {{advisor}} about clauses and rent",
+    "total": "Total over the lease",
+    "youReceiveTotal": "You receive over the lease",
+    "tenantPays": "Tenant pays each month",
+    "youReceive": "You receive each month",
+    "depositNoFee": "The deposit{{amount}} carries no fee.",
+    "agree": "I agree to lease this space on these terms and the {{brand}} standard clauses, including the {{rate}} {{brand}} fee on each rent payment. The offer is valid for 7 days.",
+    "sendInvite": "Sign and send invitation",
+    "sendOffer": "Sign and send offer"
+  },
+  "renewal": {
+    "moreMonths_one": "{{count}} more month",
+    "moreMonths_other": "{{count}} more months",
+    "theSpace": "the space",
+    "sameRent": "Same rent",
+    "request": {
+      "notePaid_one": "I've paid all {{count}} month on time and I'd like to keep leasing {{name}}.",
+      "notePaid_other": "I've paid all {{count}} months on time and I'd like to keep leasing {{name}}.",
+      "note": "I'd like to keep leasing {{name}}.",
+      "title": "Ask to renew your lease",
+      "subtitle": "{{name}} ends on {{date}}. The owner answers with a renewal offer for you to sign.",
+      "stayFor": "Stay for",
+      "noteLabel": "Note to the owner",
+      "askText": "My lease for \"{{name}}\" ends on {{date}} at {{rent}}/month. Should I renew, for how long, and what should I ask the owner?",
+      "askRony": "Ask {{advisor}} for advice first",
+      "send": "Send renewal request"
+    },
+    "offer": {
+      "agreeRequired": "Confirm that you agree to the renewal terms to sign the offer.",
+      "title": "Offer a renewal",
+      "ends": "ends {{date}}",
+      "askedFor_one": "asked for {{count}} more month",
+      "askedFor_other": "asked for {{count}} more months",
+      "extendBy": "Extend by",
+      "rentLabel": "Monthly rent for the new period (USD)",
+      "note": "Note",
+      "askText": "Should I renew {{person}}'s lease of \"{{name}}\" (now {{rent}}/month, ending {{date}})? Their record on {{brand}}: {{record}}{{detail}}. What rent and length would you suggest?",
+      "askDetail": ", {{onTime}}/{{due}} months on time, {{late}} late now",
+      "askRony": "Ask {{advisor}}: renew, and at what rent?",
+      "rentChange": "Rent change",
+      "added": "Added to the lease",
+      "agree": "I agree to extend this lease on these terms; every other clause stays the same. The offer is valid for 7 days.",
+      "send": "Sign and send renewal"
+    },
+    "sign": {
+      "agreeRequired": "Confirm that you agree to the renewal.",
+      "title": "Sign the renewal",
+      "extendedBy": "Extended by",
+      "rentFrom": "Rent from {{date}}",
+      "change": "Change",
+      "ownerNote": "Owner’s note:",
+      "agree": "I agree to extend the lease to {{date}} at {{rent}}/month. All other clauses stay the same.",
+      "sign": "Sign renewal"
+    }
+  },
+  "payments": {
+    "receiptError": "Could not create the receipt. Please try again.",
+    "sessionExpired": "Your session expired. Please sign in again.",
+    "startFailed": "Could not start the {{provider}} payment.",
+    "startFailedRetry": "Could not start the {{provider}} payment. Please try again.",
+    "loading": "Loading payments...",
+    "sectionsLabel": "Payments sections",
+    "next6": "Next 6 months",
+    "dueDesc": "{{month}} rent {{dot}} due {{date}}",
+    "opening": "Opening {{provider}}...",
+    "payWith": "Pay {{amount}} with {{provider}}",
+    "secure": "Secure checkout powered by {{provider}}.",
+    "caughtUp": "All caught up",
+    "fullyPaid": "Lease fully paid",
+    "fullyPaidText": "Every month of this lease has been paid. Nothing else is due.",
+    "noSchedule": "No schedule yet",
+    "perMo": "/mo",
+    "monthsPaidOf_one": "of {{count}} month paid",
+    "monthsPaidOf_other": "of {{count}} months paid",
+    "daysLeftLease_one": "{{count}} day left on the lease",
+    "daysLeftLease_other": "{{count}} days left on the lease",
+    "viewContract": "View contract",
+    "notConfigured": "Online payments aren't set up on this site yet, so the payment wasn't started and nothing was charged. Please try again later.",
+    "rentByMonth": "Rent by month",
+    "historyTitle": "Payment history",
+    "tabs": {
+      "label": "Your leases",
+      "monthsLate_one": "{{count}} month late",
+      "monthsLate_other": "{{count}} months late",
+      "due": "{{amount}} due",
+      "fullyPaid": "Fully paid",
+      "upToDate": "Up to date"
+    },
+    "ring": {
+      "daysLate_one": "day late",
+      "daysLate_other": "days late",
+      "daysLeft_one": "day left",
+      "daysLeft_other": "days left"
+    },
+    "export": {
+      "statement": "Statement (PDF)",
+      "statementDesc": "Every month of {{name}}, totals and receipts",
+      "thisLease": "this lease",
+      "statementYear": "Statement {{year}} (PDF)",
+      "statementYearDesc": "Only this calendar year, e.g. for accounting",
+      "excel": "Excel (.xlsx)",
+      "excelDesc": "Lease summary and every payment"
+    },
+    "return": {
+      "checking": "Confirming your payment with {{provider}}...",
+      "paid": "Payment received. Thank you! Your receipt is in the history below.",
+      "pending": "We haven't confirmed this payment yet. It can take a minute for {{provider}} to notify us — check again in a moment.",
+      "checkAgain": "Check again"
+    },
+    "kpi": {
+      "onTimeLabel_one": "{{paid}} of {{count}} month on time",
+      "onTimeLabel_other": "{{paid}} of {{count}} months on time",
+      "onTimeRecord": "On-time record",
+      "nothingDue": "Nothing due yet",
+      "everyMonth": "Every month on time",
+      "pctOnTime": "{{pct}}% of months on time",
+      "ofLease": "of {{total}} on this lease",
+      "leftThisYear": "Left this year",
+      "throughDec31": "through Dec 31, this lease"
+    },
+    "timeline": {
+      "title": "Rent timeline",
+      "hint": "Tap a month for details and receipts"
+    },
+    "tenant": {
+      "empty": {
+        "waitingTitle": "Waiting on the owner",
+        "noLeaseTitle": "No active lease",
+        "waitingText": "You have a lease request or offer in progress. Once the lease is signed, your rent schedule will show up here.",
+        "noLeaseText": "Find a space and request a lease. Once you sign the owner’s offer, your rent schedule will show up here.",
+        "viewContracts": "View my contracts",
+        "browse": "Browse spaces"
+      },
+      "subtitleMany_one": "You have {{count}} active lease. Rent is paid online with {{provider}}, oldest month first.",
+      "subtitleMany_other": "You have {{count}} active leases. Rent is paid online with {{provider}}, oldest month first.",
+      "subtitleOne": "Your rent for {{name}}, paid online with {{provider}}.",
+      "askSituation": "Explain my payment situation for \"{{name}}\" — am I up to date, and what's coming up?",
+      "myLease": "my lease",
+      "thisLease": "This lease",
+      "yourLease": "Your lease",
+      "leaseHint": "{{name}} {{dot}} what to pay and how you're doing",
+      "outstanding_one": "{{count}} month outstanding {{dot}} {{total}} total. They're paid oldest first.",
+      "outstanding_other": "{{count}} months outstanding {{dot}} {{total}} total. They're paid oldest first.",
+      "nextPayment": "Next payment {{date}} {{dot}} {{when}}. Payable a week before.",
+      "noScheduleText": "This lease doesn't have start and end dates yet, so there's no rent schedule. Ask the owner to set the lease dates.",
+      "reviewRenewalOffer": "Review renewal offer",
+      "askOwe": "How much do I still owe this year, and when is my next payment due?",
+      "allLeasesTogether": "All your leases together",
+      "fromSchedule": "From your rent schedule",
+      "chartLabel": "Rent you'll pay over the next six months",
+      "endingNote": "you stop paying {{rent}}/month after that unless you renew.",
+      "allLeases": "All your leases",
+      "everyDueMonth": "Every month that has come due",
+      "renewalSent": "Renewal request sent to {{name}}. They answer with an offer you sign in Contracts.",
+      "yourOwner": "your owner"
+    }
+  },
+  "ownerPayments": {
+    "trend": {
+      "noData": "no data for last month",
+      "same": "Same as last month",
+      "pts": "pts",
+      "vsLastMonth": "vs last month"
+    },
+    "transfersError": "Transfers couldn't be loaded: {{message}}",
+    "subtitle": "Rent across all your properties. Tenants pay online with {{provider}}; {{brand}} keeps its {{rate}} fee and transfers the rest to you.",
+    "export": {
+      "report": "Monthly report (PDF)",
+      "reportDesc": "Totals, chart, each property, late rent, with {{advisor}}’s analysis",
+      "excel": "Excel workbook (.xlsx)",
+      "excelDesc": "Summary per property, every payment, 6-month projection"
+    },
+    "yourProperties": "Your properties",
+    "transfers": "Transfers",
+    "analysis": "Analysis",
+    "todayHint": "What needs you and how this month is going",
+    "askSummary": "Summarize my rent collections this month and tell me what I should do first.",
+    "kpi": {
+      "collectedIn": "Collected in {{month}}",
+      "toYouAfterFee": "{{amount}} to you after the {{brand}} fee",
+      "expected": "Expected this month",
+      "ofRentDue": "of rent due this month",
+      "overdue": "Overdue",
+      "nobodyLate": "Nobody is late",
+      "tenantsLate_one": "{{count}} tenant late",
+      "tenantsLate_other": "{{count}} tenants late"
+    },
+    "next30": {
+      "title": "Next 30 days",
+      "coming": "{{amount}} coming in",
+      "toYou": "{{amount}} to you",
+      "none": "No rent is due in the next 30 days."
+    },
+    "more": "+{{count}} more",
+    "propertiesHint_one": "{{count}} active lease {{dot}} tap one for its details",
+    "propertiesHint_other": "{{count}} active leases {{dot}} tap one for its details",
+    "noLeases": "You don't have any active leases yet. Accept a contract request from the Contracts section.",
+    "card": {
+      "dueNow": "Due now",
+      "monthsPaid_one": "{{paid}} of {{count}} month paid",
+      "monthsPaid_other": "{{paid}} of {{count}} months paid",
+      "lateSince": "Late since",
+      "nextDue": "Next due",
+      "details": "Details"
+    },
+    "askTenant": "How is {{tenant}} doing with rent on {{name}}? What should I do next?",
+    "transfersHint": "Your rent minus the {{rate}} {{brand}} fee, sent to your bank account",
+    "analysisHint": "How rent has come in, and what to expect",
+    "chart": {
+      "title": "Rent expected vs collected",
+      "range": "Range",
+      "empty": "No rent has come due in this period yet."
+    },
+    "projection": {
+      "title": "Expected income, next 6 months",
+      "hint": "From your active leases",
+      "note": "Rent your tenants will pay. You receive it minus the {{rate}} {{brand}} fee (about {{amount}} over these six months)."
+    },
+    "historyHint": "Every month that has come due, newest first"
+  },
+  "paymentDetail": {
+    "title": "Payment details",
+    "transferToYou": "Transfer to you",
+    "sent": "Sent {{date}} {{dot}} Ref. {{reference}}",
+    "nextTransfer": "Goes out in your next transfer",
+    "paidTo": "Paid to",
+    "ownerThrough": "The owner, through {{brand}}",
+    "rentFor": "Rent for {{month}}",
+    "tenantPaid": "Tenant paid",
+    "tenantPays": "Tenant pays",
+    "willReceive": "You will receive",
+    "creatingPdf": "Creating PDF...",
+    "downloadReceipt": "Download receipt (PDF)",
+    "waitingTenant": "Waiting for {{name}} to pay it with {{provider}} in the app.",
+    "theTenant": "the tenant",
+    "pay": "Pay {{amount}}",
+    "olderFirst": "Older months are paid first. Pay the earliest outstanding month to continue.",
+    "notDueOwner": "Not due yet. The tenant can pay it starting a week before its due date.",
+    "notDueTenant": "You can pay this month starting a week before its due date.",
+    "cancelled": "This month was cancelled when the lease ended.",
+    "askText": "Tell me about my {{month}} rent for {{name}} ({{amount}}, due {{date}}, status: {{status}}). What should I do about it?",
+    "askRony": "Ask {{advisor}} about this month"
+  },
+  "collectionsChart": {
+    "aria": "Rent expected versus collected over the last six months",
+    "barAria": "{{month}}: expected {{expected}}, collected {{collected}}",
+    "pctCollected": "{{pct}}% collected",
+    "caption": "Rent expected versus collected, last six months"
+  },
+  "exportMenu": {
+    "error": "Could not create the file. Please try again.",
+    "label": "Export"
+  },
+  "feeBreakdown": {
+    "gross": "Rent the tenant pays"
+  },
+  "timeline": {
+    "empty": "No rent schedule for this lease yet."
+  },
+  "riskBadge": {
+    "why": "Why this rating?",
+    "title": "Payment risk: {{label}}",
+    "ask": "Ask {{advisor}} what to do"
+  },
+  "ronyCard": {
+    "title": "{{advisor}}'s summary",
+    "updated": "Updated just now from your rent schedule"
+  },
+  "projectionChart": {
+    "label": "Expected rent for the next six months",
+    "endingNote": "{{rent}}/month less after that.",
+    "leaseEnds": "lease ends",
+    "barAria": "{{month}}: {{amount}} expected",
+    "noRent": "No rent scheduled",
+    "ending": "{{name}}'s lease ends {{date}}{{days}} — {{note}}",
+    "inDays_one": " (in {{count}} day)",
+    "inDays_other": " (in {{count}} days)"
+  },
+  "reportModal": {
+    "writing": "{{advisor}} is writing the analysis...",
+    "building": "Building the PDF...",
+    "noRony": "{{advisor}} wasn't available, so the report was created without the analysis paragraph.",
+    "error": "Could not create the report. Please try again.",
+    "title": "Monthly rent report",
+    "subtitle": "A PDF with the month's totals, a 6-month chart, each property, late rent, what's coming up and leases ending soon.",
+    "thisMonth": "this month",
+    "include": "Include {{advisor}}'s analysis",
+    "includeHint": "A short paragraph comparing the month, naming who is late and what to do next.",
+    "download": "Download report"
+  },
+  "notice": {
+    "template": {
+      "there": "there",
+      "yourSpace": "your space",
+      "thanksOnTime": "Thank you for paying every month on time. ",
+      "thanksRenting": "Thank you for renting with me. ",
+      "renewal": "Hi {{first}}, your lease for {{name}} ends on {{date}}. {{thanks}}I'd be glad to renew it with you — let me know if you're interested.",
+      "firm_one": "Hi {{first}}, your rent of {{amount}} for {{name}} is now {{count}} day overdue (due {{due}}). Please pay it as soon as possible from the Payments section of {{brand}}, and let me know if there is a problem.",
+      "firm_other": "Hi {{first}}, your rent of {{amount}} for {{name}} is now {{count}} days overdue (due {{due}}). Please pay it as soon as possible from the Payments section of {{brand}}, and let me know if there is a problem.",
+      "friendly_one": "Hi {{first}}, just a friendly reminder that your rent of {{amount}} for {{name}} is {{count}} day late (due {{due}}). You can pay it anytime from the Payments section of {{brand}}. Thanks!",
+      "friendly_other": "Hi {{first}}, just a friendly reminder that your rent of {{amount}} for {{name}} is {{count}} days late (due {{due}}). You can pay it anytime from the Payments section of {{brand}}. Thanks!"
+    },
+    "ronyUnavailableShort": "{{advisor}} is not available",
+    "writtenByRony": "Written by {{advisor}} from this lease’s real numbers. Review it before sending.",
+    "ronyUnavailable": "{{advisor}} isn't available right now. You can edit the message above and send it yourself.",
+    "sendError": "Could not send the message.",
+    "reminderTitle": "Send a rent reminder",
+    "renewalTitle": "Offer a lease renewal",
+    "subtitleReminder": "{{name}} gets this in their Notifications and can pay from their Payments screen.",
+    "subtitleRenewal": "{{name}} gets this in their Notifications.",
+    "tone": "Tone",
+    "tones": {
+      "friendly": "Friendly",
+      "firm": "Firm"
+    },
+    "message": "Message",
+    "ronyWriting": "{{advisor}} is writing...",
+    "writeWithRony": "Write it with {{advisor}}",
+    "sendTo": "Send to {{name}}"
+  },
+  "leaseDetail": {
+    "activity": {
+      "paid": "Paid {{amount}} for {{month}} rent",
+      "onTime": "on time",
+      "tx": "Tx {{id}}…",
+      "becameLate": "{{month}} rent ({{amount}}) became late",
+      "overdue_one": "{{count}} day overdue",
+      "overdue_other": "{{count}} days overdue",
+      "askedRenew": "{{name}} asked to renew",
+      "yourTenant": "Your tenant",
+      "youOffered": "You offered a renewal",
+      "reminder_friendly": "You sent a friendly reminder",
+      "reminder_firm": "You sent a firm reminder",
+      "reminder": "You sent a reminder",
+      "started": "Lease started"
+    },
+    "thisProperty": "this property",
+    "rentLine": "{{rent}}/month ({{net}} to you after the {{rate}} fee)",
+    "noEndDate": "No end date",
+    "sendReminder": "Send reminder",
+    "collectedOf": "{{collected}} of {{total}}",
+    "ofMonthsDue_one": "{{paid}} of {{count}} month due",
+    "ofMonthsDue_other": "{{paid}} of {{count}} months due",
+    "leftOnLease_one": "{{amount}} left on the lease ({{count}} month)",
+    "leftOnLease_other": "{{amount}} left on the lease ({{count}} months)",
+    "tapMonth": "Tap a month for details",
+    "activityTitle": "Activity",
+    "activityHint": "Payments, reminders and offers",
+    "noActivity": "No activity yet.",
+    "showMore": "Show more",
+    "reminderSent": "Reminder sent to {{name}}.",
+    "renewalSent": "Renewal offer sent to {{name}}.",
+    "yourTenant": "your tenant"
+  },
+  "transfers": {
+    "flowLabel": "How your rent reaches you",
+    "flowNote": "Tenants pay the full rent online with {{provider}}. {{brand}} keeps {{rate}} for finding your tenant, collecting rent, reminders and contracts, and transfers the rest to your bank account. Deposits carry no fee.",
+    "waiting": "Waiting to be transferred",
+    "nothingPending": "Nothing pending",
+    "waitingCount_one": "{{count}} payment {{dot}} goes out in the next transfer",
+    "waitingCount_other": "{{count}} payments {{dot}} goes out in the next transfer",
+    "transferredIn": "Transferred in {{year}}",
+    "noneYet": "No transfers yet",
+    "lastOne": "Last one {{date}}",
+    "feeIn": "{{brand}} fee in {{year}}",
+    "rateOf": "{{rate}} of {{amount}} collected",
+    "sentBy": "Sent by {{brand}} to your bank account",
+    "emptyText": "No transfers yet. When {{brand}} sends you money it shows up here with its bank reference, and you get a notification.",
+    "line_one": "{{count}} payment {{dot}} {{gross}} collected {{minus}} {{fee}} fee {{dot}} Ref. {{reference}}",
+    "line_other": "{{count}} payments {{dot}} {{gross}} collected {{minus}} {{fee}} fee {{dot}} Ref. {{reference}}",
+    "bankAccount": "Bank account",
+    "change": "Change",
+    "missing": "Add the bank account where you want to receive your rent. {{brand}} can't transfer your money until you do.",
+    "addBank": "Add bank account",
+    "nextTransfer": "In your next transfer",
+    "paidLine": "{{name}} paid {{gross}} {{minus}} {{fee}} fee",
+    "showAll": "Show all {{count}}"
+  },
+  "history": {
+    "empty": "Nothing has come due yet.",
+    "searchOwner": "Search tenant, property, month...",
+    "searchTenant": "Search property, month, amount...",
+    "searchLabel": "Search payment history",
+    "allProperties": "All properties",
+    "year": "Year",
+    "allYears": "All years",
+    "noMatch": "No payments match these filters.",
+    "paidOf": "{{paid}} paid of {{total}}",
+    "paid": "{{paid}} paid",
+    "due": "Due {{date}}",
+    "paidOn": "Paid {{date}}",
+    "pendingTransfer": "pending transfer",
+    "showOlder_one": "Show older months ({{count}} more)",
+    "showOlder_other": "Show older months ({{count}} more)"
+  },
+  "payoutModal": {
+    "titleChange": "Change bank account",
+    "subtitle": "{{brand}} transfers the rent your tenants pay, minus the {{brand}} fee, to this account. Only you and the {{brand}} team can see it.",
+    "holder": "Account holder",
+    "bank": "Bank",
+    "bankPlaceholder": "Choose or type your bank",
+    "type": "Account type",
+    "number": "Account number",
+    "save": "Save bank account"
+  },
+  "advisor": {
+    "notSignedIn": "Not signed in",
+    "loading": "Loading your conversation...",
+    "unreachable": "Could not reach {{advisor}}. Please try again.",
+    "clearError": "Could not clear the conversation. Please try again.",
+    "openPayments": "Open Payments",
+    "removeAttachment": "Remove attachment",
+    "newChat": "New chat",
+    "newChatConfirm": {
+      "title": "Start a new chat?",
+      "description": "This conversation will be deleted. {{advisor}} still knows your data, it just forgets what you talked about.",
+      "confirm": "Start new chat"
+    },
+    "home": {
+      "greetingName": "Hi {{name}}, how can I help today?",
+      "greeting": "How can I help today?"
+    },
+    "composer": {
+      "label": "Message {{advisor}}",
+      "hint": "{{advisor}} answers from your {{brand}} data {{dot}} Enter to send, Shift+Enter for a new line"
+    },
+    "filter": {
+      "anyType": "Any type",
+      "services_one": "{{count}} service",
+      "services_other": "{{count}} services"
+    },
+    "chart": {
+      "listing": "Listing",
+      "budget": "Budget",
+      "rentVsBudget": "Rent against your budget"
+    },
+    "table": {
+      "services": "Services",
+      "notListed": "Not listed",
+      "noneListed": "None listed"
+    },
+    "card": {
+      "bestFit": "Best fit",
+      "noRent": "Rent not listed"
+    },
+    "audit": {
+      "issues": "Issues",
+      "rewrite": "Rewrite",
+      "noPhotos": "No photos",
+      "shortDescription": "Description too short",
+      "noServices": "No services listed",
+      "noLocation": "Missing location",
+      "noRent": "No rent set"
+    },
+    "drawer": {
+      "label": "{{advisor}}, AI advisor",
+      "knows": "Knows your rent schedule and leases",
+      "openFull": "Open the full AI Advisor page",
+      "fullChat": "Full chat",
+      "close": "Close {{advisor}}"
+    },
+    "form": {
+      "typeSpace": "a {{type}} space",
+      "anySpace": "a commercial space",
+      "inPlace": "in {{place}}",
+      "budget": "with a budget up to {{amount}} per month",
+      "needing": "needing {{services}}",
+      "message": "I am looking for {{parts}}.",
+      "lead": "Tell me what you are looking for and I will search the listings. You can change any of this later just by asking.",
+      "budgetLabel": "Monthly budget (USD)",
+      "noLimit": "No limit",
+      "businessType": "Business type",
+      "mustHave": "Must-have services",
+      "find": "Find spaces"
+    },
+    "charts": {
+      "occupancy": "Portfolio occupancy",
+      "paymentStatus": "Payment status",
+      "incomeByMonth": "Income by month",
+      "rentComparison": "Rent comparison",
+      "current": "Current",
+      "proposed": "Proposed"
+    },
+    "reply": {
+      "copyAnswer": "Copy answer",
+      "copied": "Copied",
+      "copy": "Copy"
+    },
+    "cards": {
+      "yourSpace": "your space",
+      "overdue": "{{amount}} overdue",
+      "latePrompt": "I'm late on rent for {{name}}. How much do I owe and what should I do?",
+      "dueTitle": "{{amount}} due {{when}}",
+      "nextRent": "Next rent {{dot}} {{name}}",
+      "nextPrompt": "When is my next payment due and how much is it?",
+      "offerTitle": "Lease offer to sign",
+      "offerPrompt": "I have a lease offer for {{name}}. What should I check before signing?",
+      "pendingTitle": "Request waiting on the owner",
+      "pendingPrompt": "I asked to lease {{name}}. What happens next?",
+      "savedTitle": "Find more like your saved spaces",
+      "savedSubtitle": "Last saved: {{name}}",
+      "savedPrompt": "Find me spaces similar to {{name}}.",
+      "findTitle": "Find a new space",
+      "findSubtitle": "Tell {{advisor}} your budget and area",
+      "findPrompt": "Help me find a commercial space within my budget.",
+      "aTenant": "A tenant",
+      "tenantLate": "{{tenant}} is {{late}}",
+      "reminderPrompt": "Draft a friendly reminder for {{tenant}} about the late rent.",
+      "requestsTitle_one": "{{count}} lease request waiting",
+      "requestsTitle_other": "{{count}} lease requests waiting",
+      "reviewApplied": "Review who applied",
+      "requestsPromptName": "Which lease request should I accept for {{name}}?",
+      "requestsPrompt": "Which lease request should I accept?",
+      "vacantTitle": "{{name}} has no tenant",
+      "vacantSubtitle": "Make the listing stand out",
+      "vacantPrompt": "How can I improve the listing for {{name}}?",
+      "noLateTitle": "No late rent right now",
+      "noLateSubtitle": "See what you will collect this year",
+      "noLatePrompt": "How much will I still collect this year?",
+      "checkupTitle": "Portfolio check-up",
+      "checkupSubtitle": "What needs attention first",
+      "checkupPrompt": "Give me a quick overview of my portfolio and tell me what needs attention first."
+    },
+    "topics": {
+      "businessSearch": {
+        "label": "Find a space",
+        "prompts": [
+          "Find me a local in San Salvador under $800",
+          "What are the cheapest spaces with parking?",
+          "Which area has the best prices for a restaurant?",
+          "Show me spaces with water and electricity included"
+        ]
+      },
+      "businessRent": {
+        "label": "My rent",
+        "prompts": [
+          "When is my next payment due?",
+          "How much do I still owe this year?",
+          "Am I late on anything?"
+        ]
+      },
+      "businessLeases": {
+        "label": "My leases",
+        "prompts": [
+          "When does my lease end?",
+          "Should I renew my lease?",
+          "What should I check before signing a lease?"
+        ]
+      },
+      "ownerPortfolio": {
+        "label": "My portfolio",
+        "prompts": [
+          "What needs my attention?",
+          "Which property earns the most?",
+          "Is my rent in line with the market?",
+          "What if I raise the rent 10%?"
+        ]
+      },
+      "ownerRent": {
+        "label": "Collections",
+        "prompts": [
+          "Who is late on rent?",
+          "How much will I still collect this year?",
+          "Draft a reminder for a late tenant"
+        ]
+      },
+      "ownerListings": {
+        "label": "Better listings",
+        "prompts": [
+          "Improve my listings",
+          "Which listing needs better photos or details?",
+          "Rewrite the description of my vacant space"
+        ]
+      }
+    },
+    "business": {
+      "chips": {
+        "raiseBudget": "Raise my budget",
+        "differentArea": "Try a different area",
+        "cheaper": "Something cheaper",
+        "whyThat": "Why that one?",
+        "checkBeforeSigning": "What should I check before signing?",
+        "widen": "Widen the search more",
+        "otherOptions": "Any other options?",
+        "oweThisYear": "How much do I still owe this year?",
+        "nextPayment": "When is my next payment due?",
+        "lateAnything": "Am I late on anything?",
+        "leaseEnd": "When does my lease end?"
+      },
+      "relaxedItems": {
+        "requiredServices": "dropped the required services",
+        "municipality": "searched the whole department instead of one municipality",
+        "budget15": "raised the budget by 15%",
+        "budget30": "raised the budget by 30%",
+        "otherTypes": "included other property types"
+      },
+      "relaxed": "I {{items}} to find more.",
+      "subtitleFilters": "Searching with your filters",
+      "subtitle": "Knows the marketplace, your rent and your leases",
+      "intro": "I search the {{brand}} marketplace for you and keep an eye on your rent and leases.",
+      "preferForm": "Prefer filters? Search with a form",
+      "compactWelcome": "Hi, ask me about your **rent**, your **leases** or your payments — or about finding another space.",
+      "placeholder": "Ask {{advisor}} anything, or say what to change..."
+    },
+    "owner": {
+      "chips": {
+        "whoLate": "Who is late on rent?",
+        "collectYear": "How much will I still collect this year?",
+        "improveListings": "Improve my listings",
+        "draftAnother": "Draft another message",
+        "whatElse": "What else needs attention?",
+        "differentRent": "Try a different rent change",
+        "attention": "What needs my attention?",
+        "endsSoonest": "Which lease ends soonest?"
+      },
+      "rewritePrompt": "Rewrite the description for {{name}}.",
+      "saveError": "Could not save the listing.",
+      "saved": "Saved to listing",
+      "sent": "Message sent",
+      "newDescription": "New description",
+      "draftMessage": "Draft message",
+      "saveToListing": "Save to listing",
+      "subtitle": "Knows your properties, tenants and rent",
+      "intro": "I watch your properties, tenants and rent, and help you act on what matters.",
+      "compactWelcome": "Hi, ask me about **rent collection**, your leases or your tenants.",
+      "placeholder": "Ask about your portfolio, tenants or listings..."
+    }
   }
 }

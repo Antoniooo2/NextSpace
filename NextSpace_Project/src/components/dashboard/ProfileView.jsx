@@ -1,4 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { formatDate } from '../../lib/format'
+import { availabilityLabel, propertyTypeLabel } from '../../lib/displayValues'
+import { BRAND_VALUES } from '../../lib/brand'
+import { BULLETS, DASH, DOT, MINUS } from '../../lib/symbols'
 import { supabase } from '../../lib/supabaseClient'
 import { money, recordSummary } from '../../lib/contracts'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
@@ -14,24 +19,25 @@ import EditProfileModal from './EditProfileModal'
 import './profile.css'
 
 const ACCOUNT_TYPE_LABEL = {
-    business: 'Business',
-    'property-owner': 'Property Owner',
+    business: 'dashboard.accountType.business',
+    'property-owner': 'dashboard.accountType.owner',
 }
 
 const PREVIEW_COUNT = 4
 
 function maskDui(dui) {
-    if (!dui) return '—'
-    return dui.replace(/^\d{4}/, '••••')
+    if (!dui) return DASH
+    return dui.replace(/^\d{4}/, BULLETS)
 }
 
 function memberSince(ts) {
     if (!ts) return null
-    return new Date(ts).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    return formatDate(ts, { month: 'short', year: 'numeric' })
 }
 
 // The on-time rate as a ring, the same figure owners see on a request.
 function RecordRing({ pct, tone }) {
+    const { t } = useTranslation()
     const r = 34
     const c = 2 * Math.PI * r
     return (
@@ -48,33 +54,34 @@ function RecordRing({ pct, tone }) {
                 />
             )}
             <text x="42" y="47" textAnchor="middle">
-                {pct != null ? `${pct}%` : 'New'}
+                {pct != null ? `${pct}%` : t('profile.record.new')}
             </text>
         </svg>
     )
 }
 
 function TenantRecordCard({ record, loading }) {
+    const { t } = useTranslation()
     const summary = recordSummary(record)
     const hasHistory = summary.pct != null
     const headline = !hasHistory
-        ? 'New on NextSpace'
+        ? t('contracts.record.newOnBrand', BRAND_VALUES)
         : record.months_late_now > 0
-          ? 'You have rent pending'
+          ? t('profile.record.pending')
           : summary.tone === 'success'
-            ? 'Great payment record'
-            : 'Room to improve'
+            ? t('profile.record.great')
+            : t('profile.record.improve')
 
     return (
         <section className="ns-pf-card ns-pf-record">
             <div className="ns-pf-card-head">
-                <h3>How owners see you</h3>
+                <h3>{t('profile.record.title')}</h3>
                 <span className="ns-pf-hint">
-                    <i className="bi bi-eye"></i> Shown when you request a space
+                    <i className="bi bi-eye"></i> {t('profile.record.hint')}
                 </span>
             </div>
             {loading ? (
-                <p className="ns-pf-muted">Loading your record...</p>
+                <p className="ns-pf-muted">{t('profile.record.loading')}</p>
             ) : (
                 <div className="ns-pf-record-body">
                     <RecordRing pct={summary.pct} tone={summary.tone} />
@@ -82,23 +89,23 @@ function TenantRecordCard({ record, loading }) {
                         <strong>{headline}</strong>
                         <p>
                             {!hasHistory
-                                ? 'You have no rent history yet. Paying on time from your first month builds the record owners look at.'
-                                : `${record.months_on_time} of ${record.months_due} months paid on time.`}
+                                ? t('profile.record.noHistory')
+                                : t('profile.record.paidOnTime', { count: record.months_due, onTime: record.months_on_time })}
                             {hasHistory && record.months_late_now > 0 && (
                                 <>
                                     {' '}
                                     <span className="ns-pf-late">
-                                        {record.months_late_now === 1 ? '1 month is' : `${record.months_late_now} months are`} late right now.
+                                        {t('profile.record.lateNow', { count: record.months_late_now })}
                                     </span>
                                 </>
                             )}
                         </p>
                         <div className="ns-pf-record-facts">
                             <span>
-                                <strong>{record?.active_leases ?? 0}</strong> active {record?.active_leases === 1 ? 'lease' : 'leases'}
+                                <strong>{record?.active_leases ?? 0}</strong> {t('profile.record.activeLeases', { count: record?.active_leases ?? 0 })}
                             </span>
                             <span>
-                                <strong>{record?.completed_leases ?? 0}</strong> completed
+                                <strong>{record?.completed_leases ?? 0}</strong> {t('profile.record.completed', { count: record?.completed_leases ?? 0 })}
                             </span>
                         </div>
                     </div>
@@ -109,6 +116,7 @@ function TenantRecordCard({ record, loading }) {
 }
 
 function OwnerSummary({ properties, loadingProperties }) {
+    const { t } = useTranslation()
     const [activeLeases, setActiveLeases] = useState(null)
     const [collected, setCollected] = useState(null)
     const feeRate = usePlatformFee()
@@ -154,16 +162,23 @@ function OwnerSummary({ properties, loadingProperties }) {
     const tiles = [
         {
             icon: 'bi-buildings',
-            value: loadingProperties ? '—' : properties.length,
-            label: 'Properties',
-            sub: activeLeases ? `${leased} leased · ${properties.length - leased} free` : '',
+            value: loadingProperties ? DASH : properties.length,
+            label: t('profile.owner.properties'),
+            sub: activeLeases ? t('profile.owner.leasedFree', { leased, free: properties.length - leased, dot: DOT }) : '',
         },
-        { icon: 'bi-file-earmark-check', value: activeLeases ? activeLeases.length : '—', label: 'Active leases', sub: 'Tenants paying rent' },
+        {
+            icon: 'bi-file-earmark-check',
+            value: activeLeases ? activeLeases.length : DASH,
+            label: t('profile.owner.activeLeases'),
+            sub: t('profile.owner.tenantsPaying'),
+        },
         {
             icon: 'bi-cash-coin',
-            value: collected != null ? money(collected.net) : '—',
-            label: `Yours in ${year}`,
-            sub: collected ? `${money(collected.gross)} collected − ${formatRate(feeRate)} NextSpace fee` : '',
+            value: collected != null ? money(collected.net) : DASH,
+            label: t('profile.owner.yoursIn', { year }),
+            sub: collected
+                ? t('profile.owner.collectedMinusFee', { ...BRAND_VALUES, gross: money(collected.gross), rate: formatRate(feeRate), minus: MINUS })
+                : '',
         },
     ]
 
@@ -186,6 +201,7 @@ function OwnerSummary({ properties, loadingProperties }) {
 }
 
 export default function ProfileView({ user, accountType, onNavigate, onUserUpdated, onViewProperty, onLogout }) {
+    const { t } = useTranslation()
     const [showEditModal, setShowEditModal] = useState(false)
     const [showChangePasswordModal, setShowChangePasswordModal] = useState(false)
     const [confirm, setConfirm] = useState(null)
@@ -203,7 +219,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
     const meta = user.user_metadata || {}
     const firstName = meta.first_name || ''
     const lastName = meta.last_name || ''
-    const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'NextSpace User'
+    const fullName = [firstName, lastName].filter(Boolean).join(' ') || t('profile.defaultName', BRAND_VALUES)
     const initials = ((firstName[0] || 'U') + (lastName[0] || '')).toUpperCase()
     const since = memberSince(user.created_at)
 
@@ -275,7 +291,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
     const handleClearChat = async () => {
         setConfirm(null)
         const { error } = await clearHistory()
-        setNotice(error ? 'Could not delete the chat history. Please try again.' : 'Your chat with Rony was deleted.')
+        setNotice(error ? t('profile.chatDeleteError') : t('profile.chatDeleted', BRAND_VALUES))
         setTimeout(() => setNotice(''), 3500)
     }
 
@@ -284,28 +300,32 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
     const settings = [
         isOwner && {
             icon: 'bi-bank',
-            title: payoutAccount ? 'Bank account for transfers' : 'Add your bank account',
+            title: payoutAccount ? t('profile.settings.bankTitle') : t('profile.settings.addBank'),
             text: payoutAccount
-                ? `${payoutAccount.bank_name} ${maskAccountNumber(payoutAccount.account_number)} · where NextSpace sends your rent`
-                : 'Where NextSpace sends your rent, minus its fee',
+                ? t('profile.settings.bankText', {
+                      ...BRAND_VALUES,
+                      account: `${payoutAccount.bank_name} ${maskAccountNumber(payoutAccount.account_number)}`,
+                      dot: DOT,
+                  })
+                : t('profile.settings.addBankText', BRAND_VALUES),
             onClick: () => setShowPayoutModal(true),
         },
         {
             icon: 'bi-key',
-            title: 'Change password',
-            text: 'Update your access key for security',
+            title: t('profile.settings.password'),
+            text: t('profile.settings.passwordText'),
             onClick: () => setShowChangePasswordModal(true),
         },
         {
             icon: 'bi-chat-left-dots',
-            title: 'Delete chat with Rony',
-            text: 'Start the AI Advisor from a clean slate',
+            title: t('profile.settings.deleteChat', BRAND_VALUES),
+            text: t('profile.settings.deleteChatText'),
             onClick: () => setConfirm('chat'),
         },
         onLogout && {
             icon: 'bi-box-arrow-right',
-            title: 'Sign out',
-            text: 'Leave NextSpace on this device',
+            title: t('profile.settings.signOut'),
+            text: t('profile.settings.signOutText', BRAND_VALUES),
             onClick: () => setConfirm('logout'),
             danger: true,
         },
@@ -315,8 +335,8 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
         <>
             <div className="ns-dash-header">
                 <div>
-                    <h1>Profile</h1>
-                    <p>{isOwner ? 'Your account and portfolio at a glance.' : 'Your account, your record and the spaces you saved.'}</p>
+                    <h1>{t('dashboard.nav.profile')}</h1>
+                    <p>{isOwner ? t('profile.subtitleOwner') : t('profile.subtitleBusiness')}</p>
                 </div>
             </div>
 
@@ -333,9 +353,9 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                         <div>
                             <h2>{fullName}</h2>
                             <span className="ns-pf-badge">
-                                <i className="bi bi-patch-check-fill"></i> {ACCOUNT_TYPE_LABEL[accountType]}
+                                <i className="bi bi-patch-check-fill"></i> {ACCOUNT_TYPE_LABEL[accountType] ? t(ACCOUNT_TYPE_LABEL[accountType]) : ''}
                             </span>
-                            {since && <small className="ns-pf-since">Member since {since}</small>}
+                            {since && <small className="ns-pf-since">{t('profile.memberSince', { date: since })}</small>}
                         </div>
                     </div>
 
@@ -343,7 +363,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                         <li>
                             <i className="bi bi-envelope"></i>
                             <div>
-                                <span>Email</span>
+                                <span>{t('profile.email')}</span>
                                 <strong>{user.email}</strong>
                             </div>
                         </li>
@@ -351,14 +371,14 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                             <i className="bi bi-person-vcard"></i>
                             <div>
                                 <span>DUI</span>
-                                <strong>{showDui ? meta.dui || '—' : maskDui(meta.dui)}</strong>
+                                <strong>{showDui ? meta.dui || DASH : maskDui(meta.dui)}</strong>
                             </div>
                             {meta.dui && (
                                 <button
                                     type="button"
                                     className="ns-pf-eye"
                                     onClick={() => setShowDui((v) => !v)}
-                                    aria-label={showDui ? 'Hide DUI' : 'Show DUI'}
+                                    aria-label={showDui ? t('profile.hideDui') : t('profile.showDui')}
                                 >
                                     <i className={`bi ${showDui ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                                 </button>
@@ -367,7 +387,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                     </ul>
 
                     <button type="button" className="ns-outline-btn ns-pf-edit" onClick={() => setShowEditModal(true)}>
-                        <i className="bi bi-pencil"></i> Edit profile
+                        <i className="bi bi-pencil"></i> {t('profile.edit')}
                     </button>
                 </aside>
 
@@ -381,23 +401,23 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                             <section className="ns-pf-card">
                                 <div className="ns-pf-card-head">
                                     <h3>
-                                        Saved spaces {savedProperties.length > 0 && <em>{savedProperties.length}</em>}
+                                        {t('profile.saved.title')} {savedProperties.length > 0 && <em>{savedProperties.length}</em>}
                                     </h3>
                                     {savedProperties.length > PREVIEW_COUNT && (
                                         <button type="button" className="ns-link-btn" onClick={() => setShowAll((v) => !v)}>
-                                            {showAll ? 'Show less' : 'View all'}
+                                            {showAll ? t('profile.saved.showLess') : t('profile.saved.viewAll')}
                                         </button>
                                     )}
                                 </div>
 
                                 {loadingSaved ? (
-                                    <p className="ns-pf-muted">Loading your saved spaces...</p>
+                                    <p className="ns-pf-muted">{t('profile.saved.loading')}</p>
                                 ) : savedProperties.length === 0 ? (
                                     <div className="ns-pf-empty">
                                         <i className="bi bi-bookmark-heart"></i>
-                                        <p>Tap Save on a space in the Marketplace to keep it here.</p>
+                                        <p>{t('profile.saved.empty')}</p>
                                         <button type="button" className="ns-outline-btn" onClick={() => onNavigate('home')}>
-                                            Browse Marketplace
+                                            {t('profile.saved.browse')}
                                         </button>
                                     </div>
                                 ) : (
@@ -418,28 +438,28 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                                                     <div className="ns-pf-saved-img">
                                                         {p.photo_url ? <img src={p.photo_url} alt={p.property_name} /> : <i className="bi bi-shop"></i>}
                                                         <span className={`ns-pf-saved-status ${unavailable ? 'is-off' : ''}`}>
-                                                            {unavailable ? p.availability : 'Available'}
+                                                            {availabilityLabel(unavailable ? p.availability : 'Available')}
                                                         </span>
                                                     </div>
                                                     <div className="ns-pf-saved-info">
                                                         <strong>{p.property_name}</strong>
-                                                        <span>{[p.municipality, p.department].filter(Boolean).join(', ') || p.property_type}</span>
+                                                        <span>{[p.municipality, p.department].filter(Boolean).join(', ') || propertyTypeLabel(p.property_type)}</span>
                                                         <em>
                                                             {p.monthly_rent != null ? (
                                                                 <>
                                                                     {money(p.monthly_rent)}
-                                                                    <small>/month</small>
+                                                                    <small>{t('common.perMonth')}</small>
                                                                 </>
                                                             ) : (
-                                                                'Price on request'
+                                                                t('propertyCard.priceOnRequest')
                                                             )}
                                                         </em>
                                                     </div>
                                                     <button
                                                         type="button"
                                                         className="ns-pf-saved-remove"
-                                                        title="Remove from saved"
-                                                        aria-label={`Remove ${p.property_name} from saved`}
+                                                        title={t('propertyCard.unsave')}
+                                                        aria-label={t('profile.saved.removeName', { name: p.property_name })}
                                                         disabled={removingId === p.property_id}
                                                         onClick={(e) => {
                                                             e.stopPropagation()
@@ -459,7 +479,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
 
                     <section className="ns-pf-card">
                         <div className="ns-pf-card-head">
-                            <h3>Account</h3>
+                            <h3>{t('dashboard.navGroups.account')}</h3>
                         </div>
                         <div className="ns-pf-settings">
                             {settings.map((s) => (
@@ -493,7 +513,7 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
                     onSaved={(saved) => {
                         setPayoutAccount(saved)
                         setShowPayoutModal(false)
-                        setNotice('Bank account saved.')
+                        setNotice(t('profile.bankSaved'))
                         setTimeout(() => setNotice(''), 3500)
                     }}
                     onClose={() => setShowPayoutModal(false)}
@@ -503,9 +523,9 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
             {confirm === 'chat' && (
                 <ConfirmDialog
                     icon="bi-chat-left-dots"
-                    title="Delete your chat with Rony?"
-                    description="The whole conversation is removed. Rony still knows your NextSpace data."
-                    confirmLabel="Delete chat"
+                    title={t('profile.confirmChat.title', BRAND_VALUES)}
+                    description={t('profile.confirmChat.description', BRAND_VALUES)}
+                    confirmLabel={t('profile.confirmChat.confirm')}
                     onConfirm={handleClearChat}
                     onCancel={() => setConfirm(null)}
                 />
@@ -514,9 +534,9 @@ export default function ProfileView({ user, accountType, onNavigate, onUserUpdat
             {confirm === 'logout' && (
                 <ConfirmDialog
                     icon="bi-box-arrow-right"
-                    title="Sign out?"
-                    description="You'll need your email and password to come back in."
-                    confirmLabel="Sign out"
+                    title={t('profile.confirmLogout.title')}
+                    description={t('profile.confirmLogout.description')}
+                    confirmLabel={t('profile.settings.signOut')}
                     onConfirm={onLogout}
                     onCancel={() => setConfirm(null)}
                 />

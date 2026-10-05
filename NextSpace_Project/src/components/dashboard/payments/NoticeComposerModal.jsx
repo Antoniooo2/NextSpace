@@ -1,34 +1,37 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../../i18n'
+import { BRAND_VALUES } from '../../../lib/brand'
+import { DASH } from '../../../lib/symbols'
 import { supabase } from '../../../lib/supabaseClient'
 import { formatDueDate } from '../../../lib/rentSchedule'
 import { money } from '../../../lib/leaseInsights'
 
 // Starting text before (or instead of) Rony's draft, built from real numbers.
 function templateFor({ kind, tone, contract, stats, ownerFirstName }) {
-    const first = contract.users?.first_name || 'there'
-    const property = contract.add_business?.property_name || 'your space'
-    const sign = ownerFirstName ? `\n\n— ${ownerFirstName}` : ''
+    const t = (key, values) => i18n.t(`notice.template.${key}`, { ...BRAND_VALUES, ...values })
+    const first = contract.users?.first_name || t('there')
+    const property = contract.add_business?.property_name || t('yourSpace')
+    const sign = ownerFirstName ? `\n\n${DASH} ${ownerFirstName}` : ''
 
     if (kind === 'renewal_offer') {
-        const onTime =
-            stats.monthsDue > 0 && stats.paidOnTime === stats.monthsDue
-                ? `Thank you for paying every month on time. `
-                : 'Thank you for renting with me. '
-        return `Hi ${first}, your lease for ${property} ends on ${formatDueDate(contract.end_date)}. ${onTime}I'd be glad to renew it with you — let me know if you're interested.${sign}`
+        const onTime = stats.monthsDue > 0 && stats.paidOnTime === stats.monthsDue ? t('thanksOnTime') : t('thanksRenting')
+        return t('renewal', { first, name: property, date: formatDueDate(contract.end_date), thanks: onTime }) + sign
     }
 
     const oldest = stats.owedMonths.find((p) => p.status === 'Late') || stats.owedMonths[0]
     const due = oldest ? formatDueDate(oldest.payment_date) : ''
     const days = stats.oldestLateDays
     if (tone === 'firm') {
-        return `Hi ${first}, your rent of ${money(stats.owedNow)} for ${property} is now ${days} days overdue (due ${due}). Please pay it as soon as possible from the Payments section of NextSpace, and let me know if there is a problem.${sign}`
+        return t('firm', { first, amount: money(stats.owedNow), name: property, count: days, due }) + sign
     }
-    return `Hi ${first}, just a friendly reminder that your rent of ${money(stats.owedNow)} for ${property} is ${days} days late (due ${due}). You can pay it anytime from the Payments section of NextSpace. Thanks!${sign}`
+    return t('friendly', { first, amount: money(stats.owedNow), name: property, count: days, due }) + sign
 }
 
 // Owner writes (or asks Rony to write) a reminder or renewal offer and sends
 // it to the tenant as an in-app notification through send_tenant_notice.
 export default function NoticeComposerModal({ kind, contract, stats, ownerFirstName, onClose, onSent }) {
+    const { t } = useTranslation()
     const [tone, setTone] = useState('friendly')
     const [message, setMessage] = useState(() => templateFor({ kind, tone: 'friendly', contract, stats, ownerFirstName }))
     const [edited, setEdited] = useState(false)
@@ -38,7 +41,7 @@ export default function NoticeComposerModal({ kind, contract, stats, ownerFirstN
     const [note, setNote] = useState('')
 
     const isReminder = kind === 'reminder'
-    const tenantFirst = contract.users?.first_name || 'the tenant'
+    const tenantFirst = contract.users?.first_name || t('paymentDetail.theTenant')
 
     const changeTone = (next) => {
         setTone(next)
@@ -65,12 +68,12 @@ export default function NoticeComposerModal({ kind, contract, stats, ownerFirstN
                 }),
             })
             const result = await response.json().catch(() => ({}))
-            if (!response.ok || !result.message) throw new Error(result.error || 'Rony is not available')
+            if (!response.ok || !result.message) throw new Error(result.error || t('notice.ronyUnavailableShort', BRAND_VALUES))
             setMessage(result.message)
             setEdited(true)
-            setNote('Written by Rony from this lease’s real numbers. Review it before sending.')
+            setNote(t('notice.writtenByRony', BRAND_VALUES))
         } catch {
-            setNote("Rony isn't available right now. You can edit the message above and send it yourself.")
+            setNote(t('notice.ronyUnavailable', BRAND_VALUES))
         } finally {
             setDrafting(false)
         }
@@ -87,7 +90,7 @@ export default function NoticeComposerModal({ kind, contract, stats, ownerFirstN
         })
         setSending(false)
         if (rpcError) {
-            setError(rpcError.message || 'Could not send the message.')
+            setError(rpcError.message || t('notice.sendError'))
             return
         }
         onSent()
@@ -99,41 +102,40 @@ export default function NoticeComposerModal({ kind, contract, stats, ownerFirstN
                 className="ns-modal ns-modal-form ns-notice-modal"
                 role="dialog"
                 aria-modal="true"
-                aria-label={isReminder ? 'Send a rent reminder' : 'Offer a renewal'}
+                aria-label={isReminder ? t('notice.reminderTitle') : t('renewal.offer.title')}
                 onClick={(e) => e.stopPropagation()}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
                 <div className="ns-modal-body">
-                    <h2 className="ns-modal-form-title">{isReminder ? 'Send a rent reminder' : 'Offer a lease renewal'}</h2>
+                    <h2 className="ns-modal-form-title">{isReminder ? t('notice.reminderTitle') : t('notice.renewalTitle')}</h2>
                     <p className="ns-modal-form-subtitle">
-                        {tenantFirst} gets this in their Notifications
-                        {isReminder ? ' and can pay from their Payments screen.' : '.'}
+                        {isReminder ? t('notice.subtitleReminder', { name: tenantFirst }) : t('notice.subtitleRenewal', { name: tenantFirst })}
                     </p>
 
                     {isReminder && (
-                        <div className="ns-tone-toggle" role="radiogroup" aria-label="Tone">
+                        <div className="ns-tone-toggle" role="radiogroup" aria-label={t('notice.tone')}>
                             {[
-                                { id: 'friendly', label: 'Friendly', icon: 'bi-emoji-smile' },
-                                { id: 'firm', label: 'Firm', icon: 'bi-megaphone' },
-                            ].map((t) => (
+                                { id: 'friendly', icon: 'bi-emoji-smile' },
+                                { id: 'firm', icon: 'bi-megaphone' },
+                            ].map((option) => (
                                 <button
                                     type="button"
-                                    key={t.id}
+                                    key={option.id}
                                     role="radio"
-                                    aria-checked={tone === t.id}
-                                    className={tone === t.id ? 'active' : ''}
-                                    onClick={() => changeTone(t.id)}
+                                    aria-checked={tone === option.id}
+                                    className={tone === option.id ? 'active' : ''}
+                                    onClick={() => changeTone(option.id)}
                                 >
-                                    <i className={`bi ${t.icon}`}></i> {t.label}
+                                    <i className={`bi ${option.icon}`}></i> {t(`notice.tones.${option.id}`)}
                                 </button>
                             ))}
                         </div>
                     )}
 
                     <label className="ns-label" htmlFor="noticeMessage">
-                        Message
+                        {t('notice.message')}
                     </label>
                     <textarea
                         id="noticeMessage"
@@ -148,7 +150,7 @@ export default function NoticeComposerModal({ kind, contract, stats, ownerFirstN
                     />
                     <div className="ns-notice-tools">
                         <button type="button" className="ns-rony-write" onClick={draftWithRony} disabled={drafting}>
-                            <i className="bi bi-stars"></i> {drafting ? 'Rony is writing...' : 'Write it with Rony'}
+                            <i className="bi bi-stars"></i> {drafting ? t('notice.ronyWriting', BRAND_VALUES) : t('notice.writeWithRony', BRAND_VALUES)}
                         </button>
                         <span className="ns-pay-muted">{message.length}/1200</span>
                     </div>
@@ -166,7 +168,7 @@ export default function NoticeComposerModal({ kind, contract, stats, ownerFirstN
                         onClick={send}
                         disabled={sending || message.trim().length < 10}
                     >
-                        <i className="bi bi-send"></i> {sending ? 'Sending...' : `Send to ${tenantFirst}`}
+                        <i className="bi bi-send"></i> {sending ? t('common.sending') : t('notice.sendTo', { name: tenantFirst })}
                     </button>
                 </div>
             </div>

@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n, { currentLocale } from '../../../i18n'
+import { BRAND_VALUES } from '../../../lib/brand'
+import { DASH, DOT, QUOTE_CLOSE, QUOTE_OPEN } from '../../../lib/symbols'
 import { formatDueDate, todayInElSalvador } from '../../../lib/rentSchedule'
 import {
     EVENT_META,
@@ -26,7 +30,7 @@ import { RenewalOfferModal, RenewalRequestModal, RenewalSignModal } from './Rene
 
 function stamp(ts) {
     if (!ts) return null
-    return new Date(ts).toLocaleString('en-US', {
+    return new Date(ts).toLocaleString(currentLocale(), {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -42,13 +46,14 @@ function contractSteps(contract, events, today) {
     const firstOf = (kind) => events.filter((e) => e.kind === kind).map((e) => e.created_at).sort()[0]
     const invited = contract.origin === 'invite' || Boolean(firstOf('invited'))
     const day = (ts) => (ts ? formatDueDate(String(ts).slice(0, 10)) : null)
+    const t = (key) => i18n.t(`contractDetail.steps.${key}`)
     const steps = [
-        { id: 'requested', label: invited ? 'Invited' : 'Requested', date: day(firstOf('invited') || contract.requested_at || firstOf('requested')) },
-        { id: 'offer', label: 'Offer signed by owner', date: day(contract.owner_signed_at || contract.offered_at) },
-        { id: 'signed', label: 'Signed by business', date: day(contract.tenant_signed_at) },
+        { id: 'requested', label: invited ? t('invited') : t('requested'), date: day(firstOf('invited') || contract.requested_at || firstOf('requested')) },
+        { id: 'offer', label: t('offer'), date: day(contract.owner_signed_at || contract.offered_at) },
+        { id: 'signed', label: t('signed'), date: day(contract.tenant_signed_at) },
         {
             id: 'active',
-            label: contract.start_date && contract.start_date > today ? 'Starts' : 'Active',
+            label: contract.start_date && contract.start_date > today ? t('starts') : t('active'),
             date: contract.tenant_signed_at ? day(contract.start_date) : null,
         },
         {
@@ -56,11 +61,11 @@ function contractSteps(contract, events, today) {
             label:
                 contract.status === 'Expired' || contract.status === 'Cancelled'
                     ? contract.end_reason === 'terminated'
-                        ? 'Ended early'
-                        : 'Ended'
+                        ? t('endedEarly')
+                        : t('ended')
                     : contract.renewal_count > 0
-                      ? 'Renewed · ends'
-                      : 'Ends',
+                      ? t('renewedEnds')
+                      : t('ends'),
             date: contract.tenant_signed_at ? day(contract.end_date) : null,
         },
     ]
@@ -69,7 +74,7 @@ function contractSteps(contract, events, today) {
         const reached = contract.offered_at || contract.owner_signed_at ? 2 : 1
         return [
             ...steps.slice(0, reached).map((st) => ({ ...st, state: 'done' })),
-            { id: 'stop', label: contract.status === 'Declined' ? 'Declined' : 'Withdrawn', date: day(contract.closed_at), state: 'stopped' },
+            { id: 'stop', label: contract.status === 'Declined' ? t('declined') : t('withdrawn'), date: day(contract.closed_at), state: 'stopped' },
         ]
     }
 
@@ -87,6 +92,8 @@ function contractSteps(contract, events, today) {
 // then parties, key terms, clauses, signatures and history. The buttons shown
 // depend on the status and on who is looking.
 export default function ContractDetail({ contract, events, viewer, myName, ownerName, record, onBack, onChanged, onAskRony, onOpenPayments }) {
+    const { t } = useTranslation()
+    const q = (text) => `${QUOTE_OPEN}${text}${QUOTE_CLOSE}`
     const today = todayInElSalvador()
     const [modal, setModal] = useState(null)
     const [notice, setNotice] = useState('')
@@ -127,58 +134,59 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
 
     // What this person can do right now.
     const actions = []
+    const a = (key) => t(`contractDetail.actions.${key}`)
     if (isOwner && contract.status === 'Pending') {
-        actions.push({ id: 'offer', label: 'Make an offer', icon: 'bi-pen', primary: true })
-        actions.push({ id: 'decline', label: 'Decline', icon: 'bi-x-lg' })
+        actions.push({ id: 'offer', label: a('makeOffer'), icon: 'bi-pen', primary: true })
+        actions.push({ id: 'decline', label: a('decline'), icon: 'bi-x-lg' })
     }
     if (isOwner && contract.status === 'Offered') {
-        actions.push({ id: 'offer', label: 'Update offer', icon: 'bi-pencil' })
-        actions.push({ id: 'decline', label: 'Cancel offer', icon: 'bi-x-lg' })
+        actions.push({ id: 'offer', label: a('updateOffer'), icon: 'bi-pencil' })
+        actions.push({ id: 'decline', label: a('cancelOffer'), icon: 'bi-x-lg' })
     }
     if (!isOwner && contract.status === 'Pending') {
-        actions.push({ id: 'withdraw', label: 'Withdraw request', icon: 'bi-arrow-counterclockwise' })
+        actions.push({ id: 'withdraw', label: a('withdrawRequest'), icon: 'bi-arrow-counterclockwise' })
     }
     if (!isOwner && contract.status === 'Offered' && !expiry?.expired) {
-        actions.push({ id: 'sign', label: 'Review and sign', icon: 'bi-pen', primary: true })
-        actions.push({ id: 'withdraw', label: 'Turn down', icon: 'bi-x-lg' })
+        actions.push({ id: 'sign', label: a('reviewSign'), icon: 'bi-pen', primary: true })
+        actions.push({ id: 'withdraw', label: a('turnDown'), icon: 'bi-x-lg' })
     }
     if (canRenew && isOwner) {
         if (renewal === 'offered') {
-            actions.push({ id: 'renew-offer', label: 'Update renewal offer', icon: 'bi-pencil' })
-            actions.push({ id: 'renew-decline', label: 'Withdraw renewal', icon: 'bi-x-lg' })
+            actions.push({ id: 'renew-offer', label: a('updateRenewal'), icon: 'bi-pencil' })
+            actions.push({ id: 'renew-decline', label: a('withdrawRenewal'), icon: 'bi-x-lg' })
         } else {
             actions.push({
                 id: 'renew-offer',
-                label: renewal === 'requested' ? 'Answer with a renewal offer' : 'Offer renewal',
+                label: renewal === 'requested' ? a('answerRenewal') : a('offerRenewal'),
                 icon: 'bi-arrow-repeat',
                 primary: true,
             })
-            if (renewal === 'requested') actions.push({ id: 'renew-decline', label: 'Decline renewal', icon: 'bi-x-lg' })
+            if (renewal === 'requested') actions.push({ id: 'renew-decline', label: a('declineRenewal'), icon: 'bi-x-lg' })
         }
     }
     if (canRenew && !isOwner) {
         if (renewal === 'offered') {
-            actions.push({ id: 'renew-sign', label: 'Review and sign renewal', icon: 'bi-pen', primary: true })
-            actions.push({ id: 'renew-decline', label: 'Turn down renewal', icon: 'bi-x-lg' })
+            actions.push({ id: 'renew-sign', label: a('reviewSignRenewal'), icon: 'bi-pen', primary: true })
+            actions.push({ id: 'renew-decline', label: a('turnDownRenewal'), icon: 'bi-x-lg' })
         } else if (renewal === 'requested') {
-            actions.push({ id: 'renew-decline', label: 'Cancel renewal request', icon: 'bi-x-lg' })
+            actions.push({ id: 'renew-decline', label: a('cancelRenewalRequest'), icon: 'bi-x-lg' })
         } else {
-            actions.push({ id: 'renew-request', label: 'Ask to renew', icon: 'bi-arrow-repeat', primary: true })
+            actions.push({ id: 'renew-request', label: a('askRenew'), icon: 'bi-arrow-repeat', primary: true })
         }
     }
     if (contract.status === 'Active' && !terminationPending && !renewal) {
-        actions.push({ id: 'terminate', label: 'Ask to end early', icon: 'bi-box-arrow-right' })
+        actions.push({ id: 'terminate', label: a('askEndEarly'), icon: 'bi-box-arrow-right' })
     }
     if (terminationPending && !iAskedTermination) {
-        actions.push({ id: 'accept-end', label: 'Accept early end', icon: 'bi-check2', primary: true })
-        actions.push({ id: 'decline-end', label: 'Decline early end', icon: 'bi-x-lg' })
+        actions.push({ id: 'accept-end', label: a('acceptEnd'), icon: 'bi-check2', primary: true })
+        actions.push({ id: 'decline-end', label: a('declineEnd'), icon: 'bi-x-lg' })
     }
 
     const runAction = async (id) => {
         if (id === 'accept-end' || id === 'decline-end') {
             try {
                 await contractActions.respondTermination({ contractId: contract.contract_id, accept: id === 'accept-end' })
-                done(id === 'accept-end' ? 'Early end accepted. The rent schedule was updated.' : 'Early end declined. The lease continues.')
+                done(id === 'accept-end' ? t('contractDetail.done.endAccepted') : t('contractDetail.done.endDeclined'))
             } catch (err) {
                 setNotice(err.message)
             }
@@ -189,48 +197,65 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
 
     // The "next step" banner at the top.
     let banner = null
+    const b = (key, values) => t(`contractDetail.banner.${key}`, { ...BRAND_VALUES, ...values })
     if (contract.status === 'Pending') {
         banner = isOwner
-            ? { tone: 'info', text: `${personName(tenant)} wants to lease this space. Answer with an offer (you sign it by sending it) or decline.` }
-            : { tone: 'info', text: 'Your request was sent. The owner will answer with an offer to sign, or decline it.' }
+            ? { tone: 'info', text: b('pendingOwner', { person: personName(tenant) }) }
+            : { tone: 'info', text: b('pendingTenant') }
     } else if (contract.status === 'Offered') {
         banner = isOwner
-            ? { tone: 'warning', text: `Waiting for ${personName(tenant)} to sign. ${expiry?.text || ''}.` }
+            ? { tone: 'warning', text: b('offeredOwner', { person: personName(tenant), expiry: expiry?.text || '' }) }
             : expiry?.expired
-              ? { tone: 'danger', text: 'This offer expired. Ask the owner to send it again.' }
-              : { tone: 'warning', text: `The owner sent you an offer and signed it. Review it below and sign. ${expiry?.text || ''}.` }
+              ? { tone: 'danger', text: b('offerExpired') }
+              : { tone: 'warning', text: b('offeredTenant', { expiry: expiry?.text || '' }) }
     } else if (terminationPending) {
         banner = {
             tone: 'warning',
             text: iAskedTermination
-                ? `You asked to end the lease on ${formatDueDate(contract.termination_date)}. Waiting for the other side to answer.`
-                : `The ${contract.termination_requested_by} asked to end the lease on ${formatDueDate(contract.termination_date)}: “${contract.termination_reason}”`,
+                ? b('youAskedEnd', { date: formatDueDate(contract.termination_date) })
+                : b('otherAskedEnd', {
+                      side: t(`contractsBoard.side.${contract.termination_requested_by === 'owner' ? 'owner' : 'tenant'}`),
+                      date: formatDueDate(contract.termination_date),
+                      reason: q(contract.termination_reason),
+                  }),
         }
     } else if (renewal === 'offered') {
         banner = {
             tone: 'warning',
             text: isOwner
-                ? `Renewal offer sent: ${contract.renewal_months} more months at ${money(contract.renewal_rent)}/month. Waiting for ${personName(tenant)} to sign. ${renewalExpiresIn(contract) || ''}.`
-                : `The owner offers to renew for ${contract.renewal_months} more months at ${money(contract.renewal_rent)}/month. ${renewalExpiresIn(contract) || ''}.`,
+                ? b('renewalOfferedOwner', {
+                      count: contract.renewal_months,
+                      rent: money(contract.renewal_rent),
+                      person: personName(tenant),
+                      expiry: renewalExpiresIn(contract) || '',
+                  })
+                : b('renewalOfferedTenant', { count: contract.renewal_months, rent: money(contract.renewal_rent), expiry: renewalExpiresIn(contract) || '' }),
         }
     } else if (renewal === 'requested') {
         banner = {
             tone: isOwner ? 'info' : 'neutral',
             text: isOwner
-                ? `${personName(tenant)} asked to renew for ${contract.renewal_request_months} more months${contract.renewal_request_note ? `: “${contract.renewal_request_note}”` : '.'} Answer with a renewal offer.`
-                : `You asked to renew for ${contract.renewal_request_months} more months. The owner will answer with an offer to sign.`,
+                ? b('renewalRequestedOwner', {
+                      person: personName(tenant),
+                      count: contract.renewal_request_months,
+                      note: contract.renewal_request_note ? `: ${q(contract.renewal_request_note)}` : '.',
+                  })
+                : b('renewalRequestedTenant', { count: contract.renewal_request_months }),
         }
     } else if (canRenew) {
         banner = {
             tone: 'info',
             text: isOwner
-                ? `This lease ends in ${left} days. ${summary.pct != null ? `${personName(tenant)} is ${summary.short} on NextSpace. ` : ''}Offer a renewal or plan to re-list the space.`
-                : `Your lease ends in ${left} days. If you want to stay, ask the owner to renew.`,
+                ? b('canRenewOwner', {
+                      count: left,
+                      record: summary.pct != null ? b('canRenewRecord', { person: personName(tenant), record: summary.short }) : '',
+                  })
+                : b('canRenewTenant', { count: left }),
         }
     } else if (contract.status === 'Declined' || contract.status === 'Withdrawn') {
         banner = {
             tone: 'neutral',
-            text: `${contract.status === 'Declined' ? 'Declined' : 'Withdrawn'}${contract.decline_reason ? `: “${contract.decline_reason}”` : '.'}`,
+            text: `${contract.status === 'Declined' ? t('contractDetail.steps.declined') : t('contractDetail.steps.withdrawn')}${contract.decline_reason ? `: ${q(contract.decline_reason)}` : '.'}`,
         }
     }
 
@@ -242,25 +267,25 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
     const decisions = actions.filter((a) => a.id !== 'terminate')
     const quiet = [
         ...(contract.status === 'Active' && onOpenPayments
-            ? [{ id: 'payments', label: 'Rent in Payments', icon: 'bi-credit-card', onClick: () => onOpenPayments(contract.contract_id) }]
+            ? [{ id: 'payments', label: t('contractDetail.quiet.payments'), icon: 'bi-credit-card', onClick: () => onOpenPayments(contract.contract_id) }]
             : []),
         ...((signed || contract.status === 'Offered') && hasTerms
-            ? [{ id: 'pdf', label: pdfBusy ? 'Preparing...' : 'Download PDF', icon: 'bi-file-earmark-pdf', onClick: downloadPdf, disabled: pdfBusy }]
+            ? [{ id: 'pdf', label: pdfBusy ? t('contractDetail.quiet.preparing') : t('contractDetail.quiet.pdf'), icon: 'bi-file-earmark-pdf', onClick: downloadPdf, disabled: pdfBusy }]
             : []),
         ...(actions.some((a) => a.id === 'terminate')
-            ? [{ id: 'terminate', label: 'Ask to end early', icon: 'bi-box-arrow-right', onClick: () => runAction('terminate') }]
+            ? [{ id: 'terminate', label: a('askEndEarly'), icon: 'bi-box-arrow-right', onClick: () => runAction('terminate') }]
             : []),
     ]
     const history = [...events].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
 
     return (
         <>
-            <nav className="ns-breadcrumb" aria-label="Breadcrumb">
+            <nav className="ns-breadcrumb" aria-label={t('contractDetail.breadcrumb')}>
                 <button type="button" onClick={onBack}>
-                    <i className="bi bi-arrow-left"></i> Contracts
+                    <i className="bi bi-arrow-left"></i> {t('dashboard.nav.contracts')}
                 </button>
                 <i className="bi bi-chevron-right"></i>
-                <strong>{property.property_name || 'Property'}</strong>
+                <strong>{property.property_name || t('common.property')}</strong>
             </nav>
 
             <section className="ns-contract-hero ns-contract-hero-v2">
@@ -270,19 +295,20 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     </div>
                     <div className="ns-contract-hero-info">
                         <div className="ns-contract-hero-title">
-                            <h1>{property.property_name || 'Property'}</h1>
+                            <h1>{property.property_name || t('common.property')}</h1>
                             <span className={`ns-contract-status tone-${meta.tone}`}>
                                 <i className={`bi ${meta.icon}`}></i> {meta.label}
                             </span>
                         </div>
                         <p>
-                            Contract #{contract.contract_id}
-                            <span className="ns-pay-dot">•</span>
-                            {isOwner ? `Tenant: ${personName(tenant)}` : `Owner: ${personName(owner)}`}
+                            {t('contractDetail.contractNumber', { id: contract.contract_id })}
+                            <span className="ns-pay-dot">{DOT}</span>
+                            {isOwner ? `${t('common.tenant')}: ${personName(tenant)}` : `${t('common.owner')}: ${personName(owner)}`}
                             {hasTerms && (
                                 <>
-                                    <span className="ns-pay-dot">•</span>
-                                    {money(contract.monthly_rent)}/month
+                                    <span className="ns-pay-dot">{DOT}</span>
+                                    {money(contract.monthly_rent)}
+                                    {t('common.perMonth')}
                                 </>
                             )}
                         </p>
@@ -294,7 +320,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                                         style={{ width: `${Math.round(leaseTimeProgress(contract, today) * 100)}%` }}
                                     />
                                 </div>
-                                <span>{left != null && left >= 0 ? `${left} days left` : 'Ending'}</span>
+                                <span>{left != null && left >= 0 ? t('contractDetail.daysLeft', { count: left }) : t('contractDetail.ending')}</span>
                             </div>
                         )}
                     </div>
@@ -314,7 +340,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     )}
                 </div>
 
-                <ol className="ns-contract-steps" aria-label="Contract progress">
+                <ol className="ns-contract-steps" aria-label={t('contractDetail.progress')}>
                     {steps.map((st) => (
                         <li key={st.id} className={`is-${st.state}`} aria-current={st.state === 'current' ? 'step' : undefined}>
                             <span className="ns-contract-step-dot">
@@ -325,7 +351,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                                 ) : null}
                             </span>
                             <strong>{st.label}</strong>
-                            <small>{st.date || (st.state === 'current' ? 'Next step' : '—')}</small>
+                            <small>{st.date || (st.state === 'current' ? t('contractDetail.nextStep') : DASH)}</small>
                         </li>
                     ))}
                 </ol>
@@ -358,75 +384,77 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
             {notice && (
                 <div className="alert alert-success d-flex align-items-center justify-content-between gap-2 py-2" role="status">
                     <span>{notice}</span>
-                    <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setNotice('')} />
+                    <button type="button" className="btn-close" aria-label={t('common.dismiss')} onClick={() => setNotice('')} />
                 </div>
             )}
 
             <div className="ns-contract-grid">
                 <article className="ns-contract-doc">
                     <header className="ns-contract-doc-head">
-                        <span>Commercial lease agreement</span>
+                        <span>{t('contractDetail.doc.title')}</span>
                         <strong>{property.property_name}</strong>
-                        {contract.verification_code && <small>Verification code {contract.verification_code}</small>}
+                        {contract.verification_code && <small>{t('contractDetail.doc.verification', { code: contract.verification_code })}</small>}
                     </header>
 
                     <section>
-                        <h4>Parties</h4>
+                        <h4>{t('docs.lease.parties')}</h4>
                         <dl className="ns-contract-terms">
                             <div>
-                                <dt>Owner</dt>
+                                <dt>{t('common.owner')}</dt>
                                 <dd>{personName(owner)}</dd>
                             </div>
                             <div>
-                                <dt>Tenant</dt>
+                                <dt>{t('common.tenant')}</dt>
                                 <dd>
                                     {personName(tenant)}
-                                    {contract.tenant_dui ? ` · DUI ${contract.tenant_dui}` : ''}
+                                    {contract.tenant_dui ? ` ${DOT} DUI ${contract.tenant_dui}` : ''}
                                 </dd>
                             </div>
                         </dl>
                     </section>
 
                     <section>
-                        <h4>Key terms</h4>
+                        <h4>{t('docs.lease.keyTerms')}</h4>
                         {hasTerms ? (
                             <dl className="ns-contract-terms ns-contract-terms-3">
                                 <div>
-                                    <dt>Monthly rent</dt>
+                                    <dt>{t('docs.lease.monthlyRent')}</dt>
                                     <dd>
                                         {money(contract.monthly_rent)}
                                         {contract.previous_rent != null && contract.rent_changes_from && (
                                             <small className="ns-contract-term-note">
-                                                from {formatDueDate(contract.rent_changes_from)} (was {money(contract.previous_rent)})
+                                                {t('contractDetail.terms.rentChange', {
+                                                    date: formatDueDate(contract.rent_changes_from),
+                                                    previous: money(contract.previous_rent),
+                                                })}
                                             </small>
                                         )}
                                     </dd>
                                 </div>
                                 <div>
-                                    <dt>Rent due</dt>
-                                    <dd>The {dueDayLabel(contract.start_date)} of each month</dd>
+                                    <dt>{t('docs.lease.rentDue')}</dt>
+                                    <dd>{t('docs.lease.rentDueValue', { day: dueDayLabel(contract.start_date) })}</dd>
                                 </div>
                                 <div>
-                                    <dt>Deposit</dt>
-                                    <dd>{Number(contract.deposit || 0) > 0 ? money(contract.deposit) : 'None'}</dd>
+                                    <dt>{t('docs.lease.deposit')}</dt>
+                                    <dd>{Number(contract.deposit || 0) > 0 ? money(contract.deposit) : t('common.none')}</dd>
                                 </div>
                                 <div>
-                                    <dt>Start</dt>
+                                    <dt>{t('docs.lease.start')}</dt>
                                     <dd>{formatDueDate(contract.start_date)}</dd>
                                 </div>
                                 <div>
-                                    <dt>End</dt>
+                                    <dt>{t('docs.lease.end')}</dt>
                                     <dd>{formatDueDate(contract.end_date)}</dd>
                                 </div>
                                 <div>
-                                    <dt>Length</dt>
-                                    <dd>{contract.duration_months ? `${contract.duration_months} months` : '—'}</dd>
+                                    <dt>{t('docs.lease.length')}</dt>
+                                    <dd>{contract.duration_months ? t('common.month', { count: contract.duration_months }) : DASH}</dd>
                                 </div>
                             </dl>
                         ) : (
                             <p className="ns-pay-muted mb-0">
-                                Requested at {money(contract.monthly_rent)}/month (the listing price). The terms appear here when the owner
-                                sends an offer.
+                                {t('contractDetail.terms.requestedAt', { rent: money(contract.monthly_rent) })}
                             </p>
                         )}
                     </section>
@@ -434,7 +462,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     {hasTerms && (
                         <section>
                             <div className="ns-contract-clauses-head">
-                                <h4>Clauses</h4>
+                                <h4>{t('docs.lease.clauses')}</h4>
                                 <button
                                     type="button"
                                     className="ns-link-btn"
@@ -444,7 +472,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                                         )
                                     }
                                 >
-                                    {openClauses.size === clauses.length ? 'Collapse all' : 'Expand all'}
+                                    {openClauses.size === clauses.length ? t('contractDetail.collapseAll') : t('contractDetail.expandAll')}
                                 </button>
                             </div>
                             <ol className="ns-contract-clauses ns-contract-clauses-accordion">
@@ -476,7 +504,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                             </ol>
                             {contract.special_clauses && (
                                 <div className="ns-contract-special">
-                                    <strong>Special clauses</strong>
+                                    <strong>{t('docs.lease.specialClauses')}</strong>
                                     <p>{contract.special_clauses}</p>
                                 </div>
                             )}
@@ -485,17 +513,17 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
 
                     {hasTerms && (
                         <section>
-                            <h4>Signatures</h4>
+                            <h4>{t('docs.lease.signatures')}</h4>
                             <div className="ns-contract-signatures">
                                 {[
-                                    ['Owner', contract.owner_signed_name, contract.owner_signed_at],
-                                    ['Tenant', contract.tenant_signed_name, contract.tenant_signed_at],
+                                    [t('common.owner'), contract.owner_signed_name, contract.owner_signed_at],
+                                    [t('common.tenant'), contract.tenant_signed_name, contract.tenant_signed_at],
                                 ].map(([role, name, at]) => (
                                     <div key={role} className={at ? 'is-signed' : ''}>
-                                        <span className="ns-contract-sig-name">{name || 'Waiting for signature'}</span>
+                                        <span className="ns-contract-sig-name">{name || t('contractDetail.waitingSignature')}</span>
                                         <small>
                                             {role}
-                                            {at ? ` · signed ${stamp(at)}` : ''}
+                                            {at ? ` ${DOT} ${t('contractDetail.signedAt', { date: stamp(at) })}` : ''}
                                         </small>
                                     </div>
                                 ))}
@@ -505,12 +533,15 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
 
                     {contract.renewal_count > 0 && (
                         <section>
-                            <h4>Renewals</h4>
+                            <h4>{t('contractDetail.renewals')}</h4>
                             <p className="ns-contract-renewal-line">
-                                Renewed {contract.renewal_count} {contract.renewal_count === 1 ? 'time' : 'times'}. Last renewal signed{' '}
-                                {stamp(contract.last_renewed_at)} by {contract.last_renewal_owner_name} (owner) and{' '}
-                                {contract.last_renewal_tenant_name} (tenant). The lease now ends on{' '}
-                                {formatDueDate(contract.end_date)}.
+                                {t('contractDetail.renewedLine', {
+                                    count: contract.renewal_count,
+                                    date: stamp(contract.last_renewed_at),
+                                    owner: contract.last_renewal_owner_name,
+                                    tenant: contract.last_renewal_tenant_name,
+                                    end: formatDueDate(contract.end_date),
+                                })}
                             </p>
                         </section>
                     )}
@@ -522,24 +553,37 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     {onAskRony && (
                         <section className="ns-panel ns-contract-rony">
                             <h3>
-                                <i className="bi bi-stars"></i> Ask Rony
+                                <i className="bi bi-stars"></i> {t('insights.owner.askRony', BRAND_VALUES)}
                             </h3>
                             {(isOwner
                                 ? [
-                                      `Is ${money(contract.monthly_rent)}/month a fair rent for "${property.property_name}" compared with similar listings on NextSpace?`,
-                                      `Suggest special clauses for this lease of "${property.property_name}".`,
+                                      t('contractDetail.ask.fairRent', { ...BRAND_VALUES, rent: money(contract.monthly_rent), name: property.property_name }),
+                                      t('contractDetail.ask.clauses', { name: property.property_name }),
                                       contract.status === 'Pending' || contract.status === 'Offered'
-                                          ? `${personName(tenant)} wants to lease "${property.property_name}". Their NextSpace record: ${summary.short}${record ? ` (${record.months_on_time}/${record.months_due} months on time, ${record.leases} leases)` : ''}. Should I accept, and on what terms?`
-                                          : `How is ${personName(tenant)} doing with rent, and should I renew this lease? Their record: ${summary.short}.`,
+                                          ? t('contractDetail.ask.accept', {
+                                                ...BRAND_VALUES,
+                                                person: personName(tenant),
+                                                name: property.property_name,
+                                                record: summary.short,
+                                                detail: record
+                                                    ? t('contractDetail.ask.acceptDetail', { onTime: record.months_on_time, due: record.months_due, leases: record.leases })
+                                                    : '',
+                                            })
+                                          : t('contractDetail.ask.renew', { person: personName(tenant), record: summary.short }),
                                   ]
                                 : [
-                                      `Explain my lease for "${property.property_name}" in simple words: rent ${money(contract.monthly_rent)}/month, ${contract.duration_months || ''} months, deposit ${money(contract.deposit)}.`,
-                                      `What should I check before signing a commercial lease for "${property.property_name}"?`,
-                                      `Is ${money(contract.monthly_rent)}/month a good price for "${property.property_name}" compared with similar spaces on NextSpace?`,
+                                      t('contractDetail.ask.explain', {
+                                          name: property.property_name,
+                                          rent: money(contract.monthly_rent),
+                                          months: contract.duration_months || '',
+                                          deposit: money(contract.deposit),
+                                      }),
+                                      t('contractDetail.ask.check', { name: property.property_name }),
+                                      t('contractDetail.ask.goodPrice', { ...BRAND_VALUES, rent: money(contract.monthly_rent), name: property.property_name }),
                                   ]
-                            ).map((q) => (
-                                <button type="button" key={q} onClick={() => onAskRony({ text: q })}>
-                                    {q}
+                            ).map((question) => (
+                                <button type="button" key={question} onClick={() => onAskRony({ text: question })}>
+                                    {question}
                                 </button>
                             ))}
                         </section>
@@ -547,11 +591,11 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
 
                     <section className="ns-panel">
                         <div className="ns-panel-head">
-                            <h3>History</h3>
+                            <h3>{t('contractDetail.history')}</h3>
                         </div>
                         {history.length === 0 ? (
                             <p className="ns-pay-muted mb-0">
-                                {contract.requested_at ? `Requested ${stamp(contract.requested_at)}.` : 'No history yet.'}
+                                {contract.requested_at ? t('contractDetail.requestedOn', { date: stamp(contract.requested_at) }) : t('contractDetail.noHistory')}
                             </p>
                         ) : (
                             <ol className="ns-contract-history">
@@ -580,7 +624,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     ownerName={ownerName}
                     onAskRony={onAskRony}
                     onClose={() => setModal(null)}
-                    onDone={() => done(`Offer sent to ${personName(tenant)}. They have 7 days to sign.`)}
+                    onDone={() => done(t('contractDetail.done.offerSent', { person: personName(tenant) }))}
                 />
             )}
             {modal === 'sign' && (
@@ -588,7 +632,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     contract={contract}
                     tenantName={myName}
                     onClose={() => setModal(null)}
-                    onSigned={(code) => done(`Lease signed. Verification code ${code}. Your rent schedule is ready in Payments.`)}
+                    onSigned={(code) => done(t('contractDetail.done.leaseSigned', { code }))}
                 />
             )}
             {modal === 'renew-offer' && (
@@ -598,7 +642,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     record={record}
                     onAskRony={onAskRony}
                     onClose={() => setModal(null)}
-                    onDone={() => done(`Renewal offer sent to ${personName(tenant)}. They have 7 days to sign.`)}
+                    onDone={() => done(t('contractDetail.done.renewalOfferSent', { person: personName(tenant) }))}
                 />
             )}
             {modal === 'renew-request' && (
@@ -606,7 +650,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     contract={contract}
                     onAskRony={onAskRony}
                     onClose={() => setModal(null)}
-                    onSent={() => done('Renewal request sent. The owner will answer with an offer to sign.')}
+                    onSent={() => done(t('contractDetail.done.renewalRequestSent'))}
                 />
             )}
             {modal === 'renew-sign' && (
@@ -614,7 +658,7 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     contract={contract}
                     tenantName={myName}
                     onClose={() => setModal(null)}
-                    onSigned={(code) => done(`Renewal signed. New verification code ${code}. The new months are in Payments.`)}
+                    onSigned={(code) => done(t('contractDetail.done.renewalSigned', { code }))}
                 />
             )}
             {modal === 'renew-decline' && (
@@ -622,65 +666,65 @@ export default function ContractDetail({ contract, events, viewer, myName, owner
                     title={
                         renewal === 'offered'
                             ? isOwner
-                                ? 'Withdraw the renewal offer'
-                                : 'Turn down the renewal'
+                                ? t('contractDetail.reason.withdrawRenewal')
+                                : t('contractDetail.reason.turnDownRenewal')
                             : isOwner
-                              ? 'Decline the renewal request'
-                              : 'Cancel your renewal request'
+                              ? t('contractDetail.reason.declineRenewal')
+                              : t('contractDetail.reason.cancelRenewal')
                     }
-                    subtitle={`The lease still ends on ${formatDueDate(contract.end_date)}. The other side is notified.`}
-                    placeholder="E.g. I plan to use the space for something else"
-                    confirmLabel="Confirm"
+                    subtitle={t('contractDetail.reason.renewalSubtitle', { date: formatDueDate(contract.end_date) })}
+                    placeholder={t('contractDetail.reason.renewalPlaceholder')}
+                    confirmLabel={t('common.confirm')}
                     danger
                     onClose={() => setModal(null)}
                     onConfirm={async ({ reason }) => {
                         await contractActions.declineRenewal({ contractId: contract.contract_id, reason })
-                        done('Done. The other side was notified.')
+                        done(t('contractDetail.done.otherNotified'))
                     }}
                 />
             )}
             {modal === 'decline' && (
                 <ReasonModal
-                    title={contract.status === 'Offered' ? 'Cancel your offer' : 'Decline this request'}
-                    subtitle={`${personName(tenant)} will be notified with your reason.`}
-                    placeholder="E.g. the space is no longer available for this kind of business"
-                    confirmLabel={contract.status === 'Offered' ? 'Cancel offer' : 'Decline request'}
+                    title={contract.status === 'Offered' ? t('contractDetail.reason.cancelOffer') : t('contractDetail.reason.declineRequest')}
+                    subtitle={t('contractDetail.reason.declineSubtitle', { person: personName(tenant) })}
+                    placeholder={t('contractDetail.reason.declinePlaceholder')}
+                    confirmLabel={contract.status === 'Offered' ? t('contractDetail.actions.cancelOffer') : t('contractDetail.reason.declineRequestButton')}
                     danger
                     onClose={() => setModal(null)}
                     onConfirm={async ({ reason }) => {
                         await contractActions.decline({ contractId: contract.contract_id, reason })
-                        done('Done. The business was notified.')
+                        done(t('contractDetail.done.businessNotified'))
                     }}
                 />
             )}
             {modal === 'withdraw' && (
                 <ReasonModal
-                    title={contract.status === 'Offered' ? 'Turn down this offer' : 'Withdraw your request'}
-                    subtitle="The owner will be notified."
-                    placeholder="E.g. I found another space"
-                    confirmLabel={contract.status === 'Offered' ? 'Turn down offer' : 'Withdraw request'}
+                    title={contract.status === 'Offered' ? t('contractDetail.reason.turnDownOffer') : t('contractDetail.reason.withdrawRequest')}
+                    subtitle={t('contractDetail.reason.ownerNotified')}
+                    placeholder={t('contractDetail.reason.withdrawPlaceholder')}
+                    confirmLabel={contract.status === 'Offered' ? t('contractDetail.reason.turnDownOfferButton') : t('contractDetail.actions.withdrawRequest')}
                     danger
                     onClose={() => setModal(null)}
                     onConfirm={async ({ reason }) => {
                         await contractActions.withdraw({ contractId: contract.contract_id, reason })
-                        done('Done. The owner was notified.')
+                        done(t('contractDetail.done.ownerNotified'))
                     }}
                 />
             )}
             {modal === 'terminate' && (
                 <ReasonModal
-                    title="Ask to end the lease early"
-                    subtitle="The other side has to accept it. Rent after the new end date is then removed; anything already late stays owed."
+                    title={t('contractDetail.reason.endTitle')}
+                    subtitle={t('contractDetail.reason.endSubtitle')}
                     reasonRequired
-                    placeholder="Explain why"
+                    placeholder={t('contractDetail.reason.endPlaceholder')}
                     withDate
                     minDate={[today, addDays(contract.start_date, 1)].sort().pop()}
                     maxDate={addDays(contract.end_date, -1)}
-                    confirmLabel="Send request"
+                    confirmLabel={t('contractDetail.reason.sendRequest')}
                     onClose={() => setModal(null)}
                     onConfirm={async ({ reason, date }) => {
                         await contractActions.requestTermination({ contractId: contract.contract_id, date, reason })
-                        done('Request sent. You will be notified of the answer.')
+                        done(t('contractDetail.done.endRequestSent'))
                     }}
                 />
             )}

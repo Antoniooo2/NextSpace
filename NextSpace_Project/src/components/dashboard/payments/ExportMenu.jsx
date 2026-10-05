@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 // "Export" button with a small menu of download options. Each option's
 // onSelect may be async; the menu shows progress and any error.
-export default function ExportMenu({ options, label = 'Export' }) {
+export default function ExportMenu({ options, label }) {
+    const { t } = useTranslation()
     const [open, setOpen] = useState(false)
     const [busy, setBusy] = useState(null)
     const [error, setError] = useState('')
@@ -32,7 +34,7 @@ export default function ExportMenu({ options, label = 'Export' }) {
             setOpen(false)
         } catch (err) {
             console.error('Export failed', err)
-            setError('Could not create the file. Please try again.')
+            setError(t('exportMenu.error'))
         } finally {
             setBusy(null)
         }
@@ -47,7 +49,7 @@ export default function ExportMenu({ options, label = 'Export' }) {
                 aria-haspopup="menu"
                 aria-expanded={open}
             >
-                <i className="bi bi-download"></i> {busy ? 'Preparing...' : label}{' '}
+                <i className="bi bi-download"></i> {busy ? t('contractDetail.quiet.preparing') : label || t('exportMenu.label')}{' '}
                 <i className="bi bi-chevron-down ns-export-caret"></i>
             </button>
             {open && (
@@ -62,7 +64,7 @@ export default function ExportMenu({ options, label = 'Export' }) {
                         >
                             <i className={`bi ${option.icon}`}></i>
                             <span>
-                                <strong>{busy === option.id ? 'Preparing...' : option.label}</strong>
+                                <strong>{busy === option.id ? t('contractDetail.quiet.preparing') : option.label}</strong>
                                 <small>{option.description}</small>
                             </span>
                         </button>

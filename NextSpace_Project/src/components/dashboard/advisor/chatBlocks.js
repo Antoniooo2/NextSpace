@@ -1,4 +1,5 @@
 import { supabase } from '../../../lib/supabaseClient'
+import i18n from '../../../i18n'
 
 // The visual pieces of a Rony answer (see api/advisor.js sanitizeBlocks).
 // Stored in the saved payload so a reloaded chat looks the same; older
@@ -37,7 +38,7 @@ export async function clearHistory() {
     const {
         data: { user },
     } = await supabase.auth.getUser()
-    if (!user) return { error: new Error('Not signed in') }
+    if (!user) return { error: new Error(i18n.t('advisor.notSignedIn')) }
     return supabase.from('advisor_messages').delete().eq('user_auth_id', user.id)
 }
 

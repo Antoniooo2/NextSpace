@@ -38,6 +38,10 @@ function syncDocumentLanguage(lng) {
 syncDocumentLanguage(i18n.resolvedLanguage)
 i18n.on('languageChanged', syncDocumentLanguage)
 
+export function currentLocale() {
+  return i18n.resolvedLanguage === 'es' ? 'es-SV' : 'en-US'
+}
+
 export function changeLanguage(lng) {
   try {
     localStorage.setItem(LANGUAGE_STORAGE_KEY, lng)

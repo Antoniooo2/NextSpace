@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../../../lib/brand'
 import { ACCOUNT_TYPES, SV_BANKS, savePayoutAccount, validatePayoutAccount } from '../../../lib/payouts'
 
 // Where NextSpace sends an owner's rent (minus the NextSpace fee). Only the
 // owner and NextSpace staff can read it.
 export default function PayoutAccountModal({ ownerDui, account, defaultHolder = '', onSaved, onClose }) {
+    const { t } = useTranslation()
     const [holderName, setHolderName] = useState(account?.holder_name || defaultHolder)
     const [bankName, setBankName] = useState(account?.bank_name || '')
     const [accountType, setAccountType] = useState(account?.account_type || 'Savings')
@@ -35,18 +38,17 @@ export default function PayoutAccountModal({ ownerDui, account, defaultHolder = 
                 className="ns-modal ns-modal-form"
                 role="dialog"
                 aria-modal="true"
-                aria-label="Bank account for transfers"
+                aria-label={t('profile.settings.bankTitle')}
                 onClick={(e) => e.stopPropagation()}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
 
                 <div className="ns-modal-body">
-                    <h2 className="ns-modal-form-title">{account ? 'Change bank account' : 'Add your bank account'}</h2>
+                    <h2 className="ns-modal-form-title">{account ? t('payoutModal.titleChange') : t('profile.settings.addBank')}</h2>
                     <p className="ns-modal-form-subtitle">
-                        NextSpace transfers the rent your tenants pay, minus the NextSpace fee, to this account. Only you
-                        and the NextSpace team can see it.
+                        {t('payoutModal.subtitle', BRAND_VALUES)}
                     </p>
 
                     <form onSubmit={handleSubmit} noValidate>
@@ -57,7 +59,7 @@ export default function PayoutAccountModal({ ownerDui, account, defaultHolder = 
                         )}
 
                         <div className="ns-mb-field">
-                            <label className="ns-label" htmlFor="payoutHolder">Account holder</label>
+                            <label className="ns-label" htmlFor="payoutHolder">{t('payoutModal.holder')}</label>
                             <input
                                 id="payoutHolder"
                                 className={`form-control ${errors.holderName ? 'is-invalid' : ''}`}
@@ -70,14 +72,14 @@ export default function PayoutAccountModal({ ownerDui, account, defaultHolder = 
                         </div>
 
                         <div className="ns-mb-field">
-                            <label className="ns-label" htmlFor="payoutBank">Bank</label>
+                            <label className="ns-label" htmlFor="payoutBank">{t('payoutModal.bank')}</label>
                             <input
                                 id="payoutBank"
                                 className={`form-control ${errors.bankName ? 'is-invalid' : ''}`}
                                 value={bankName}
                                 onChange={(e) => setBankName(e.target.value)}
                                 list="payoutBankList"
-                                placeholder="Choose or type your bank"
+                                placeholder={t('payoutModal.bankPlaceholder')}
                                 maxLength={80}
                             />
                             <datalist id="payoutBankList">
@@ -89,25 +91,25 @@ export default function PayoutAccountModal({ ownerDui, account, defaultHolder = 
                         </div>
 
                         <div className="ns-mb-field">
-                            <span className="ns-label">Account type</span>
-                            <div className="ns-segmented" role="radiogroup" aria-label="Account type">
-                                {ACCOUNT_TYPES.map((t) => (
+                            <span className="ns-label">{t('payoutModal.type')}</span>
+                            <div className="ns-segmented" role="radiogroup" aria-label={t('payoutModal.type')}>
+                                {ACCOUNT_TYPES.map((type) => (
                                     <button
                                         type="button"
-                                        key={t.id}
+                                        key={type.id}
                                         role="radio"
-                                        aria-checked={accountType === t.id}
-                                        className={accountType === t.id ? 'active' : ''}
-                                        onClick={() => setAccountType(t.id)}
+                                        aria-checked={accountType === type.id}
+                                        className={accountType === type.id ? 'active' : ''}
+                                        onClick={() => setAccountType(type.id)}
                                     >
-                                        {t.label}
+                                        {type.label}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         <div className="ns-mb-field">
-                            <label className="ns-label" htmlFor="payoutNumber">Account number</label>
+                            <label className="ns-label" htmlFor="payoutNumber">{t('payoutModal.number')}</label>
                             <input
                                 id="payoutNumber"
                                 className={`form-control ${errors.accountNumber ? 'is-invalid' : ''}`}
@@ -121,7 +123,7 @@ export default function PayoutAccountModal({ ownerDui, account, defaultHolder = 
                         </div>
 
                         <button type="submit" className="ns-submit-btn" disabled={saving}>
-                            {saving ? 'Saving...' : 'Save bank account'}
+                            {saving ? t('common.saving') : t('payoutModal.save')}
                         </button>
                     </form>
                 </div>

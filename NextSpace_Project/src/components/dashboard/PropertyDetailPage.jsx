@@ -1,4 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
+import { propertyTypeLabel, serviceLabel } from '../../lib/displayValues'
+import { BRAND_VALUES } from '../../lib/brand'
+import { DASH, DOT, MINUS, SQ_M } from '../../lib/symbols'
 import { supabase } from '../../lib/supabaseClient'
 import { LISTING_STATUS } from '../../lib/propertyTypes'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
@@ -39,44 +44,45 @@ function toAdvisorPropertyCard(detail) {
 function listedAgo(ts) {
     const d = daysSince(ts)
     if (d == null) return null
-    if (d === 0) return 'Listed today'
-    if (d < 30) return `Listed ${d} ${d === 1 ? 'day' : 'days'} ago`
+    if (d === 0) return i18n.t('propertyDetail.listedToday')
+    if (d < 30) return i18n.t('propertyDetail.listedDaysAgo', { count: d })
     const months = Math.round(d / 30)
-    return `Listed ${months} ${months === 1 ? 'month' : 'months'} ago`
+    return i18n.t('propertyDetail.listedMonthsAgo', { count: months })
 }
 
 // What businesses read about the space: description, amenities, location.
 function ListingContent({ detail }) {
+    const { t } = useTranslation()
     return (
         <>
             <section className="ns-pd-section">
-                <h3>About this space</h3>
+                <h3>{t('propertyDetail.about')}</h3>
                 <p className="ns-pd-desc">
-                    {detail.description || 'The owner has not added a description yet. Ask Rony whether it fits your business, or request the lease to talk terms.'}
+                    {detail.description || t('propertyDetail.noDescription', BRAND_VALUES)}
                 </p>
             </section>
 
             <section className="ns-pd-section">
-                <h3>Amenities</h3>
+                <h3>{t('propertyCard.amenities')}</h3>
                 {detail.service_names?.length > 0 ? (
                     <ul className="ns-amenity-list">
                         {detail.service_names.map((name) => (
                             <li key={name}>
-                                <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i> {name}
+                                <i className={`bi ${SERVICE_ICON[name] || 'bi-check2'}`}></i> {serviceLabel(name)}
                             </li>
                         ))}
                     </ul>
                 ) : (
-                    <p className="ns-pay-muted mb-0">No amenities listed.</p>
+                    <p className="ns-pay-muted mb-0">{t('propertyDetail.noAmenities')}</p>
                 )}
             </section>
 
             <section className="ns-pd-section">
-                <h3>Location</h3>
+                <h3>{t('compare.location')}</h3>
                 <p className="ns-pd-location">
                     <i className="bi bi-geo-alt-fill"></i>
                     <span>
-                        <strong>{locationOf(detail) || 'Location on request'}</strong>
+                        <strong>{locationOf(detail) || t('propertyDetail.locationOnRequest')}</strong>
                         {detail.address && <small>{detail.address}</small>}
                     </span>
                 </p>
@@ -85,7 +91,8 @@ function ListingContent({ detail }) {
     )
 }
 
-export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony, onViewProperty, onNavigate, backLabel = 'Back' }) {
+export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony, onViewProperty, onNavigate, backLabel }) {
+    const { t } = useTranslation()
     const isBusiness = accountType === 'business'
     const isOwnerView = accountType === 'property-owner'
 
@@ -125,7 +132,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             .eq('property_id', property.property_id)
             .single()
         if (error || !data) {
-            setLoadError("We couldn't load this property. It may have been removed.")
+            setLoadError(i18n.t('propertyDetail.loadError'))
             setLoading(false)
             return
         }
@@ -164,7 +171,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             if (cancelled) return
             setSaved(Boolean(savedRow))
             if (!userRow?.dui) {
-                setRequestError("We couldn't find your account record (DUI), so you can't request a contract yet. Please contact support.")
+                setRequestError(i18n.t('propertyDetail.noDui'))
                 return
             }
             setTenantDui(userRow.dui)
@@ -251,7 +258,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             .select()
         setRequesting(false)
         if (error || !data?.length) {
-            setRequestError(error ? describeSupabaseError(error) : 'The request could not be sent.')
+            setRequestError(error ? describeSupabaseError(error) : t('propertyDetail.requestFailed'))
             return
         }
         createNotification({
@@ -273,7 +280,8 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         if (!(await persistSaved(user.id, detail.property_id, next))) setSaved(!next)
     }
 
-    const askRony = (text) => onAskRony?.(text ? { text } : { text: `Is "${detail.property_name}" a good fit for my business?`, property: toAdvisorPropertyCard(detail) })
+    const askRony = (text) =>
+        onAskRony?.(text ? { text } : { text: t('propertyDetail.ask.fit', { name: detail.property_name }), property: toAdvisorPropertyCard(detail) })
 
     const togglePause = async () => {
         setBusy(true)
@@ -282,7 +290,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         const { data, error } = await supabase.from('add_business').update({ availability: next }).eq('property_id', detail.property_id).select('availability')
         setBusy(false)
         if (error || !data?.length) {
-            setActionError(error ? describeSupabaseError(error) : 'The listing could not be updated.')
+            setActionError(error ? describeSupabaseError(error) : t('propertyDetail.updateFailed'))
             return
         }
         setDetail((d) => ({ ...d, availability: next }))
@@ -295,7 +303,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         setBusy(false)
         setModal(null)
         if (error || !data?.length) {
-            setActionError(error ? describeSupabaseError(error) : 'The property could not be deleted.')
+            setActionError(error ? describeSupabaseError(error) : t('propertyDetail.deleteFailed'))
             return
         }
         onBack()
@@ -307,7 +315,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading property...</p>
+                <p>{t('propertyDetail.loading')}</p>
             </div>
         )
     }
@@ -316,10 +324,10 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         return (
             <div className="ns-detail-page">
                 <button type="button" className="ns-detail-back" onClick={onBack}>
-                    <i className="bi bi-arrow-left"></i> {backLabel}
+                    <i className="bi bi-arrow-left"></i> {backLabel || t('common.back')}
                 </button>
                 <div className="alert alert-danger py-2 mt-3" role="alert">
-                    {loadError || 'Property not found.'}
+                    {loadError || t('propertyDetail.notFound')}
                 </div>
             </div>
         )
@@ -333,7 +341,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     const header = (
         <>
             <button type="button" className="ns-detail-back" onClick={onBack}>
-                <i className="bi bi-arrow-left"></i> {backLabel}
+                <i className="bi bi-arrow-left"></i> {backLabel || t('common.back')}
             </button>
 
             <PropertyGallery
@@ -350,31 +358,31 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             <div className="ns-pd-head">
                 <div className="ns-pd-title">
                     <span className="ns-pd-type">
-                        <i className={`bi ${typeIcon(detail.property_type)}`}></i> {detail.property_type}
+                        <i className={`bi ${typeIcon(detail.property_type)}`}></i> {propertyTypeLabel(detail.property_type)}
                     </span>
                     <h1>{detail.property_name}</h1>
                     <p>
-                        <i className="bi bi-geo-alt"></i> {locationOf(detail) || 'Location on request'}
+                        <i className="bi bi-geo-alt"></i> {locationOf(detail) || t('propertyDetail.locationOnRequest')}
                     </p>
                 </div>
                 <div className="ns-pd-facts">
                     <div>
-                        <strong>{detail.monthly_rent != null ? money(detail.monthly_rent) : '—'}</strong>
-                        <small>per month</small>
+                        <strong>{detail.monthly_rent != null ? money(detail.monthly_rent) : DASH}</strong>
+                        <small>{t('propertyDetail.perMonth')}</small>
                     </div>
                     <div>
-                        <strong>{area ? `${area} m²` : '—'}</strong>
+                        <strong>{area ? `${area} ${SQ_M}` : DASH}</strong>
                         <small>
-                            {detail.business_size_width} × {detail.business_size_length} m
+                            {t('propertyDetail.dimensions', { width: detail.business_size_width, length: detail.business_size_length })}
                         </small>
                     </div>
                     <div>
-                        <strong>{insight ? formatPpm(insight.ppm) : '—'}</strong>
-                        <small>per m²</small>
+                        <strong>{insight ? formatPpm(insight.ppm) : DASH}</strong>
+                        <small>{t('propertyDetail.perM2', { unit: SQ_M })}</small>
                     </div>
                     <div>
                         <strong>{detail.service_names?.length || 0}</strong>
-                        <small>amenities</small>
+                        <small>{t('propertyDetail.amenitiesCount', { count: detail.service_names?.length || 0 })}</small>
                     </div>
                 </div>
             </div>
@@ -386,27 +394,27 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         const cta =
             openRequest === 'Active' ? (
                 <button type="button" className="ns-filled-btn" onClick={() => onNavigate?.('contracts')}>
-                    <i className="bi bi-key"></i> You lease this space
+                    <i className="bi bi-key"></i> {t('propertyDetail.cta.leased')}
                 </button>
             ) : openRequest === 'Offered' ? (
                 <button type="button" className="ns-filled-btn is-warm" onClick={() => onNavigate?.('contracts')}>
-                    <i className="bi bi-pen"></i> Review the owner's offer
+                    <i className="bi bi-pen"></i> {t('propertyDetail.cta.reviewOffer')}
                 </button>
             ) : openRequest === 'Pending' ? (
                 <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('contracts')}>
-                    <i className="bi bi-hourglass-split"></i> Request sent · waiting
+                    <i className="bi bi-hourglass-split"></i> {t('propertyDetail.cta.waiting', { dot: DOT })}
                 </button>
             ) : detail.availability === 'Available' && detail.monthly_rent != null ? (
                 <button type="button" className="ns-filled-btn" onClick={handleRequestContract} disabled={requesting || !tenantDui}>
-                    <i className="bi bi-file-earmark-text"></i> {requesting ? 'Sending...' : 'Request lease'}
+                    <i className="bi bi-file-earmark-text"></i> {requesting ? t('common.sending') : t('propertyDetail.cta.request')}
                 </button>
             ) : null
         const yearly = detail.monthly_rent != null ? Number(detail.monthly_rent) * 12 : null
         const steps = [
-            { icon: 'bi-send', label: 'Request', done: Boolean(openRequest) },
-            { icon: 'bi-envelope-paper', label: 'Owner sends an offer', done: openRequest === 'Offered' || openRequest === 'Active' },
-            { icon: 'bi-pen', label: 'You sign', done: openRequest === 'Active' },
-            { icon: 'bi-credit-card', label: 'Pay rent in NextSpace', done: openRequest === 'Active' },
+            { icon: 'bi-send', label: t('propertyDetail.steps.request'), done: Boolean(openRequest) },
+            { icon: 'bi-envelope-paper', label: t('propertyDetail.steps.offer'), done: openRequest === 'Offered' || openRequest === 'Active' },
+            { icon: 'bi-pen', label: t('propertyDetail.steps.sign'), done: openRequest === 'Active' },
+            { icon: 'bi-credit-card', label: t('propertyDetail.steps.pay', BRAND_VALUES), done: openRequest === 'Active' },
         ]
 
         return (
@@ -414,25 +422,25 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 {header}
 
                 <div className="ns-pd-owner-bar">
-                    <div className="ns-pd-tabs" role="tablist" aria-label="About this space">
+                    <div className="ns-pd-tabs" role="tablist" aria-label={t('propertyDetail.about')}>
                         {[
-                            { id: 'overview', label: 'Overview', icon: 'bi-house' },
-                            { id: 'price', label: 'Price', icon: 'bi-tag', badge: insight && insight.tone === 'good' ? `−${Math.abs(insight.pct)}%` : null },
-                        ].map((t) => (
-                            <button type="button" key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-                                <i className={`bi ${t.icon}`}></i> {t.label}
-                                {t.badge && <em className="is-good">{t.badge}</em>}
+                            { id: 'overview', label: t('propertyDetail.tabs.overview'), icon: 'bi-house' },
+                            { id: 'price', label: t('propertyDetail.tabs.price'), icon: 'bi-tag', badge: insight && insight.tone === 'good' ? `${MINUS}${Math.abs(insight.pct)}%` : null },
+                        ].map((tabItem) => (
+                            <button type="button" key={tabItem.id} role="tab" aria-selected={tab === tabItem.id} className={tab === tabItem.id ? 'active' : ''} onClick={() => setTab(tabItem.id)}>
+                                <i className={`bi ${tabItem.icon}`}></i> {tabItem.label}
+                                {tabItem.badge && <em className="is-good">{tabItem.badge}</em>}
                             </button>
                         ))}
                     </div>
                     <div className="ns-pd-owner-actions">
                         {cta}
                         <button type="button" className={`ns-outline-btn ${saved ? 'is-saved' : ''}`} onClick={toggleSave} aria-pressed={saved}>
-                            <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i> {saved ? 'Saved' : 'Save'}
+                            <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i> {saved ? t('propertyCard.saved') : t('propertyCard.save')}
                         </button>
                         {onAskRony && (
                             <button type="button" className="ns-outline-btn" onClick={() => askRony()}>
-                                <i className="bi bi-stars"></i> Ask Rony
+                                <i className="bi bi-stars"></i> {t('insights.owner.askRony', BRAND_VALUES)}
                             </button>
                         )}
                     </div>
@@ -445,14 +453,14 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 )}
                 {requestSuccess && (
                     <div className="alert alert-success py-2" role="status">
-                        Request sent. The owner answers with an offer in Contracts, and you'll get a notification.
+                        {t('propertyDetail.requestSent')}
                     </div>
                 )}
                 {!cta && !openRequest && (
                     <div className="alert alert-secondary py-2" role="status">
                         {detail.monthly_rent == null
-                            ? "This space has no rent set yet, so it can't be requested."
-                            : "This space isn't taking requests right now."}
+                            ? t('propertyDetail.noRent')
+                            : t('propertyDetail.notTaking')}
                     </div>
                 )}
 
@@ -463,42 +471,43 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                         </div>
                         <aside className="ns-pd-side">
                             <div className="ns-pd-card">
-                                <h3 className="ns-pd-card-title">At a glance</h3>
+                                <h3 className="ns-pd-card-title">{t('propertyDetail.glance')}</h3>
                                 <ul className="ns-pd-glance">
                                     <li>
                                         <i className={`bi ${typeIcon(detail.property_type)}`}></i>
-                                        <span>Type</span>
-                                        <strong>{detail.property_type}</strong>
+                                        <span>{t('compare.type')}</span>
+                                        <strong>{propertyTypeLabel(detail.property_type)}</strong>
                                     </li>
                                     <li>
                                         <i className="bi bi-bounding-box"></i>
-                                        <span>Size</span>
+                                        <span>{t('compare.size')}</span>
                                         <strong>
-                                            {area ? `${area} m²` : '—'} <small>({detail.business_size_width} × {detail.business_size_length} m)</small>
+                                            {area ? `${area} ${SQ_M}` : DASH}{' '}
+                                            <small>({t('propertyDetail.dimensions', { width: detail.business_size_width, length: detail.business_size_length })})</small>
                                         </strong>
                                     </li>
                                     <li>
                                         <i className="bi bi-cash-stack"></i>
-                                        <span>Rent</span>
-                                        <strong>{detail.monthly_rent != null ? `${money(detail.monthly_rent)}/month` : 'On request'}</strong>
+                                        <span>{t('propertyDetail.rent')}</span>
+                                        <strong>{detail.monthly_rent != null ? `${money(detail.monthly_rent)}${t('common.perMonth')}` : t('compare.onRequest')}</strong>
                                     </li>
                                     <li>
                                         <i className="bi bi-calendar3"></i>
-                                        <span>On NextSpace</span>
-                                        <strong>{listedAgo(detail.registration_date) || '—'}</strong>
+                                        <span>{t('propertyDetail.onBrand', BRAND_VALUES)}</span>
+                                        <strong>{listedAgo(detail.registration_date) || DASH}</strong>
                                     </li>
                                 </ul>
                                 <div className="ns-pd-owner-row">
                                     <span className="ns-detail-owner-avatar">{(ownerName[0] || 'O').toUpperCase()}</span>
                                     <div>
                                         <strong>{ownerName}</strong>
-                                        <small>Owner · answers requests in Contracts</small>
+                                        <small>{t('propertyDetail.ownerAnswers', { dot: DOT })}</small>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="ns-pd-card ns-pd-steps-card">
-                                <h3 className="ns-pd-card-title">How leasing works</h3>
+                                <h3 className="ns-pd-card-title">{t('propertyDetail.howLeasing')}</h3>
                                 <ol className="ns-pd-steps">
                                     {steps.map((st) => (
                                         <li key={st.label} className={st.done ? 'is-done' : ''}>
@@ -517,31 +526,31 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 {tab === 'price' && (
                     <div className="ns-pd-panels">
                         <section className="ns-pd-section">
-                            <h3>Price vs similar spaces</h3>
+                            <h3>{t('propertyDetail.priceVsSimilar')}</h3>
                             {insight ? (
                                 <PriceMarketBar insight={insight} />
                             ) : (
-                                <p className="ns-pay-muted mb-0">Not enough similar spaces on NextSpace to compare yet.</p>
+                                <p className="ns-pay-muted mb-0">{t('propertyDetail.notEnoughSimilar', BRAND_VALUES)}</p>
                             )}
                         </section>
                         <section className="ns-pd-section">
-                            <h3>What it costs</h3>
+                            <h3>{t('propertyDetail.whatItCosts')}</h3>
                             <div className="ns-pd-mini">
                                 <div>
-                                    <strong>{detail.monthly_rent != null ? money(detail.monthly_rent) : '—'}</strong>
-                                    <small>per month</small>
+                                    <strong>{detail.monthly_rent != null ? money(detail.monthly_rent) : DASH}</strong>
+                                    <small>{t('propertyDetail.perMonth')}</small>
                                 </div>
                                 <div>
-                                    <strong>{yearly != null ? money(yearly) : '—'}</strong>
-                                    <small>per year</small>
+                                    <strong>{yearly != null ? money(yearly) : DASH}</strong>
+                                    <small>{t('propertyDetail.perYear')}</small>
                                 </div>
                                 <div>
-                                    <strong>{insight ? formatPpm(insight.ppm) : area && detail.monthly_rent != null ? formatPpm(Number(detail.monthly_rent) / area) : '—'}</strong>
-                                    <small>per m²</small>
+                                    <strong>{insight ? formatPpm(insight.ppm) : area && detail.monthly_rent != null ? formatPpm(Number(detail.monthly_rent) / area) : DASH}</strong>
+                                    <small>{t('propertyDetail.perM2', { unit: SQ_M })}</small>
                                 </div>
                             </div>
                             <p className="ns-pd-hint">
-                                The lease length, start date and deposit come in the owner's offer; you review them before signing.
+                                {t('propertyDetail.offerHint')}
                             </p>
                             {onAskRony && detail.monthly_rent != null && (
                                 <button
@@ -549,11 +558,19 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                     className="ns-rony-write mt-2"
                                     onClick={() =>
                                         askRony(
-                                            `Is ${money(detail.monthly_rent)}/month a good price for "${detail.property_name}" (${detail.property_type}, ${area || '?'} m² in ${locationOf(detail) || 'El Salvador'})?${insight ? ` It's ${formatPpm(insight.ppm)} while similar spaces go for about ${formatPpm(insight.median)}.` : ''} What should I negotiate?`
+                                            t('propertyDetail.ask.goodPrice', {
+                                                rent: money(detail.monthly_rent),
+                                                name: detail.property_name,
+                                                type: propertyTypeLabel(detail.property_type),
+                                                area: area || '?',
+                                                unit: SQ_M,
+                                                place: locationOf(detail) || 'El Salvador',
+                                                market: insight ? t('propertyDetail.ask.goodPriceMarket', { ppm: formatPpm(insight.ppm), median: formatPpm(insight.median) }) : '',
+                                            })
                                         )
                                     }
                                 >
-                                    <i className="bi bi-stars"></i> Ask Rony if it's a good price
+                                    <i className="bi bi-stars"></i> {t('propertyDetail.askGoodPrice', BRAND_VALUES)}
                                 </button>
                             )}
                         </section>
@@ -562,7 +579,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
 
                 {similar.length > 0 && (
                     <section className="ns-similar">
-                        <h2>Similar spaces</h2>
+                        <h2>{t('propertyDetail.similar')}</h2>
                         <div className="ns-mk-grid">
                             {similar.map((p) => (
                                 <PropertyCard key={p.property_id} property={p} onOpen={onViewProperty} insight={priceInsight(p, marketStats)} />
@@ -592,38 +609,38 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             {actionError && (
                 <div className="alert alert-danger d-flex justify-content-between align-items-center gap-2 py-2" role="alert">
                     <span>{actionError}</span>
-                    <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setActionError('')} />
+                    <button type="button" className="btn-close" aria-label={t('common.dismiss')} onClick={() => setActionError('')} />
                 </div>
             )}
 
             <div className="ns-pd-owner-bar">
-                <div className="ns-pd-tabs" role="tablist" aria-label="Manage this space">
+                <div className="ns-pd-tabs" role="tablist" aria-label={t('propertyDetail.manage')}>
                     {[
-                        { id: 'overview', label: 'Overview', icon: 'bi-house' },
-                        { id: 'performance', label: 'Performance', icon: 'bi-graph-up' },
-                        { id: 'listing', label: 'Listing', icon: 'bi-card-text', badge: score < 100 ? `${score}%` : null },
-                    ].map((t) => (
-                        <button type="button" key={t.id} role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'active' : ''} onClick={() => setTab(t.id)}>
-                            <i className={`bi ${t.icon}`}></i> {t.label}
-                            {t.badge && <em>{t.badge}</em>}
+                        { id: 'overview', label: t('propertyDetail.tabs.overview'), icon: 'bi-house' },
+                        { id: 'performance', label: t('propertyDetail.tabs.performance'), icon: 'bi-graph-up' },
+                        { id: 'listing', label: t('propertyDetail.tabs.listing'), icon: 'bi-card-text', badge: score < 100 ? `${score}%` : null },
+                    ].map((tabItem) => (
+                        <button type="button" key={tabItem.id} role="tab" aria-selected={tab === tabItem.id} className={tab === tabItem.id ? 'active' : ''} onClick={() => setTab(tabItem.id)}>
+                            <i className={`bi ${tabItem.icon}`}></i> {tabItem.label}
+                            {tabItem.badge && <em>{tabItem.badge}</em>}
                         </button>
                     ))}
                 </div>
                 <div className="ns-pd-owner-actions">
                     <button type="button" className="ns-filled-btn" onClick={() => setModal('edit')} disabled={!ownerDui}>
-                        <i className="bi bi-pencil"></i> Edit
+                        <i className="bi bi-pencil"></i> {t('common.edit')}
                     </button>
                     <button type="button" className="ns-outline-btn" onClick={() => setModal('duplicate')} disabled={!ownerDui}>
-                        <i className="bi bi-copy"></i> Duplicate
+                        <i className="bi bi-copy"></i> {t('propertyDetail.duplicate')}
                     </button>
                     {!active && (
                         <button type="button" className="ns-outline-btn" onClick={togglePause} disabled={busy}>
                             <i className={`bi ${detail.availability === 'Reserved' ? 'bi-play-circle' : 'bi-pause-circle'}`}></i>{' '}
-                            {detail.availability === 'Reserved' ? 'Resume' : 'Pause'}
+                            {detail.availability === 'Reserved' ? t('propertyDetail.resume') : t('propertyDetail.pause')}
                         </button>
                     )}
                     {!hasHistory && (
-                        <button type="button" className="ns-outline-btn is-danger" onClick={() => setModal('delete')} aria-label="Delete listing" title="Delete listing">
+                        <button type="button" className="ns-outline-btn is-danger" onClick={() => setModal('delete')} aria-label={t('propertyDetail.deleteListing')} title={t('propertyDetail.deleteListing')}>
                             <i className="bi bi-trash"></i>
                         </button>
                     )}
@@ -633,20 +650,20 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             {tab === 'overview' && (
                 <div className="ns-pd-panels">
                     <section className="ns-pd-section">
-                        <h3>Right now</h3>
+                        <h3>{t('propertyDetail.now.title')}</h3>
                         {active ? (
                             <div className="ns-pd-now tone-info">
                                 <i className="bi bi-key-fill"></i>
                                 <div>
-                                    <strong>Leased to {personName(active.users)}</strong>
-                                    <span>Until {formatDueDate(active.end_date)}</span>
+                                    <strong>{t('propertyDetail.now.leasedTo', { name: personName(active.users) })}</strong>
+                                    <span>{t('propertyDetail.now.until', { date: formatDueDate(active.end_date) })}</span>
                                 </div>
                                 <div className="ns-pd-now-actions">
                                     <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('contracts', { contractId: active.contract_id })}>
-                                        Contract
+                                        {t('propertyDetail.now.contract')}
                                     </button>
                                     <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('payments', { contractId: active.contract_id })}>
-                                        Rent
+                                        {t('propertyDetail.rent')}
                                     </button>
                                 </div>
                             </div>
@@ -654,12 +671,12 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                             <div className="ns-pd-now tone-warning">
                                 <i className="bi bi-pen-fill"></i>
                                 <div>
-                                    <strong>Offer sent to {personName(offer.users)}</strong>
-                                    <span>Waiting for their signature</span>
+                                    <strong>{t('propertyDetail.now.offerSent', { name: personName(offer.users) })}</strong>
+                                    <span>{t('propertyDetail.now.waitingSignature')}</span>
                                 </div>
                                 <div className="ns-pd-now-actions">
                                     <button type="button" className="ns-outline-btn" onClick={() => onNavigate?.('contracts', { contractId: offer.contract_id })}>
-                                        Open offer
+                                        {t('propertyDetail.now.openOffer')}
                                     </button>
                                 </div>
                             </div>
@@ -668,7 +685,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                 <i className="bi bi-inbox-fill"></i>
                                 <div>
                                     <strong>
-                                        {requests.length} {requests.length === 1 ? 'business wants' : 'businesses want'} this space
+                                        {t('propertyDetail.now.wanted', { count: requests.length })}
                                     </strong>
                                     <span>{requests.map((r) => personName(r.users)).join(', ')}</span>
                                 </div>
@@ -678,7 +695,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                         className="ns-filled-btn"
                                         onClick={() => onNavigate?.('contracts', { contractId: requests.length === 1 ? requests[0].contract_id : null })}
                                     >
-                                        Answer
+                                        {t('notifications.actions.answer')}
                                     </button>
                                 </div>
                             </div>
@@ -686,11 +703,13 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                             <div className="ns-pd-now tone-neutral">
                                 <i className={`bi ${detail.availability === 'Reserved' ? 'bi-pause-circle-fill' : 'bi-broadcast'}`}></i>
                                 <div>
-                                    <strong>{detail.availability === 'Reserved' ? 'Paused' : 'Listed, waiting for requests'}</strong>
+                                    <strong>{detail.availability === 'Reserved' ? t('values.listingStatus.reserved') : t('propertyDetail.now.listedWaiting')}</strong>
                                     <span>
                                         {detail.availability === 'Reserved'
-                                            ? 'Hidden from the Marketplace. Resume it to get requests.'
-                                            : `Vacant ${vacantDays === 0 ? 'since today' : `for ${vacantDays} days`}${missed ? ` · ${money(missed)} in rent missed` : ''}`}
+                                            ? t('propertyDetail.now.pausedHint')
+                                            : `${vacantDays === 0 ? t('propertyDetail.now.vacantToday') : t('propertyDetail.now.vacantFor', { count: vacantDays })}${
+                                                  missed ? ` ${DOT} ${t('propertyDetail.now.missed', { amount: money(missed) })}` : ''
+                                              }`}
                                     </span>
                                 </div>
                             </div>
@@ -698,23 +717,23 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                     </section>
 
                     <section className="ns-pd-section">
-                        <h3>Interest</h3>
+                        <h3>{t('propertyDetail.interest.title')}</h3>
                         <div className="ns-pd-mini">
                             <div>
                                 <strong>{stats?.views_30d ?? 0}</strong>
-                                <small>views, last 30 days</small>
+                                <small>{t('propertyDetail.interest.views30')}</small>
                             </div>
                             <div>
                                 <strong>{stats?.saves ?? 0}</strong>
-                                <small>saved it</small>
+                                <small>{t('propertyDetail.interest.saved')}</small>
                             </div>
                             <div>
                                 <strong>{stats?.requests_total ?? 0}</strong>
-                                <small>requests, all time</small>
+                                <small>{t('propertyDetail.interest.requestsAll')}</small>
                             </div>
                         </div>
                         <button type="button" className="ns-link-btn mt-2" onClick={() => setTab('performance')}>
-                            See performance <i className="bi bi-arrow-right"></i>
+                            {t('propertyDetail.interest.seePerformance')} <i className="bi bi-arrow-right"></i>
                         </button>
                     </section>
                 </div>
@@ -723,41 +742,41 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             {tab === 'performance' && (
                 <div className="ns-pd-panels">
                     <section className="ns-pd-section">
-                        <h3>Views</h3>
+                        <h3>{t('propertyDetail.performance.views')}</h3>
                         <ViewsChart days={viewDays} />
                         <div className="ns-pd-mini mt-3">
                             <div>
                                 <strong>{stats?.saves ?? 0}</strong>
-                                <small>businesses saved it</small>
+                                <small>{t('propertyDetail.performance.saved')}</small>
                             </div>
                             <div>
                                 <strong>{stats?.requests_total ?? 0}</strong>
-                                <small>lease requests</small>
+                                <small>{t('propertyDetail.performance.requests')}</small>
                             </div>
                             <div>
                                 <strong>{stats?.views_total ?? 0}</strong>
-                                <small>views, all time</small>
+                                <small>{t('propertyDetail.performance.viewsAll')}</small>
                             </div>
                         </div>
                         <p className="ns-pd-hint">
                             {(stats?.views_30d || 0) >= 10 && (stats?.requests_total || 0) === 0
-                                ? 'Businesses look but don’t request: check the price and add photos.'
+                                ? t('propertyDetail.performance.lookNoRequest')
                                 : (stats?.views_30d || 0) === 0 && !active
-                                  ? 'No views this month. Complete the listing so it shows up in more searches.'
-                                  : 'Each business counts once per day; who viewed stays private.'}
+                                  ? t('propertyDetail.performance.noViews')
+                                  : t('propertyDetail.performance.privacy')}
                         </p>
                     </section>
 
                     <section className="ns-pd-section">
-                        <h3>Your price</h3>
+                        <h3>{t('propertyDetail.performance.yourPrice')}</h3>
                         {insight ? (
                             <PriceMarketBar insight={insight} />
                         ) : (
-                            <p className="ns-pay-muted">Not enough similar spaces on NextSpace to compare yet.</p>
+                            <p className="ns-pay-muted">{t('propertyDetail.notEnoughSimilar', BRAND_VALUES)}</p>
                         )}
                         {!active && missed > 0 && (
                             <p className="ns-pd-missed">
-                                <i className="bi bi-hourglass-split"></i> Vacant {vacantDays} days: {money(missed)} in rent missed.
+                                <i className="bi bi-hourglass-split"></i> {t('propertyDetail.performance.vacantMissed', { count: vacantDays, amount: money(missed) })}
                             </p>
                         )}
                         {onAskRony && detail.monthly_rent != null && (
@@ -766,11 +785,21 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                                 className="ns-rony-write mt-2"
                                 onClick={() =>
                                     askRony(
-                                        `What rent should I ask for "${detail.property_name}" (${detail.property_type}, ${area || '?'} m² in ${locationOf(detail) || 'El Salvador'})? It's listed at ${money(detail.monthly_rent)}/month${insight ? ` (${formatPpm(insight.ppm)}; similar spaces go for about ${formatPpm(insight.median)})` : ''}. It had ${stats?.views_30d ?? 0} views this month and ${stats?.requests_total ?? 0} requests in total.`
+                                        t('propertyDetail.ask.whatRent', {
+                                            name: detail.property_name,
+                                            type: propertyTypeLabel(detail.property_type),
+                                            area: area || '?',
+                                            unit: SQ_M,
+                                            place: locationOf(detail) || 'El Salvador',
+                                            rent: money(detail.monthly_rent),
+                                            market: insight ? t('propertyDetail.ask.whatRentMarket', { ppm: formatPpm(insight.ppm), median: formatPpm(insight.median) }) : '',
+                                            views: stats?.views_30d ?? 0,
+                                            requests: stats?.requests_total ?? 0,
+                                        })
                                     )
                                 }
                             >
-                                <i className="bi bi-stars"></i> Ask Rony for a price
+                                <i className="bi bi-stars"></i> {t('propertyDetail.askPrice', BRAND_VALUES)}
                             </button>
                         )}
                     </section>
@@ -781,14 +810,14 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                 <div className="ns-pd-grid">
                     <div className="ns-pd-main">
                         <p className="ns-pd-preview-note">
-                            <i className="bi bi-eye"></i> This is what businesses read about your space.
+                            <i className="bi bi-eye"></i> {t('propertyDetail.previewNote')}
                         </p>
                         <ListingContent detail={detail} />
                     </div>
                     <aside className="ns-pd-side">
                         <div className="ns-pd-card">
                             <div className="ns-own-quality-head">
-                                <span>Listing quality</span>
+                                <span>{t('ownerHome.listingQuality')}</span>
                                 <strong className={score === 100 ? 'is-good' : score < 60 ? 'is-bad' : ''}>{score}%</strong>
                             </div>
                             <div className="ns-own-quality-track">
@@ -803,7 +832,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                             </ul>
                             {score < 100 && (
                                 <button type="button" className="ns-submit-btn" onClick={() => setModal('edit')} disabled={!ownerDui}>
-                                    Complete the listing
+                                    {t('propertyDetail.complete')}
                                 </button>
                             )}
                         </div>
@@ -832,10 +861,10 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
             {modal === 'delete' && (
                 <ConfirmDialog
                     icon="bi-trash"
-                    title="Delete this property?"
-                    description={`"${detail.property_name}" will be permanently removed from your listings. This can't be undone.`}
-                    confirmLabel={busy ? 'Deleting...' : 'Delete'}
-                    cancelLabel="Cancel"
+                    title={t('propertyDetail.deleteConfirm.title')}
+                    description={t('propertyDetail.deleteConfirm.description', { name: detail.property_name })}
+                    confirmLabel={busy ? t('propertyDetail.deleteConfirm.deleting') : t('common.delete')}
+                    cancelLabel={t('common.cancel')}
                     onConfirm={handleDelete}
                     onCancel={() => setModal(null)}
                 />

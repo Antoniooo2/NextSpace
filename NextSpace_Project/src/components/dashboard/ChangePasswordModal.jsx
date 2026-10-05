@@ -1,7 +1,10 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabaseClient'
+import { describeAuthError } from '../../lib/supabaseErrors'
 
 export default function ChangePasswordModal({ onClose }) {
+    const { t } = useTranslation()
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
     const [saving, setSaving] = useState(false)
@@ -13,11 +16,11 @@ export default function ChangePasswordModal({ onClose }) {
         setErrorMsg('')
 
         if (newPassword.length < 6) {
-            setErrorMsg('Password must be at least 6 characters long.')
+            setErrorMsg(t('auth.password.tooShort'))
             return
         }
         if (newPassword !== confirmPassword) {
-            setErrorMsg('Passwords do not match.')
+            setErrorMsg(t('auth.password.mismatch'))
             return
         }
 
@@ -26,7 +29,7 @@ export default function ChangePasswordModal({ onClose }) {
         setSaving(false)
 
         if (error) {
-            setErrorMsg(error.message)
+            setErrorMsg(describeAuthError(error))
             return
         }
 
@@ -36,17 +39,17 @@ export default function ChangePasswordModal({ onClose }) {
     return (
         <div className="ns-modal-backdrop" onClick={onClose}>
             <div className="ns-modal ns-modal-form" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
 
                 <div className="ns-modal-body">
-                    <h2 className="ns-modal-form-title">Change password</h2>
-                    <p className="ns-modal-form-subtitle">Choose a new password for your account.</p>
+                    <h2 className="ns-modal-form-title">{t('profile.settings.password')}</h2>
+                    <p className="ns-modal-form-subtitle">{t('profile.passwordModal.subtitle')}</p>
 
                     {success ? (
                         <div className="alert alert-success py-2" role="alert">
-                            Password updated. Use it next time you log in.
+                            {t('profile.passwordModal.success')}
                         </div>
                     ) : (
                         <form onSubmit={handleSubmit}>
@@ -57,7 +60,7 @@ export default function ChangePasswordModal({ onClose }) {
                             )}
 
                             <div className="ns-mb-field">
-                                <label className="ns-label" htmlFor="newPassword">New password</label>
+                                <label className="ns-label" htmlFor="newPassword">{t('auth.password.new')}</label>
                                 <div className="ns-input-group input-group">
                                     <span className="input-group-text"><i className="bi bi-lock"></i></span>
                                     <input
@@ -69,7 +72,7 @@ export default function ChangePasswordModal({ onClose }) {
                             </div>
 
                             <div className="ns-mb-field">
-                                <label className="ns-label" htmlFor="confirmPassword">Confirm password</label>
+                                <label className="ns-label" htmlFor="confirmPassword">{t('profile.passwordModal.confirm')}</label>
                                 <div className="ns-input-group input-group">
                                     <span className="input-group-text"><i className="bi bi-lock-fill"></i></span>
                                     <input
@@ -81,7 +84,7 @@ export default function ChangePasswordModal({ onClose }) {
                             </div>
 
                             <button type="submit" className="ns-submit-btn" disabled={saving}>
-                                {saving ? 'Saving...' : 'Update password'}
+                                {saving ? t('common.saving') : t('profile.passwordModal.submit')}
                             </button>
                         </form>
                     )}

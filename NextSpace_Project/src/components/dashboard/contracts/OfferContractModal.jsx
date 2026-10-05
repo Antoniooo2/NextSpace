@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../../../lib/brand'
+import { propertyTypeLabel } from '../../../lib/displayValues'
+import { ARROW_RIGHT, DASH } from '../../../lib/symbols'
 import { formatDueDate, todayInElSalvador } from '../../../lib/rentSchedule'
 import { addDays, addMonths, contractActions, dueDayLabel, money, personName } from '../../../lib/contracts'
 import { contractRate, feeSplit, formatRate } from '../../../lib/platformFee'
@@ -10,6 +14,7 @@ const DURATIONS = [3, 6, 12, 18, 24, 36]
 // Owner answers a request with terms (or updates an open offer), or invites
 // a business directly by email/DUI. Sending it is the owner's signature.
 export default function OfferContractModal({ mode = 'offer', contract, properties = [], ownerName, onClose, onDone, onAskRony }) {
+    const { t } = useTranslation()
     const today = todayInElSalvador()
     const isInvite = mode === 'invite'
     const [propertyId, setPropertyId] = useState(() => (isInvite ? properties[0]?.property_id ?? '' : contract.property_id))
@@ -41,11 +46,11 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
         e.preventDefault()
         setError('')
         if (isInvite && !identifier.trim()) {
-            setError("Enter the business's email or DUI.")
+            setError(t('offerModal.identifierRequired'))
             return
         }
         if (!agree) {
-            setError('Confirm that you agree to the terms to sign the offer.')
+            setError(t('offerModal.agreeRequired'))
             return
         }
         setSaving(true)
@@ -69,27 +74,27 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                 className="ns-modal ns-modal-form ns-contract-modal"
                 role="dialog"
                 aria-modal="true"
-                aria-label={isInvite ? 'Invite a business' : 'Make an offer'}
+                aria-label={isInvite ? t('contractsBoard.invite') : t('contractDetail.actions.makeOffer')}
                 onClick={(e) => e.stopPropagation()}
                 onSubmit={submit}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
                 <div className="ns-modal-body">
                     <h2 className="ns-modal-form-title">
-                        {isInvite ? 'Invite a business to lease' : contract.status === 'Offered' ? 'Update your offer' : 'Make an offer'}
+                        {isInvite ? t('offerModal.titleInvite') : contract.status === 'Offered' ? t('offerModal.titleUpdate') : t('contractDetail.actions.makeOffer')}
                     </h2>
                     <p className="ns-modal-form-subtitle">
                         {isInvite
-                            ? 'They get a lease offer to review and sign. Nothing starts until they sign.'
-                            : `${tenant} requested ${property?.property_name || 'your space'}. Set the terms; the lease starts once they sign.`}
+                            ? t('offerModal.subtitleInvite')
+                            : t('offerModal.subtitleOffer', { person: tenant, name: property?.property_name || t('offerModal.yourSpace') })}
                     </p>
 
                     {isInvite && (
                         <div className="row g-3 mb-1">
                             <div className="col-sm-6">
-                                <label className="ns-label" htmlFor="offerProperty">Space</label>
+                                <label className="ns-label" htmlFor="offerProperty">{t('docs.lease.space')}</label>
                                 <select
                                     id="offerProperty"
                                     className="form-select"
@@ -111,11 +116,11 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                                 </select>
                             </div>
                             <div className="col-sm-6">
-                                <label className="ns-label" htmlFor="offerIdentifier">Business email or DUI</label>
+                                <label className="ns-label" htmlFor="offerIdentifier">{t('offerModal.identifier')}</label>
                                 <input
                                     id="offerIdentifier"
                                     className="form-control"
-                                    placeholder="name@business.com or 01234567-8"
+                                    placeholder={t('offerModal.identifierPlaceholder')}
                                     value={identifier}
                                     onChange={(e) => setIdentifier(e.target.value)}
                                     autoComplete="off"
@@ -126,7 +131,7 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
 
                     <div className="row g-3">
                         <div className="col-sm-4">
-                            <label className="ns-label" htmlFor="offerStart">Start date</label>
+                            <label className="ns-label" htmlFor="offerStart">{t('offerModal.startDate')}</label>
                             <input
                                 id="offerStart"
                                 type="date"
@@ -138,17 +143,17 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                             />
                         </div>
                         <div className="col-sm-4">
-                            <label className="ns-label" htmlFor="offerMonths">Length</label>
+                            <label className="ns-label" htmlFor="offerMonths">{t('docs.lease.length')}</label>
                             <select id="offerMonths" className="form-select" value={months} onChange={(e) => setMonths(Number(e.target.value))}>
                                 {[...new Set([...DURATIONS, Number(months)])].sort((a, b) => a - b).map((m) => (
                                     <option key={m} value={m}>
-                                        {m} months
+                                        {t('common.month', { count: m })}
                                     </option>
                                 ))}
                             </select>
                         </div>
                         <div className="col-sm-4">
-                            <label className="ns-label" htmlFor="offerRent">Monthly rent (USD)</label>
+                            <label className="ns-label" htmlFor="offerRent">{t('marketplace.monthlyRentUsd')}</label>
                             <input
                                 id="offerRent"
                                 type="number"
@@ -161,7 +166,7 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                             />
                         </div>
                         <div className="col-sm-4">
-                            <label className="ns-label" htmlFor="offerDeposit">Deposit (USD)</label>
+                            <label className="ns-label" htmlFor="offerDeposit">{t('offerModal.depositUsd')}</label>
                             <input
                                 id="offerDeposit"
                                 type="number"
@@ -174,14 +179,14 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                         </div>
                         <div className="col-sm-8">
                             <label className="ns-label" htmlFor="offerClauses">
-                                Special clauses <span className="ns-pay-muted">(optional)</span>
+                                {t('docs.lease.specialClauses')} <span className="ns-pay-muted">({t('listingForm.optional')})</span>
                             </label>
                             <textarea
                                 id="offerClauses"
                                 className="form-control"
                                 rows={2}
                                 maxLength={3000}
-                                placeholder="E.g. opening hours, signage, parking..."
+                                placeholder={t('offerModal.clausesPlaceholder')}
                                 value={clauses}
                                 onChange={(e) => setClauses(e.target.value)}
                             />
@@ -195,32 +200,37 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                                 className="ns-rony-write"
                                 onClick={() =>
                                     onAskRony({
-                                        text: `Suggest special clauses for leasing my ${property?.property_type || 'commercial space'} "${property?.property_name || ''}" and tell me if ${money(rent)}/month is reasonable compared with similar listings on NextSpace.`,
+                                        text: t('offerModal.askRonyText', {
+                                            ...BRAND_VALUES,
+                                            type: property?.property_type ? propertyTypeLabel(property.property_type) : t('offerModal.commercialSpace'),
+                                            name: property?.property_name || '',
+                                            rent: money(rent),
+                                        }),
                                     })
                                 }
                             >
-                                <i className="bi bi-stars"></i> Ask Rony about clauses and rent
+                                <i className="bi bi-stars"></i> {t('offerModal.askRony', BRAND_VALUES)}
                             </button>
                         </div>
                     )}
 
                     <div className="ns-offer-summary ns-offer-summary-4">
                         <div>
-                            <small>Lease</small>
+                            <small>{t('docs.reports.lease')}</small>
                             <strong>
-                                {start ? formatDueDate(start) : '—'} → {end ? formatDueDate(end) : '—'}
+                                {start ? formatDueDate(start) : DASH} {ARROW_RIGHT} {end ? formatDueDate(end) : DASH}
                             </strong>
                         </div>
                         <div>
-                            <small>Rent due</small>
-                            <strong>the {dueDayLabel(start)} of each month</strong>
+                            <small>{t('docs.lease.rentDue')}</small>
+                            <strong>{t('docs.lease.rentDueValue', { day: dueDayLabel(start) })}</strong>
                         </div>
                         <div>
-                            <small>Total over the lease</small>
+                            <small>{t('offerModal.total')}</small>
                             <strong>{money(total)}</strong>
                         </div>
                         <div>
-                            <small>You receive over the lease</small>
+                            <small>{t('offerModal.youReceiveTotal')}</small>
                             <strong>{money(monthlySplit.net * Number(months || 0))}</strong>
                         </div>
                     </div>
@@ -229,14 +239,14 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                         <FeeBreakdown
                             amount={Number(rent)}
                             rate={feeRate}
-                            grossLabel="Tenant pays each month"
-                            netLabel="You receive each month"
-                            note={`The deposit${Number(deposit) > 0 ? ` (${money(deposit)})` : ''} carries no fee.`}
+                            grossLabel={t('offerModal.tenantPays')}
+                            netLabel={t('offerModal.youReceive')}
+                            note={t('offerModal.depositNoFee', { amount: Number(deposit) > 0 ? ` (${money(deposit)})` : '' })}
                         />
                     )}
 
                     <div className="ns-signature-box">
-                        <label className="ns-label" htmlFor="offerSignature">Sign with your full name</label>
+                        <label className="ns-label" htmlFor="offerSignature">{t('signModal.signWithName')}</label>
                         <input
                             id="offerSignature"
                             className="form-control ns-signature-input"
@@ -248,8 +258,7 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                         <label className="ns-agree">
                             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                             <span>
-                                I agree to lease this space on these terms and the NextSpace standard clauses, including the{' '}
-                                {formatRate(feeRate)} NextSpace fee on each rent payment. The offer is valid for 7 days.
+                                {t('offerModal.agree', { ...BRAND_VALUES, rate: formatRate(feeRate) })}
                             </span>
                         </label>
                     </div>
@@ -261,7 +270,7 @@ export default function OfferContractModal({ mode = 'offer', contract, propertie
                     )}
 
                     <button type="submit" className="ns-submit-btn" disabled={saving}>
-                        <i className="bi bi-pen"></i> {saving ? 'Sending...' : isInvite ? 'Sign and send invitation' : 'Sign and send offer'}
+                        <i className="bi bi-pen"></i> {saving ? t('common.sending') : isInvite ? t('offerModal.sendInvite') : t('offerModal.sendOffer')}
                     </button>
                 </div>
             </form>

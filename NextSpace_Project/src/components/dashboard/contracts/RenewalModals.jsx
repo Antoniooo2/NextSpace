@@ -1,17 +1,21 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../../../lib/brand'
+import { DOT, MINUS, QUOTE_CLOSE, QUOTE_OPEN } from '../../../lib/symbols'
 import { formatDueDate } from '../../../lib/rentSchedule'
 import { addMonths, contractActions, money, personName, recordSummary } from '../../../lib/contracts'
 
 const LENGTHS = [3, 6, 12, 18, 24, 36]
 
 function LengthSelect({ id, value, onChange }) {
+    const { t } = useTranslation()
     return (
         <select id={id} className="form-select" value={value} onChange={(e) => onChange(Number(e.target.value))}>
             {[...new Set([...LENGTHS, Number(value)])]
                 .sort((a, b) => a - b)
                 .map((m) => (
                     <option key={m} value={m}>
-                        {m} more months
+                        {t('renewal.moreMonths', { count: m })}
                     </option>
                 ))}
         </select>
@@ -19,6 +23,7 @@ function LengthSelect({ id, value, onChange }) {
 }
 
 function ModalShell({ label, onClose, onSubmit, children }) {
+    const { t } = useTranslation()
     return (
         <div className="ns-modal-backdrop" onClick={onClose}>
             <form
@@ -29,7 +34,7 @@ function ModalShell({ label, onClose, onSubmit, children }) {
                 onClick={(e) => e.stopPropagation()}
                 onSubmit={onSubmit}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
                 <div className="ns-modal-body">{children}</div>
@@ -50,12 +55,13 @@ function ErrorAlert({ error }) {
 // Tenant asks the owner to renew: how long they'd like to stay and a note.
 // The owner answers with a renewal offer the tenant then signs.
 export function RenewalRequestModal({ contract, stats, onClose, onSent, onAskRony }) {
-    const property = contract.add_business?.property_name || 'the space'
+    const { t } = useTranslation()
+    const property = contract.add_business?.property_name || t('renewal.theSpace')
     const [months, setMonths] = useState(contract.duration_months && contract.duration_months <= 36 ? contract.duration_months : 12)
     const [note, setNote] = useState(() =>
         stats && stats.monthsDue > 0 && stats.paidOnTime === stats.monthsDue
-            ? `I've paid all ${stats.monthsDue} months on time and I'd like to keep leasing ${property}.`
-            : `I'd like to keep leasing ${property}.`
+            ? t('renewal.request.notePaid', { count: stats.monthsDue, name: property })
+            : t('renewal.request.note', { name: property })
     )
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
@@ -74,23 +80,23 @@ export function RenewalRequestModal({ contract, stats, onClose, onSent, onAskRon
     }
 
     return (
-        <ModalShell label="Ask to renew your lease" onClose={onClose} onSubmit={submit}>
-            <h2 className="ns-modal-form-title">Ask to renew your lease</h2>
+        <ModalShell label={t('renewal.request.title')} onClose={onClose} onSubmit={submit}>
+            <h2 className="ns-modal-form-title">{t('renewal.request.title')}</h2>
             <p className="ns-modal-form-subtitle">
-                {property} ends on {formatDueDate(contract.end_date)}. The owner answers with a renewal offer for you to sign.
+                {t('renewal.request.subtitle', { name: property, date: formatDueDate(contract.end_date) })}
             </p>
             <div className="row g-3">
                 <div className="col-sm-5">
-                    <label className="ns-label" htmlFor="renewMonths">Stay for</label>
+                    <label className="ns-label" htmlFor="renewMonths">{t('renewal.request.stayFor')}</label>
                     <LengthSelect id="renewMonths" value={months} onChange={setMonths} />
                 </div>
                 <div className="col-sm-7">
-                    <label className="ns-label">New end date</label>
+                    <label className="ns-label">{t('reasonModal.newEndDate')}</label>
                     <p className="ns-renew-newend">{formatDueDate(addMonths(contract.end_date, months))}</p>
                 </div>
             </div>
             <label className="ns-label mt-2" htmlFor="renewNote">
-                Note to the owner <span className="ns-pay-muted">(optional)</span>
+                {t('renewal.request.noteLabel')} <span className="ns-pay-muted">({t('listingForm.optional')})</span>
             </label>
             <textarea
                 id="renewNote"
@@ -107,17 +113,17 @@ export function RenewalRequestModal({ contract, stats, onClose, onSent, onAskRon
                         className="ns-rony-write"
                         onClick={() =>
                             onAskRony({
-                                text: `My lease for "${property}" ends on ${contract.end_date} at ${money(contract.monthly_rent)}/month. Should I renew, for how long, and what should I ask the owner?`,
+                                text: t('renewal.request.askText', { name: property, date: formatDueDate(contract.end_date), rent: money(contract.monthly_rent) }),
                             })
                         }
                     >
-                        <i className="bi bi-stars"></i> Ask Rony for advice first
+                        <i className="bi bi-stars"></i> {t('renewal.request.askRony', BRAND_VALUES)}
                     </button>
                 </div>
             )}
             <ErrorAlert error={error} />
             <button type="submit" className="ns-submit-btn" disabled={saving}>
-                <i className="bi bi-send"></i> {saving ? 'Sending...' : 'Send renewal request'}
+                <i className="bi bi-send"></i> {saving ? t('common.sending') : t('renewal.request.send')}
             </button>
         </ModalShell>
     )
@@ -126,7 +132,8 @@ export function RenewalRequestModal({ contract, stats, onClose, onSent, onAskRon
 // Owner proposes the extension: extra months and the rent for them, signed
 // with their typed name. Months already scheduled keep their current rent.
 export function RenewalOfferModal({ contract, ownerName, record, onClose, onDone, onAskRony }) {
-    const property = contract.add_business?.property_name || 'your space'
+    const { t } = useTranslation()
+    const property = contract.add_business?.property_name || t('offerModal.yourSpace')
     const tenant = personName(contract.users)
     const [months, setMonths] = useState(contract.renewal_request_months || contract.renewal_months || 12)
     const [rent, setRent] = useState(String(contract.renewal_rent ?? contract.monthly_rent ?? ''))
@@ -142,7 +149,7 @@ export function RenewalOfferModal({ contract, ownerName, record, onClose, onDone
     const submit = async (e) => {
         e.preventDefault()
         if (!agree) {
-            setError('Confirm that you agree to the renewal terms to sign the offer.')
+            setError(t('renewal.offer.agreeRequired'))
             return
         }
         setSaving(true)
@@ -157,21 +164,27 @@ export function RenewalOfferModal({ contract, ownerName, record, onClose, onDone
     }
 
     return (
-        <ModalShell label="Offer a renewal" onClose={onClose} onSubmit={submit}>
-            <h2 className="ns-modal-form-title">{contract.renewal_offered_at ? 'Update renewal offer' : 'Offer a renewal'}</h2>
+        <ModalShell label={t('renewal.offer.title')} onClose={onClose} onSubmit={submit}>
+            <h2 className="ns-modal-form-title">{contract.renewal_offered_at ? t('contractDetail.actions.updateRenewal') : t('renewal.offer.title')}</h2>
             <p className="ns-modal-form-subtitle">
-                {tenant} · {property} · ends {formatDueDate(contract.end_date)}
-                {contract.renewal_request_months ? ` · asked for ${contract.renewal_request_months} more months` : ''}
+                {tenant} {DOT} {property} {DOT} {t('renewal.offer.ends', { date: formatDueDate(contract.end_date) })}
+                {contract.renewal_request_months ? ` ${DOT} ${t('renewal.offer.askedFor', { count: contract.renewal_request_months })}` : ''}
             </p>
-            {contract.renewal_request_note && <p className="ns-notice-note">“{contract.renewal_request_note}”</p>}
+            {contract.renewal_request_note && (
+                <p className="ns-notice-note">
+                    {QUOTE_OPEN}
+                    {contract.renewal_request_note}
+                    {QUOTE_CLOSE}
+                </p>
+            )}
 
             <div className="row g-3">
                 <div className="col-sm-6">
-                    <label className="ns-label" htmlFor="renewOfferMonths">Extend by</label>
+                    <label className="ns-label" htmlFor="renewOfferMonths">{t('renewal.offer.extendBy')}</label>
                     <LengthSelect id="renewOfferMonths" value={months} onChange={setMonths} />
                 </div>
                 <div className="col-sm-6">
-                    <label className="ns-label" htmlFor="renewOfferRent">Monthly rent for the new period (USD)</label>
+                    <label className="ns-label" htmlFor="renewOfferRent">{t('renewal.offer.rentLabel')}</label>
                     <input
                         id="renewOfferRent"
                         type="number"
@@ -185,7 +198,7 @@ export function RenewalOfferModal({ contract, ownerName, record, onClose, onDone
                 </div>
                 <div className="col-12">
                     <label className="ns-label" htmlFor="renewOfferNote">
-                        Note <span className="ns-pay-muted">(optional)</span>
+                        {t('renewal.offer.note')} <span className="ns-pay-muted">({t('listingForm.optional')})</span>
                     </label>
                     <textarea
                         id="renewOfferNote"
@@ -205,34 +218,44 @@ export function RenewalOfferModal({ contract, ownerName, record, onClose, onDone
                         className="ns-rony-write"
                         onClick={() =>
                             onAskRony({
-                                text: `Should I renew ${tenant}'s lease of "${property}" (now ${money(contract.monthly_rent)}/month, ending ${contract.end_date})? Their record on NextSpace: ${summary.short}${record ? `, ${record.months_on_time}/${record.months_due} months on time, ${record.months_late_now} late now` : ''}. What rent and length would you suggest?`,
+                                text: t('renewal.offer.askText', {
+                                    ...BRAND_VALUES,
+                                    person: tenant,
+                                    name: property,
+                                    rent: money(contract.monthly_rent),
+                                    date: formatDueDate(contract.end_date),
+                                    record: summary.short,
+                                    detail: record
+                                        ? t('renewal.offer.askDetail', { onTime: record.months_on_time, due: record.months_due, late: record.months_late_now })
+                                        : '',
+                                }),
                             })
                         }
                     >
-                        <i className="bi bi-stars"></i> Ask Rony: renew, and at what rent?
+                        <i className="bi bi-stars"></i> {t('renewal.offer.askRony', BRAND_VALUES)}
                     </button>
                 </div>
             )}
 
             <div className="ns-offer-summary">
                 <div>
-                    <small>New end date</small>
+                    <small>{t('reasonModal.newEndDate')}</small>
                     <strong>{formatDueDate(newEnd)}</strong>
                 </div>
                 <div>
-                    <small>Rent change</small>
+                    <small>{t('renewal.offer.rentChange')}</small>
                     <strong>
-                        {change === 0 ? 'Same rent' : `${change > 0 ? '+' : '−'}${money(Math.abs(change))}/month`}
+                        {change === 0 ? t('renewal.sameRent') : `${change > 0 ? '+' : MINUS}${money(Math.abs(change))}${t('common.perMonth')}`}
                     </strong>
                 </div>
                 <div>
-                    <small>Added to the lease</small>
+                    <small>{t('renewal.offer.added')}</small>
                     <strong>{money(Number(rent || 0) * Number(months || 0))}</strong>
                 </div>
             </div>
 
             <div className="ns-signature-box">
-                <label className="ns-label" htmlFor="renewOfferSign">Sign with your full name</label>
+                <label className="ns-label" htmlFor="renewOfferSign">{t('signModal.signWithName')}</label>
                 <input
                     id="renewOfferSign"
                     className="form-control ns-signature-input"
@@ -244,13 +267,13 @@ export function RenewalOfferModal({ contract, ownerName, record, onClose, onDone
                 <label className="ns-agree">
                     <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                     <span>
-                        I agree to extend this lease on these terms; every other clause stays the same. The offer is valid for 7 days.
+                        {t('renewal.offer.agree')}
                     </span>
                 </label>
             </div>
             <ErrorAlert error={error} />
             <button type="submit" className="ns-submit-btn" disabled={saving}>
-                <i className="bi bi-pen"></i> {saving ? 'Sending...' : 'Sign and send renewal'}
+                <i className="bi bi-pen"></i> {saving ? t('common.sending') : t('renewal.offer.send')}
             </button>
         </ModalShell>
     )
@@ -258,6 +281,7 @@ export function RenewalOfferModal({ contract, ownerName, record, onClose, onDone
 
 // Tenant signs the owner's renewal offer: the lease is extended right away.
 export function RenewalSignModal({ contract, tenantName, onClose, onSigned }) {
+    const { t } = useTranslation()
     const [name, setName] = useState(tenantName || '')
     const [agree, setAgree] = useState(false)
     const [saving, setSaving] = useState(false)
@@ -268,7 +292,7 @@ export function RenewalSignModal({ contract, tenantName, onClose, onSigned }) {
     const submit = async (e) => {
         e.preventDefault()
         if (!agree) {
-            setError('Confirm that you agree to the renewal.')
+            setError(t('renewal.sign.agreeRequired'))
             return
         }
         setSaving(true)
@@ -283,36 +307,39 @@ export function RenewalSignModal({ contract, tenantName, onClose, onSigned }) {
     }
 
     return (
-        <ModalShell label="Sign the renewal" onClose={onClose} onSubmit={submit}>
-            <h2 className="ns-modal-form-title">Sign the renewal</h2>
+        <ModalShell label={t('renewal.sign.title')} onClose={onClose} onSubmit={submit}>
+            <h2 className="ns-modal-form-title">{t('renewal.sign.title')}</h2>
             <p className="ns-modal-form-subtitle">
-                {contract.add_business?.property_name} · offered and signed by {contract.renewal_owner_signed_name}
+                {contract.add_business?.property_name} {DOT} {t('signModal.offeredBy', { name: contract.renewal_owner_signed_name })}
             </p>
             <div className="ns-offer-summary ns-offer-summary-4">
                 <div>
-                    <small>Extended by</small>
-                    <strong>{contract.renewal_months} months</strong>
+                    <small>{t('renewal.sign.extendedBy')}</small>
+                    <strong>{t('common.month', { count: contract.renewal_months })}</strong>
                 </div>
                 <div>
-                    <small>New end date</small>
+                    <small>{t('reasonModal.newEndDate')}</small>
                     <strong>{formatDueDate(newEnd)}</strong>
                 </div>
                 <div>
-                    <small>Rent from {formatDueDate(contract.end_date)}</small>
-                    <strong>{money(contract.renewal_rent)}/month</strong>
+                    <small>{t('renewal.sign.rentFrom', { date: formatDueDate(contract.end_date) })}</small>
+                    <strong>
+                        {money(contract.renewal_rent)}
+                        {t('common.perMonth')}
+                    </strong>
                 </div>
                 <div>
-                    <small>Change</small>
-                    <strong>{change === 0 ? 'Same rent' : `${change > 0 ? '+' : '−'}${money(Math.abs(change))}/month`}</strong>
+                    <small>{t('renewal.sign.change')}</small>
+                    <strong>{change === 0 ? t('renewal.sameRent') : `${change > 0 ? '+' : MINUS}${money(Math.abs(change))}${t('common.perMonth')}`}</strong>
                 </div>
             </div>
             {contract.renewal_note && (
                 <p className="ns-notice-note" style={{ whiteSpace: 'pre-wrap' }}>
-                    <strong>Owner’s note:</strong> {contract.renewal_note}
+                    <strong>{t('renewal.sign.ownerNote')}</strong> {contract.renewal_note}
                 </p>
             )}
             <div className="ns-signature-box">
-                <label className="ns-label" htmlFor="renewSignName">Sign with your full name</label>
+                <label className="ns-label" htmlFor="renewSignName">{t('signModal.signWithName')}</label>
                 <input
                     id="renewSignName"
                     className="form-control ns-signature-input"
@@ -324,14 +351,13 @@ export function RenewalSignModal({ contract, tenantName, onClose, onSigned }) {
                 <label className="ns-agree">
                     <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                     <span>
-                        I agree to extend the lease to {formatDueDate(newEnd)} at {money(contract.renewal_rent)}/month. All other
-                        clauses stay the same.
+                        {t('renewal.sign.agree', { date: formatDueDate(newEnd), rent: money(contract.renewal_rent) })}
                     </span>
                 </label>
             </div>
             <ErrorAlert error={error} />
             <button type="submit" className="ns-submit-btn" disabled={saving}>
-                <i className="bi bi-pen"></i> {saving ? 'Signing...' : 'Sign renewal'}
+                <i className="bi bi-pen"></i> {saving ? t('signModal.signing') : t('renewal.sign.sign')}
             </button>
         </ModalShell>
     )

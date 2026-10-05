@@ -1,12 +1,15 @@
+import { useTranslation } from 'react-i18next'
+
 export default function ConfirmDialog({
     icon = 'bi-exclamation-triangle',
     title,
     description,
-    confirmLabel = 'Confirm',
-    cancelLabel = 'Cancel',
+    confirmLabel,
+    cancelLabel,
     onConfirm,
     onCancel,
 }) {
+    const { t } = useTranslation()
     return (
         <div className="ns-modal-backdrop" onClick={onCancel}>
             <div className="ns-modal ns-confirm-modal" onClick={(e) => e.stopPropagation()}>
@@ -17,10 +20,10 @@ export default function ConfirmDialog({
                 <p className="ns-confirm-desc">{description}</p>
                 <div className="ns-confirm-actions">
                     <button type="button" className="ns-confirm-btn-cancel" onClick={onCancel}>
-                        {cancelLabel}
+                        {cancelLabel || t('common.cancel')}
                     </button>
                     <button type="button" className="ns-confirm-btn-danger" onClick={onConfirm}>
-                        {confirmLabel}
+                        {confirmLabel || t('common.confirm')}
                     </button>
                 </div>
             </div>

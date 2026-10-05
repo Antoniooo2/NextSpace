@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { describeSupabaseError } from '../lib/supabaseErrors'
+import i18n from '../i18n'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../lib/propertyPhotos'
 import { PROPERTY_SERVICE_IDS_EMBED, withServiceIds } from '../lib/propertyServices'
 
@@ -55,7 +56,7 @@ export function useOwnerProperties(user) {
             if (cancelled) return
 
             if (userError || !userRow) {
-                setError("We couldn't find your account record. Please contact support.")
+                setError(i18n.t('errors.noAccountRecord'))
                 setLoading(false)
                 return
             }

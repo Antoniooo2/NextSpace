@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../../lib/brand'
+import { contractStatusLabel } from '../../lib/displayValues'
+import { ARROW_RIGHT, DASH, DOT } from '../../lib/symbols'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
@@ -47,6 +51,7 @@ function mostUrgentContractId(contracts, payments, today) {
 }
 
 export default function BusinessPayments({ user, onNavigate, onAskRony, initialContractId }) {
+    const { t } = useTranslation()
     const [contracts, setContracts] = useState([])
     const [selectedId, setSelectedId] = useState(null)
     const [hasPendingRequest, setHasPendingRequest] = useState(false)
@@ -237,7 +242,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
             await downloadReceiptPdf({ payment, contract: payment.contract || contract, tenant: tenantInfo })
         } catch (err) {
             console.error('Could not build the receipt PDF', err)
-            setPayError({ text: 'Could not create the receipt. Please try again.' })
+            setPayError({ text: t('payments.receiptError') })
         } finally {
             setReceiptBusyId(null)
         }
@@ -254,7 +259,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
 
         if (!accessToken) {
             setPaying(false)
-            setPayError({ text: 'Your session expired. Please sign in again.' })
+            setPayError({ text: t('payments.sessionExpired') })
             return
         }
 
@@ -275,11 +280,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                 return
             }
             if (!response.ok || !result.url) {
-                throw new Error(result.error || 'Could not start the Wompi payment.')
+                throw new Error(result.error || t('payments.startFailed', BRAND_VALUES))
             }
         } catch (err) {
             setPaying(false)
-            setPayError({ text: err.message || 'Could not start the Wompi payment. Please try again.' })
+            setPayError({ text: err.message || t('payments.startFailedRetry', BRAND_VALUES) })
             return
         }
 
@@ -290,7 +295,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading payments...</p>
+                <p>{t('payments.loading')}</p>
             </div>
         )
     }
@@ -307,11 +312,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
         return (
             <div className="ns-empty-state">
                 <i className="bi bi-credit-card"></i>
-                <h3>{hasPendingRequest ? 'Waiting on the owner' : 'No active lease'}</h3>
+                <h3>{hasPendingRequest ? t('payments.tenant.empty.waitingTitle') : t('payments.tenant.empty.noLeaseTitle')}</h3>
                 <p>
                     {hasPendingRequest
-                        ? "You have a lease request or offer in progress. Once the lease is signed, your rent schedule will show up here."
-                        : 'Find a space and request a lease. Once you sign the owner’s offer, your rent schedule will show up here.'}
+                        ? t('payments.tenant.empty.waitingText')
+                        : t('payments.tenant.empty.noLeaseText')}
                 </p>
                 {onNavigate && (
                     <button
@@ -319,7 +324,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                         className="ns-outline-btn"
                         onClick={() => onNavigate(hasPendingRequest ? 'contracts' : 'home')}
                     >
-                        {hasPendingRequest ? 'View my contracts' : 'Browse spaces'}
+                        {hasPendingRequest ? t('payments.tenant.empty.viewContracts') : t('payments.tenant.empty.browse')}
                     </button>
                 )}
             </div>
@@ -331,12 +336,12 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
         const tone = st.lateMonths > 0 ? 'danger' : st.owedNow > 0 ? 'warning' : 'success'
         const label =
             tone === 'danger'
-                ? `${st.lateMonths} ${st.lateMonths === 1 ? 'month' : 'months'} late`
+                ? t('payments.tabs.monthsLate', { count: st.lateMonths })
                 : tone === 'warning'
-                  ? `${money(st.owedNow)} due`
+                  ? t('payments.tabs.due', { amount: money(st.owedNow) })
                   : rows.length > 0 && rows.every((p) => p.status === 'Paid')
-                    ? 'Fully paid'
-                    : 'Up to date'
+                    ? t('payments.tabs.fullyPaid')
+                    : t('payments.tabs.upToDate')
         return { contract: c, tone, label }
     })
 
@@ -345,7 +350,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
     const property = contract.add_business
     const owner = property?.users
     const countdown = nextToPay ? dueCountdown(nextToPay.payment_date, today) : null
-    const nextCountdown = nextScheduled ? dueCountdown(nextScheduled.payment_date, today) : null
+    const daysToNext = nextScheduled ? daysUntil(nextScheduled.payment_date, today) : null
     const daysToDue = nextToPay ? daysUntil(nextToPay.payment_date, today) : null
     const daysToEnd = contract.end_date ? daysUntil(contract.end_date, today) : null
     const renewal = renewalState(contract)
@@ -378,11 +383,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
         <>
             <div className="ns-dash-header">
                 <div>
-                    <h1>Payments</h1>
+                    <h1>{t('dashboard.nav.payments')}</h1>
                     <p>
                         {leases.length > 1
-                            ? `You have ${leases.length} active leases. Rent is paid online with Wompi, oldest month first.`
-                            : `Your rent for ${property?.property_name || 'your space'}, paid online with Wompi.`}
+                            ? t('payments.tenant.subtitleMany', { ...BRAND_VALUES, count: leases.length })
+                            : t('payments.tenant.subtitleOne', { ...BRAND_VALUES, name: property?.property_name || t('offerModal.yourSpace') })}
                     </p>
                 </div>
                 <div className="ns-dash-header-actions">
@@ -392,11 +397,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                             className="ns-outline-btn"
                             onClick={() =>
                                 onAskRony({
-                                    text: `Explain my payment situation for "${property?.property_name || 'my lease'}" — am I up to date, and what's coming up?`,
+                                    text: t('payments.tenant.askSituation', { name: property?.property_name || t('payments.tenant.myLease') }),
                                 })
                             }
                         >
-                            <i className="bi bi-stars"></i> Ask Rony
+                            <i className="bi bi-stars"></i> {t('insights.owner.askRony', BRAND_VALUES)}
                         </button>
                     )}
                     {installments.length > 0 && (
@@ -405,15 +410,15 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                 {
                                     id: 'statement',
                                     icon: 'bi-file-earmark-pdf',
-                                    label: 'Statement (PDF)',
-                                    description: `Every month of ${property?.property_name || 'this lease'}, totals and receipts`,
+                                    label: t('payments.export.statement'),
+                                    description: t('payments.export.statementDesc', { name: property?.property_name || t('payments.export.thisLease') }),
                                     onSelect: () => downloadLeaseStatementPdf({ contract, installments, tenant: tenantInfo }),
                                 },
                                 {
                                     id: 'statement-year',
                                     icon: 'bi-calendar3',
-                                    label: `Statement ${today.slice(0, 4)} (PDF)`,
-                                    description: 'Only this calendar year, e.g. for accounting',
+                                    label: t('payments.export.statementYear', { year: today.slice(0, 4) }),
+                                    description: t('payments.export.statementYearDesc'),
                                     onSelect: () =>
                                         downloadLeaseStatementPdf({
                                             contract,
@@ -425,8 +430,8 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                 {
                                     id: 'xlsx',
                                     icon: 'bi-file-earmark-spreadsheet',
-                                    label: 'Excel (.xlsx)',
-                                    description: 'Lease summary and every payment',
+                                    label: t('payments.export.excel'),
+                                    description: t('payments.export.excelDesc'),
                                     onSelect: () => downloadLeaseWorkbook({ contract, installments, tenant: tenantInfo }),
                                 },
                             ]}
@@ -438,22 +443,21 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
             {returnState === 'checking' && (
                 <div className="alert alert-info d-flex align-items-center gap-2 py-2" role="status">
                     <span className="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                    Confirming your payment with Wompi...
+                    {t('payments.return.checking', BRAND_VALUES)}
                 </div>
             )}
             {returnState === 'paid' && (
                 <div className="alert alert-success d-flex align-items-center gap-2 py-2" role="status">
-                    <i className="bi bi-check-circle-fill"></i> Payment received. Thank you! Your receipt is in the history below.
+                    <i className="bi bi-check-circle-fill"></i> {t('payments.return.paid')}
                 </div>
             )}
             {returnState === 'pending' && (
                 <div className="alert alert-warning d-flex align-items-center justify-content-between gap-2 py-2" role="status">
                     <span>
-                        <i className="bi bi-hourglass-split"></i> We haven't confirmed this payment yet. It can take a
-                        minute for Wompi to notify us — check again in a moment.
+                        <i className="bi bi-hourglass-split"></i> {t('payments.return.pending', BRAND_VALUES)}
                     </span>
                     <button type="button" className="ns-outline-btn" onClick={checkPaymentAgain}>
-                        Check again
+                        {t('payments.return.checkAgain')}
                     </button>
                 </div>
             )}
@@ -462,12 +466,12 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     <span>
                         <i className="bi bi-check-circle-fill"></i> {notice}
                     </span>
-                    <button type="button" className="btn-close" aria-label="Dismiss" onClick={() => setNotice('')} />
+                    <button type="button" className="btn-close" aria-label={t('common.dismiss')} onClick={() => setNotice('')} />
                 </div>
             )}
 
             {leaseTabs.length > 1 && (
-                <div className="ns-pay-lease-tabs" role="tablist" aria-label="Your leases">
+                <div className="ns-pay-lease-tabs" role="tablist" aria-label={t('payments.tabs.label')}>
                     {leaseTabs.map(({ contract: c, tone, label }) => (
                         <button
                             key={c.contract_id}
@@ -488,7 +492,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                 )}
                             </span>
                             <span className="ns-pay-lease-tab-text">
-                                <span className="ns-pay-lease-tab-name">{c.add_business?.property_name || 'Property'}</span>
+                                <span className="ns-pay-lease-tab-name">{c.add_business?.property_name || t('common.property')}</span>
                                 <span className={`ns-pay-lease-tab-status tone-${tone}`}>
                                     <span className="ns-pay-lease-tab-dot" /> {label}
                                 </span>
@@ -499,18 +503,18 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
             )}
 
             <SectionNav
-                label="Payments sections"
+                label={t('payments.sectionsLabel')}
                 sections={[
-                    { id: 'pay-lease', label: leases.length > 1 ? 'This lease' : 'Your lease', icon: 'bi-shop' },
-                    { id: 'pay-coming', label: 'Next 6 months', icon: 'bi-graph-up' },
-                    { id: 'pay-history', label: 'History', icon: 'bi-clock-history' },
+                    { id: 'pay-lease', label: leases.length > 1 ? t('payments.tenant.thisLease') : t('payments.tenant.yourLease'), icon: 'bi-shop' },
+                    { id: 'pay-coming', label: t('payments.next6'), icon: 'bi-graph-up' },
+                    { id: 'pay-history', label: t('contractDetail.history'), icon: 'bi-clock-history' },
                 ]}
             />
 
             <PageGroup
                 id="pay-lease"
-                title={leases.length > 1 ? 'This lease' : 'Your lease'}
-                hint={`${property?.property_name || 'Property'} · what to pay and how you're doing`}
+                title={leases.length > 1 ? t('payments.tenant.thisLease') : t('payments.tenant.yourLease')}
+                hint={t('payments.tenant.leaseHint', { name: property?.property_name || t('common.property'), dot: DOT })}
             >
                 <div className="ns-pay-top-grid ns-pay-top-grid-v2 ns-pay-top-grid-v3">
                 <div className="ns-pay-due-card ns-pay-due-card-v2">
@@ -527,16 +531,16 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                     {daysToDue < 0 ? (
                                         <span className="ns-due-ring-text is-late">
                                             <strong>{-daysToDue}</strong>
-                                            <small>days late</small>
+                                            <small>{t('payments.ring.daysLate', { count: -daysToDue })}</small>
                                         </span>
                                     ) : daysToDue === 0 ? (
                                         <span className="ns-due-ring-text">
-                                            <strong>Today</strong>
+                                            <strong>{t('notifications.groups.today')}</strong>
                                         </span>
                                     ) : (
                                         <span className="ns-due-ring-text">
                                             <strong>{daysToDue}</strong>
-                                            <small>{daysToDue === 1 ? 'day left' : 'days left'}</small>
+                                            <small>{t('payments.ring.daysLeft', { count: daysToDue })}</small>
                                         </span>
                                     )}
                                 </ProgressRing>
@@ -544,14 +548,17 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                     <span className={`ns-pay-countdown tone-${countdown.tone}`}>{countdown.text}</span>
                                     <p className="ns-pay-due-amount">{money(nextToPay.amount)}</p>
                                     <p className="ns-pay-due-desc">
-                                        {formatDueDate(nextToPay.payment_date, { month: 'long', year: 'numeric' })} rent · due{' '}
-                                        {formatDueDate(nextToPay.payment_date, { month: 'short', day: 'numeric' })}
+                                        {t('payments.dueDesc', {
+                                            month: formatDueDate(nextToPay.payment_date, { month: 'long', year: 'numeric' }),
+                                            date: formatDueDate(nextToPay.payment_date, { month: 'short', day: 'numeric' }),
+                                            dot: DOT,
+                                        })}
                                     </p>
                                 </div>
                             </div>
                             {payable.length > 1 && (
                                 <p className="ns-pay-due-extra">
-                                    {payable.length} months outstanding · {money(stats.owedNow)} total. They're paid oldest first.
+                                    {t('payments.tenant.outstanding', { count: payable.length, total: money(stats.owedNow), dot: DOT })}
                                 </p>
                             )}
                             <button
@@ -560,48 +567,50 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                 onClick={() => payInstallment(nextToPay)}
                                 disabled={paying}
                             >
-                                {paying ? 'Opening Wompi...' : `Pay ${money(nextToPay.amount)} with Wompi`}
+                                {paying ? t('payments.opening', BRAND_VALUES) : t('payments.payWith', { ...BRAND_VALUES, amount: money(nextToPay.amount) })}
                             </button>
                             <p className="ns-pay-simulation-note">
-                                <i className="bi bi-shield-lock"></i> Secure checkout powered by Wompi.
+                                <i className="bi bi-shield-lock"></i> {t('payments.secure', BRAND_VALUES)}
                             </p>
                         </>
                     ) : nextScheduled ? (
                         <div className="ns-due-hero">
-                            <ProgressRing size={92} stroke={8} value={1} tone="success" label="All caught up">
+                            <ProgressRing size={92} stroke={8} value={1} tone="success" label={t('payments.caughtUp')}>
                                 <span className="ns-due-ring-text">
                                     <i className="bi bi-check-lg ns-due-check"></i>
                                 </span>
                             </ProgressRing>
                             <div>
-                                <span className="ns-pay-countdown tone-success">All caught up</span>
+                                <span className="ns-pay-countdown tone-success">{t('payments.caughtUp')}</span>
                                 <p className="ns-pay-due-amount">{money(nextScheduled.amount)}</p>
                                 <p className="ns-pay-due-desc">
-                                    Next payment {formatDueDate(nextScheduled.payment_date, { month: 'short', day: 'numeric' })} ·{' '}
-                                    {nextCountdown.text.replace('Due in', 'in')}. Payable a week before.
+                                    {t('payments.tenant.nextPayment', {
+                                        date: formatDueDate(nextScheduled.payment_date, { month: 'short', day: 'numeric' }),
+                                        when: t('insights.tenant.inDays', { count: daysToNext }),
+                                        dot: DOT,
+                                    })}
                                 </p>
                             </div>
                         </div>
                     ) : installments.length > 0 ? (
                         <div className="ns-due-hero">
-                            <ProgressRing size={92} stroke={8} value={1} tone="success" label="Lease fully paid">
+                            <ProgressRing size={92} stroke={8} value={1} tone="success" label={t('payments.fullyPaid')}>
                                 <span className="ns-due-ring-text">
                                     <i className="bi bi-patch-check-fill ns-due-check"></i>
                                 </span>
                             </ProgressRing>
                             <div>
-                                <span className="ns-pay-countdown tone-success">Lease fully paid</span>
-                                <p className="ns-pay-due-desc">Every month of this lease has been paid. Nothing else is due.</p>
+                                <span className="ns-pay-countdown tone-success">{t('payments.fullyPaid')}</span>
+                                <p className="ns-pay-due-desc">{t('payments.fullyPaidText')}</p>
                             </div>
                         </div>
                     ) : (
                         <>
                             <span className="ns-pay-countdown tone-neutral">
-                                <i className="bi bi-calendar2-x"></i> No schedule yet
+                                <i className="bi bi-calendar2-x"></i> {t('payments.noSchedule')}
                             </span>
                             <p className="ns-pay-due-desc">
-                                This lease doesn't have start and end dates yet, so there's no rent schedule. Ask the owner
-                                to set the lease dates.
+                                {t('payments.tenant.noScheduleText')}
                             </p>
                         </>
                     )}
@@ -618,28 +627,28 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                         </div>
                         <div className="ns-pay-lease-head-info">
                             <div className="ns-pay-lease-head-title">
-                                <h2>{property?.property_name || 'Property'}</h2>
-                                <span className="ns-pay-tag tag-active">{contract.status}</span>
+                                <h2>{property?.property_name || t('common.property')}</h2>
+                                <span className="ns-pay-tag tag-active">{contractStatusLabel(contract.status)}</span>
                             </div>
                             <p className="ns-pay-lease-meta">
-                                Owner: <strong>{owner ? `${owner.first_name} ${owner.last_name}` : '—'}</strong>
-                                <span className="ns-pay-dot">•</span>
-                                {formatDueDate(contract.start_date)} → {formatDueDate(contract.end_date)}
+                                {t('common.owner')}: <strong>{owner ? `${owner.first_name} ${owner.last_name}` : DASH}</strong>
+                                <span className="ns-pay-dot">{DOT}</span>
+                                {formatDueDate(contract.start_date)} {ARROW_RIGHT} {formatDueDate(contract.end_date)}
                             </p>
                         </div>
                         <div className="ns-pay-rent">
                             {money(contract.monthly_rent)}
-                            <small>/mo</small>
+                            <small>{t('payments.perMo')}</small>
                         </div>
                     </div>
 
                     <div className="ns-pay-progress">
                         <div className="ns-pay-progress-labels">
                             <span>
-                                <strong>{stats.monthsPaid}</strong> of {stats.monthsTotal} months paid
+                                <strong>{stats.monthsPaid}</strong> {t('payments.monthsPaidOf', { count: stats.monthsTotal })}
                             </span>
                             <span>
-                                {daysToEnd == null ? '' : daysToEnd >= 0 ? `${daysToEnd} days left on the lease` : 'Lease ended'}
+                                {daysToEnd == null ? '' : daysToEnd >= 0 ? t('payments.daysLeftLease', { count: daysToEnd }) : t('contracts.events.expired')}
                             </span>
                         </div>
                         <div className="ns-pay-progress-track" role="progressbar" aria-valuenow={Math.round(timeProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
@@ -648,10 +657,10 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     </div>
 
                     <div className="ns-pay-lease-footer">
-                        <span className="ns-pay-contract-id">Contract #{contract.contract_id}</span>
+                        <span className="ns-pay-contract-id">{t('contractDetail.contractNumber', { id: contract.contract_id })}</span>
                         {canAskRenewal ? (
                             <button type="button" className="ns-link-btn" onClick={() => setRenewalFor(contract.contract_id)}>
-                                <i className="bi bi-arrow-repeat"></i> Ask to renew
+                                <i className="bi bi-arrow-repeat"></i> {t('notifications.actions.askToRenew')}
                             </button>
                         ) : renewal === 'offered' ? (
                             <button
@@ -659,11 +668,11 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                                 className="ns-link-btn"
                                 onClick={() => onNavigate('contracts', { contractId: contract.contract_id })}
                             >
-                                <i className="bi bi-pen"></i> Review renewal offer
+                                <i className="bi bi-pen"></i> {t('payments.tenant.reviewRenewalOffer')}
                             </button>
                         ) : (
                             <button type="button" className="ns-link-btn" onClick={() => onNavigate('contracts')}>
-                                View contract <i className="bi bi-box-arrow-up-right"></i>
+                                {t('payments.viewContract')} <i className="bi bi-box-arrow-up-right"></i>
                             </button>
                         )}
                     </div>
@@ -674,8 +683,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     <div className="alert alert-warning d-flex align-items-start gap-2 py-2" role="alert">
                         <i className="bi bi-plug"></i>
                         <span>
-                            Online payments aren't set up on this site yet, so the payment wasn't started and nothing was
-                            charged. Please try again later.
+                            {t('payments.notConfigured')}
                         </span>
                     </div>
                 )}
@@ -690,7 +698,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     onAction={handleInsightAction}
                     onAskRony={
                         onAskRony
-                            ? () => onAskRony({ text: 'How much do I still owe this year, and when is my next payment due?' })
+                            ? () => onAskRony({ text: t('payments.tenant.askOwe') })
                             : undefined
                     }
                 />
@@ -700,42 +708,42 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                         <ProgressRing
                             value={stats.monthsDue > 0 ? stats.paidOnTime / stats.monthsDue : 0}
                             tone={onTimePct == null || onTimePct >= 85 ? 'success' : 'warning'}
-                            label={`${stats.paidOnTime} of ${stats.monthsDue} months on time`}
+                            label={t('payments.kpi.onTimeLabel', { count: stats.monthsDue, paid: stats.paidOnTime })}
                         >
                             <strong>{stats.paidOnTime}</strong>
                             <small>/{stats.monthsDue}</small>
                         </ProgressRing>
                         <div>
-                            <span className="ns-lease-kpi-value">On-time record</span>
+                            <span className="ns-lease-kpi-value">{t('payments.kpi.onTimeRecord')}</span>
                             <span className="ns-lease-kpi-label">
                                 {stats.monthsDue === 0
-                                    ? 'Nothing due yet'
+                                    ? t('payments.kpi.nothingDue')
                                     : onTimePct === 100
-                                      ? 'Every month on time'
-                                      : `${onTimePct}% of months on time`}
+                                      ? t('payments.kpi.everyMonth')
+                                      : t('payments.kpi.pctOnTime', { pct: onTimePct })}
                             </span>
                         </div>
                     </div>
                     <div className="ns-lease-kpi">
                         <span className="ns-lease-kpi-big">{money(stats.collectedTotal)}</span>
                         <div>
-                            <span className="ns-lease-kpi-value">Paid so far</span>
-                            <span className="ns-lease-kpi-label">of {money(stats.leaseTotal)} on this lease</span>
+                            <span className="ns-lease-kpi-value">{t('docs.reports.paidSoFar')}</span>
+                            <span className="ns-lease-kpi-label">{t('payments.kpi.ofLease', { total: money(stats.leaseTotal) })}</span>
                         </div>
                     </div>
                     <div className="ns-lease-kpi">
                         <span className="ns-lease-kpi-big">{money(leftThisYear)}</span>
                         <div>
-                            <span className="ns-lease-kpi-value">Left this year</span>
-                            <span className="ns-lease-kpi-label">through Dec 31, this lease</span>
+                            <span className="ns-lease-kpi-value">{t('payments.kpi.leftThisYear')}</span>
+                            <span className="ns-lease-kpi-label">{t('payments.kpi.throughDec31')}</span>
                         </div>
                     </div>
                 </div>
 
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Rent timeline</h3>
-                        <span>Tap a month for details and receipts</span>
+                        <h3>{t('payments.timeline.title')}</h3>
+                        <span>{t('payments.timeline.hint')}</span>
                     </div>
                     <LeaseTimeline installments={installments} today={today} onSelect={(p) => setDetailPaymentId(p.payment_id)} />
                 </section>
@@ -743,26 +751,26 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
 
             <PageGroup
                 id="pay-coming"
-                title="Next 6 months"
-                hint={leases.length > 1 ? 'All your leases together' : 'From your rent schedule'}
+                title={t('payments.next6')}
+                hint={leases.length > 1 ? t('payments.tenant.allLeasesTogether') : t('payments.tenant.fromSchedule')}
             >
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Rent by month</h3>
+                        <h3>{t('payments.rentByMonth')}</h3>
                     </div>
                     <IncomeProjectionChart
                         projection={projection}
-                        label="Rent you'll pay over the next six months"
-                        endingNote={(e) => `you stop paying ${money(e.monthlyRent)}/month after that unless you renew.`}
+                        label={t('payments.tenant.chartLabel')}
+                        endingNote={(e) => t('payments.tenant.endingNote', { rent: money(e.monthlyRent) })}
                     />
                 </section>
             </PageGroup>
 
-            <PageGroup id="pay-history" title="History">
+            <PageGroup id="pay-history" title={t('contractDetail.history')}>
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Payment history</h3>
-                        <span>{leases.length > 1 ? 'All your leases' : 'Every month that has come due'}</span>
+                        <h3>{t('payments.historyTitle')}</h3>
+                        <span>{leases.length > 1 ? t('payments.tenant.allLeases') : t('payments.tenant.everyDueMonth')}</span>
                     </div>
                     <PaymentHistory
                         rows={allRows}
@@ -810,7 +818,7 @@ export default function BusinessPayments({ user, onNavigate, onAskRony, initialC
                     onSent={() => {
                         setRenewalFor(null)
                         setNotice(
-                            `Renewal request sent to ${renewalLease.contract.add_business?.users?.first_name || 'your owner'}. They answer with an offer you sign in Contracts.`
+                            t('payments.tenant.renewalSent', { name: renewalLease.contract.add_business?.users?.first_name || t('payments.tenant.yourOwner') })
                         )
                     }}
                 />

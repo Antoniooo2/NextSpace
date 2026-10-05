@@ -1,10 +1,16 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabaseClient'
+import { describeAuthError } from '../lib/supabaseErrors'
+import { BRAND_NAME } from '../lib/brand'
+import { ARROW_RIGHT, PASSWORD_MASK } from '../lib/symbols'
+import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
 import logo from '../assets/NextSpace_logo.png'
 import './AuthPages.css'
 
 function NewPassword() {
+  const { t } = useTranslation()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [errors, setErrors] = useState({ password: '', confirmPassword: '' })
@@ -16,15 +22,15 @@ function NewPassword() {
     const newErrors = { password: '', confirmPassword: '' }
 
     if (!password) {
-      newErrors.password = 'Please enter a new password.'
+      newErrors.password = t('auth.password.required')
     } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters.'
+      newErrors.password = t('auth.password.tooShort')
     }
 
     if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password.'
+      newErrors.confirmPassword = t('auth.password.confirmRequired')
     } else if (password && confirmPassword !== password) {
-      newErrors.confirmPassword = 'Passwords do not match.'
+      newErrors.confirmPassword = t('auth.password.mismatch')
     }
 
     return newErrors
@@ -47,10 +53,10 @@ function NewPassword() {
     if (error) {
       setStatus({
         type: 'error',
-        text: 'We could not update your password: ' + error.message,
+        text: t('auth.password.updateFailed', { message: describeAuthError(error) }),
       })
     } else {
-      setStatus({ type: 'success', text: 'Password updated successfully. Redirecting...' })
+      setStatus({ type: 'success', text: t('auth.password.updated') })
       setTimeout(() => navigate('/'), 2000)
     }
   }
@@ -58,15 +64,18 @@ function NewPassword() {
   return (
     <div className="ns-auth-wrapper">
       <div className="ns-card">
+        <div className="ns-card-lang">
+          <LanguageSwitcher />
+        </div>
 
-        <img src={logo} alt="NextSpace" className="ns-logo-img" />
+        <img src={logo} alt={BRAND_NAME} className="ns-logo-img" />
 
-        <h1 className="ns-title">Set a new password</h1>
-        <p className="ns-subtitle">Choose a strong password for your account.</p>
+        <h1 className="ns-title">{t('auth.newPassword.title')}</h1>
+        <p className="ns-subtitle">{t('auth.newPassword.subtitle')}</p>
 
         <form onSubmit={handleSubmit} noValidate>
           <div className="ns-field">
-            <label className="ns-label" htmlFor="password">New password</label>
+            <label className="ns-label" htmlFor="password">{t('auth.password.new')}</label>
             <div className="ns-input-wrap">
               <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="4" y="11" width="16" height="10" rx="2" />
@@ -76,7 +85,7 @@ function NewPassword() {
                 id="password"
                 className={`ns-input ${errors.password ? 'ns-input-error' : ''}`}
                 type="password"
-                placeholder="••••••••"
+                placeholder={PASSWORD_MASK}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value)
@@ -88,7 +97,7 @@ function NewPassword() {
           </div>
 
           <div className="ns-field">
-            <label className="ns-label" htmlFor="confirmPassword">Confirm new password</label>
+            <label className="ns-label" htmlFor="confirmPassword">{t('auth.password.confirm')}</label>
             <div className="ns-input-wrap">
               <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="4" y="11" width="16" height="10" rx="2" />
@@ -98,7 +107,7 @@ function NewPassword() {
                 id="confirmPassword"
                 className={`ns-input ${errors.confirmPassword ? 'ns-input-error' : ''}`}
                 type="password"
-                placeholder="••••••••"
+                placeholder={PASSWORD_MASK}
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value)
@@ -110,7 +119,7 @@ function NewPassword() {
           </div>
 
           <button className="ns-button" type="submit" disabled={loading}>
-            {loading ? 'Saving...' : 'Save new password →'}
+            {loading ? t('common.saving') : `${t('auth.newPassword.submit')} ${ARROW_RIGHT}`}
           </button>
         </form>
 

@@ -1,10 +1,14 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { BRAND_VALUES } from '../../../lib/brand'
+import { ARROW_RIGHT, DOT } from '../../../lib/symbols'
 import { formatDueDate } from '../../../lib/rentSchedule'
 import { contractActions, dueDayLabel, money, personName } from '../../../lib/contracts'
 
 // Tenant signs the owner's offer: a last look at the key terms, their typed
 // name and an explicit agreement. Signing makes the lease Active.
 export default function SignContractModal({ contract, tenantName, onClose, onSigned }) {
+    const { t } = useTranslation()
     const [name, setName] = useState(tenantName || '')
     const [agree, setAgree] = useState(false)
     const [saving, setSaving] = useState(false)
@@ -14,7 +18,7 @@ export default function SignContractModal({ contract, tenantName, onClose, onSig
     const submit = async (e) => {
         e.preventDefault()
         if (!agree) {
-            setError('Confirm that you have read and agree to the lease.')
+            setError(t('signModal.confirmError'))
             return
         }
         setSaving(true)
@@ -34,47 +38,47 @@ export default function SignContractModal({ contract, tenantName, onClose, onSig
                 className="ns-modal ns-modal-form ns-contract-modal"
                 role="dialog"
                 aria-modal="true"
-                aria-label="Sign the lease"
+                aria-label={t('signModal.title')}
                 onClick={(e) => e.stopPropagation()}
                 onSubmit={submit}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
                 <div className="ns-modal-body">
-                    <h2 className="ns-modal-form-title">Sign the lease</h2>
+                    <h2 className="ns-modal-form-title">{t('signModal.title')}</h2>
                     <p className="ns-modal-form-subtitle">
-                        {property.property_name} · offered and signed by {contract.owner_signed_name || personName(property.users)}
+                        {property.property_name} {DOT} {t('signModal.offeredBy', { name: contract.owner_signed_name || personName(property.users) })}
                     </p>
 
                     <div className="ns-offer-summary ns-offer-summary-4">
                         <div>
-                            <small>Monthly rent</small>
+                            <small>{t('docs.lease.monthlyRent')}</small>
                             <strong>{money(contract.monthly_rent)}</strong>
                         </div>
                         <div>
-                            <small>Lease</small>
+                            <small>{t('docs.reports.lease')}</small>
                             <strong>
-                                {formatDueDate(contract.start_date)} → {formatDueDate(contract.end_date)}
+                                {formatDueDate(contract.start_date)} {ARROW_RIGHT} {formatDueDate(contract.end_date)}
                             </strong>
                         </div>
                         <div>
-                            <small>Rent due</small>
-                            <strong>the {dueDayLabel(contract.start_date)}</strong>
+                            <small>{t('docs.lease.rentDue')}</small>
+                            <strong>{t('signModal.dueDay', { day: dueDayLabel(contract.start_date) })}</strong>
                         </div>
                         <div>
-                            <small>Deposit</small>
-                            <strong>{Number(contract.deposit || 0) > 0 ? money(contract.deposit) : 'None'}</strong>
+                            <small>{t('docs.lease.deposit')}</small>
+                            <strong>{Number(contract.deposit || 0) > 0 ? money(contract.deposit) : t('common.none')}</strong>
                         </div>
                     </div>
                     {contract.special_clauses && (
                         <p className="ns-notice-note" style={{ whiteSpace: 'pre-wrap' }}>
-                            <strong>Special clauses:</strong> {contract.special_clauses}
+                            <strong>{t('docs.lease.specialClauses')}:</strong> {contract.special_clauses}
                         </p>
                     )}
 
                     <div className="ns-signature-box">
-                        <label className="ns-label" htmlFor="signName">Sign with your full name</label>
+                        <label className="ns-label" htmlFor="signName">{t('signModal.signWithName')}</label>
                         <input
                             id="signName"
                             className="form-control ns-signature-input"
@@ -86,8 +90,7 @@ export default function SignContractModal({ contract, tenantName, onClose, onSig
                         <label className="ns-agree">
                             <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
                             <span>
-                                I have read the lease, including the standard and special clauses, and I agree to it. I understand
-                                the first rent is due on {formatDueDate(contract.start_date)} and is paid in NextSpace.
+                                {t('signModal.agree', { ...BRAND_VALUES, date: formatDueDate(contract.start_date) })}
                             </span>
                         </label>
                     </div>
@@ -99,7 +102,7 @@ export default function SignContractModal({ contract, tenantName, onClose, onSig
                     )}
 
                     <button type="submit" className="ns-submit-btn" disabled={saving}>
-                        <i className="bi bi-pen"></i> {saving ? 'Signing...' : 'Sign lease'}
+                        <i className="bi bi-pen"></i> {saving ? t('signModal.signing') : t('signModal.sign')}
                     </button>
                 </div>
             </form>

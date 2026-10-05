@@ -1,4 +1,9 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { currentLocale } from '../../i18n'
+import { BRAND_VALUES } from '../../lib/brand'
+import { paymentMethodLabel } from '../../lib/displayValues'
+import { DASH, DOT } from '../../lib/symbols'
 import { PAYMENT_STATUS_LABEL, PAYMENT_STATUS_TAG, dueCountdown, formatDueDate, isPayable } from '../../lib/rentSchedule'
 import { downloadReceiptPdf, receiptNumber } from '../../lib/paymentDocuments'
 import { moneyExact as money } from '../../lib/money'
@@ -18,6 +23,7 @@ export default function PaymentDetailModal({
     payout,
     feeRate,
 }) {
+    const { t } = useTranslation()
     const [downloading, setDownloading] = useState(false)
     const [downloadError, setDownloadError] = useState('')
 
@@ -31,19 +37,19 @@ export default function PaymentDetailModal({
             await downloadReceiptPdf({ payment, contract, tenant })
         } catch (err) {
             console.error('Could not build the receipt PDF', err)
-            setDownloadError('Could not create the receipt. Please try again.')
+            setDownloadError(t('payments.receiptError'))
         } finally {
             setDownloading(false)
         }
     }
 
     const rows = [
-        ['Rent period', formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' })],
-        ['Due date', formatDueDate(payment.payment_date, { month: 'long', day: 'numeric', year: 'numeric' })],
+        [t('docs.receipt.rentPeriod'), formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' })],
+        [t('docs.receipt.dueDate'), formatDueDate(payment.payment_date, { month: 'long', day: 'numeric', year: 'numeric' })],
         [
-            'Paid on',
+            t('docs.receipt.paidOn'),
             payment.paid_at
-                ? new Date(payment.paid_at).toLocaleString('en-US', {
+                ? new Date(payment.paid_at).toLocaleString(currentLocale(), {
                       month: 'long',
                       day: 'numeric',
                       year: 'numeric',
@@ -51,24 +57,33 @@ export default function PaymentDetailModal({
                       minute: '2-digit',
                       timeZone: 'America/El_Salvador',
                   })
-                : '—',
+                : DASH,
         ],
-        ['Method', payment.payment_method || '—'],
-        ['Transaction ID', payment.wompi_transaction_id || '—'],
-        ['Receipt', isPaid ? receiptNumber(payment) : '—'],
-        ['Property', contract.add_business?.property_name || '—'],
-        ['Contract', `#${contract.contract_id}`],
+        [t('docs.reports.method'), payment.payment_method ? paymentMethodLabel(payment.payment_method) : DASH],
+        [t('docs.receipt.transactionId'), payment.wompi_transaction_id || DASH],
+        [t('docs.reports.receipt'), isPaid ? receiptNumber(payment) : DASH],
+        [t('common.property'), contract.add_business?.property_name || DASH],
+        [t('docs.receipt.contract'), `#${contract.contract_id}`],
     ]
     if (viewer === 'owner' && isPaid) {
         rows.push([
-            'Transfer to you',
+            t('paymentDetail.transferToYou'),
             payout
-                ? `Sent ${new Date(payout.sent_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/El_Salvador' })} · Ref. ${payout.reference}`
-                : 'Goes out in your next transfer',
+                ? t('paymentDetail.sent', {
+                      date: new Date(payout.sent_at).toLocaleDateString(currentLocale(), {
+                          month: 'long',
+                          day: 'numeric',
+                          year: 'numeric',
+                          timeZone: 'America/El_Salvador',
+                      }),
+                      reference: payout.reference,
+                      dot: DOT,
+                  })
+                : t('paymentDetail.nextTransfer'),
         ])
     }
     if (viewer === 'tenant' && isPaid) {
-        rows.push(['Paid to', 'The owner, through NextSpace'])
+        rows.push([t('paymentDetail.paidTo'), t('paymentDetail.ownerThrough', BRAND_VALUES)])
     }
 
     return (
@@ -77,10 +92,10 @@ export default function PaymentDetailModal({
                 className="ns-modal ns-modal-form ns-pay-detail-modal"
                 role="dialog"
                 aria-modal="true"
-                aria-label="Payment details"
+                aria-label={t('paymentDetail.title')}
                 onClick={(e) => e.stopPropagation()}
             >
-                <button type="button" className="ns-modal-close" onClick={onClose} aria-label="Close">
+                <button type="button" className="ns-modal-close" onClick={onClose} aria-label={t('common.close')}>
                     <i className="bi bi-x-lg"></i>
                 </button>
 
@@ -93,14 +108,14 @@ export default function PaymentDetailModal({
                     </div>
                     <p className="ns-pay-detail-amount">{money(payment.amount)}</p>
                     <p className="ns-pay-muted mb-3">
-                        Rent for {formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' })}
+                        {t('paymentDetail.rentFor', { month: formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' }) })}
                     </p>
 
                     {viewer === 'owner' && payment.status !== 'Cancelled' && (
                         <FeeBreakdown
                             split={paymentSplit(payment, contractRate(contract, feeRate))}
-                            grossLabel={isPaid ? 'Tenant paid' : 'Tenant pays'}
-                            netLabel={isPaid ? 'You receive' : 'You will receive'}
+                            grossLabel={isPaid ? t('paymentDetail.tenantPaid') : t('paymentDetail.tenantPays')}
+                            netLabel={isPaid ? t('pricing.example.youReceive') : t('paymentDetail.willReceive')}
                         />
                     )}
 
@@ -121,25 +136,25 @@ export default function PaymentDetailModal({
 
                     {isPaid ? (
                         <button type="button" className="ns-submit-btn" onClick={handleDownload} disabled={downloading}>
-                            <i className="bi bi-file-earmark-pdf"></i> {downloading ? 'Creating PDF...' : 'Download receipt (PDF)'}
+                            <i className="bi bi-file-earmark-pdf"></i> {downloading ? t('paymentDetail.creatingPdf') : t('paymentDetail.downloadReceipt')}
                         </button>
                     ) : isPayable(payment.status) && viewer === 'owner' ? (
                         <p className="ns-pay-muted mb-0">
-                            Waiting for {tenant?.first_name || 'the tenant'} to pay it with Wompi in the app.
+                            {t('paymentDetail.waitingTenant', { ...BRAND_VALUES, name: tenant?.first_name || t('paymentDetail.theTenant') })}
                         </p>
                     ) : isPayable(payment.status) && canPay ? (
                         <button type="button" className="ns-submit-btn" onClick={onPay} disabled={paying}>
-                            {paying ? 'Opening Wompi...' : `Pay ${money(payment.amount)}`}
+                            {paying ? t('payments.opening', BRAND_VALUES) : t('paymentDetail.pay', { amount: money(payment.amount) })}
                         </button>
                     ) : isPayable(payment.status) ? (
-                        <p className="ns-pay-muted mb-0">Older months are paid first. Pay the earliest outstanding month to continue.</p>
+                        <p className="ns-pay-muted mb-0">{t('paymentDetail.olderFirst')}</p>
                     ) : (
                         <p className="ns-pay-muted mb-0">
                             {payment.status === 'Scheduled'
                                 ? viewer === 'owner'
-                                    ? 'Not due yet. The tenant can pay it starting a week before its due date.'
-                                    : 'You can pay this month starting a week before its due date.'
-                                : 'This month was cancelled when the lease ended.'}
+                                    ? t('paymentDetail.notDueOwner')
+                                    : t('paymentDetail.notDueTenant')
+                                : t('paymentDetail.cancelled')}
                         </p>
                     )}
 
@@ -149,13 +164,19 @@ export default function PaymentDetailModal({
                             className="ns-detail-ask-rony"
                             onClick={() => {
                                 const month = formatDueDate(payment.payment_date, { month: 'long', year: 'numeric' })
-                                const property = contract.add_business?.property_name || 'my lease'
+                                const property = contract.add_business?.property_name || t('payments.tenant.myLease')
                                 onAskRony({
-                                    text: `Tell me about my ${month} rent for ${property} (${money(payment.amount)}, due ${formatDueDate(payment.payment_date)}, status: ${PAYMENT_STATUS_LABEL[payment.status] || payment.status}). What should I do about it?`,
+                                    text: t('paymentDetail.askText', {
+                                        month,
+                                        name: property,
+                                        amount: money(payment.amount),
+                                        date: formatDueDate(payment.payment_date),
+                                        status: PAYMENT_STATUS_LABEL[payment.status] || payment.status,
+                                    }),
                                 })
                             }}
                         >
-                            <i className="bi bi-stars"></i> Ask Rony about this month
+                            <i className="bi bi-stars"></i> {t('paymentDetail.askRony', BRAND_VALUES)}
                         </button>
                     )}
                 </div>

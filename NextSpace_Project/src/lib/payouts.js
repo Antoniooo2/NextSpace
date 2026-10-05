@@ -4,10 +4,23 @@
 // and keep the bank account they want to be paid into.
 import { supabase } from './supabaseClient'
 import { describeSupabaseError } from './supabaseErrors'
+import i18n from '../i18n'
+import { accountTypeLabel } from './displayValues'
+import { BULLETS } from './symbols'
 
 export const ACCOUNT_TYPES = [
-    { id: 'Savings', label: 'Savings' },
-    { id: 'Checking', label: 'Checking' },
+    {
+        id: 'Savings',
+        get label() {
+            return accountTypeLabel('Savings')
+        },
+    },
+    {
+        id: 'Checking',
+        get label() {
+            return accountTypeLabel('Checking')
+        },
+    },
 ]
 
 export async function loadPayouts() {
@@ -38,15 +51,15 @@ export async function savePayoutAccount({ ownerDui, holderName, bankName, accoun
 // "•••• 5678"
 export function maskAccountNumber(number) {
     const digits = String(number || '').replace(/\D/g, '')
-    return digits.length > 4 ? `•••• ${digits.slice(-4)}` : digits
+    return digits.length > 4 ? `${BULLETS} ${digits.slice(-4)}` : digits
 }
 
 export function validatePayoutAccount({ holderName, bankName, accountNumber }) {
     const errors = {}
-    if (holderName.trim().length < 3) errors.holderName = 'Write the full name on the account.'
-    if (bankName.trim().length < 2) errors.bankName = 'Choose or write the bank.'
+    if (holderName.trim().length < 3) errors.holderName = i18n.t('payouts.errors.holderName')
+    if (bankName.trim().length < 2) errors.bankName = i18n.t('payouts.errors.bankName')
     const cleaned = accountNumber.replace(/\s+/g, '')
-    if (!/^[0-9][0-9-]{4,28}[0-9]$/.test(cleaned)) errors.accountNumber = 'Use only numbers (dashes are fine), at least 6 digits.'
+    if (!/^[0-9][0-9-]{4,28}[0-9]$/.test(cleaned)) errors.accountNumber = i18n.t('payouts.errors.accountNumber')
     return errors
 }
 

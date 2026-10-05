@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../../i18n'
+import { BRAND_VALUES } from '../../../lib/brand'
 import { supabase } from '../../../lib/supabaseClient'
 import AdvisorForm from './AdvisorForm'
 import { AdvisorComposer, AdvisorHome, AdvisorTopBar, RonyTyping } from './AdvisorChrome'
@@ -10,49 +13,45 @@ import PropertyResultCard from './PropertyResultCard'
 import RonyReply from './RonyReply'
 import { BUSINESS_TOPICS, useAdvisorLiveCards } from './useAdvisorContext'
 
-// Shown in the side panel over Payments, where questions are about rent.
-const COMPACT_WELCOME_TEXT =
-    'Hi, ask me about your **rent**, your **leases** or your payments — or about finding another space.'
-const COMPACT_STARTERS = ['When is my next payment due?', 'Am I late on anything?', 'When does my lease end?']
-
-const RELAXED_LABELS = {
-    required_services: 'dropped the required services',
-    municipality: 'searched the whole department instead of one municipality',
-    budget_max_15: 'raised the budget by 15%',
-    budget_max_30: 'raised the budget by 30%',
-    property_type_other: 'included other property types',
+const RELAXED_KEYS = {
+    required_services: 'requiredServices',
+    municipality: 'municipality',
+    budget_max_15: 'budget15',
+    budget_max_30: 'budget30',
+    property_type_other: 'otherTypes',
 }
 
 const HISTORY_LIMIT = 20
 
 function computeChips(lastTurn) {
     if (!lastTurn) return []
+    const t = (key) => i18n.t(`advisor.business.chips.${key}`)
 
     if (lastTurn.intent === 'search' || lastTurn.intent === 'refine') {
         if (lastTurn.resultsCount === 0) {
-            return ['Raise my budget', 'Try a different area']
+            return [t('raiseBudget'), t('differentArea')]
         }
-        const chips = ['Something cheaper', 'Why that one?', 'What should I check before signing?']
-        if (lastTurn.relaxedCount > 0) chips.push('Widen the search more')
+        const chips = [t('cheaper'), t('whyThat'), t('checkBeforeSigning')]
+        if (lastTurn.relaxedCount > 0) chips.push(t('widen'))
         return chips
     }
 
     if (lastTurn.intent === 'explain') {
-        return ['Something cheaper', 'Any other options?']
+        return [t('cheaper'), t('otherOptions')]
     }
 
     if (lastTurn.intent === 'account') {
-        return ['How much do I still owe this year?', 'When is my next payment due?', 'Am I late on anything?']
+        return [t('oweThisYear'), t('nextPayment'), t('lateAnything')]
     }
 
-    return ['Something cheaper', 'What should I check before signing?']
+    return [t('cheaper'), t('checkBeforeSigning')]
 }
 
 // A rent answer always offers a way to Payments, even when the model didn't
 // add the button itself (and for answers saved before buttons existed).
 function linksWithPayments(links = [], paymentsLink) {
     if (!paymentsLink || links.some((l) => l.target === 'payments')) return links
-    return [{ label: 'Open Payments', target: 'payments', contractId: paymentsLink.contractId ?? null }, ...links].slice(0, 2)
+    return [{ label: i18n.t('advisor.openPayments'), target: 'payments', contractId: paymentsLink.contractId ?? null }, ...links].slice(0, 2)
 }
 
 function buildResultsBlock(payload) {
@@ -66,6 +65,7 @@ function buildResultsBlock(payload) {
 }
 
 export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate, seed, onSeedConsumed, compact = false }) {
+    const { t } = useTranslation()
     const [servicesCatalog, setServicesCatalog] = useState([])
     const [historyLoaded, setHistoryLoaded] = useState(false)
     const [formOpen, setFormOpen] = useState(true)
@@ -229,7 +229,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
 
         if (!accessToken) {
             setLoading(false)
-            setError('Your session expired. Please sign in again.')
+            setError(t('payments.sessionExpired'))
             return
         }
 
@@ -252,7 +252,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
 
             const result = await response.json()
             if (!response.ok) {
-                throw new Error(result.error || 'Something went wrong. Please try again.')
+                throw new Error(result.error || t('common.genericError'))
             }
 
             setMessages((prev) => [...prev, { role: 'assistant', content: result.reply }])
@@ -331,7 +331,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
 
             persistTurn(userId, userVisibleText, result.reply, persistPayload, attachment)
         } catch (err) {
-            setError(err.message || 'Could not reach Rony. Please try again.')
+            setError(err.message || t('advisor.unreachable', BRAND_VALUES))
         } finally {
             setLoading(false)
         }
@@ -383,7 +383,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
     const handleNewChat = async () => {
         const { error: deleteError } = await clearHistory()
         if (deleteError) {
-            setError('Could not clear the conversation. Please try again.')
+            setError(t('advisor.clearError'))
             return
         }
         chatLogRef.current = []
@@ -405,7 +405,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading your conversation...</p>
+                <p>{t('advisor.loading')}</p>
             </div>
         )
     }
@@ -438,7 +438,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
         <div className={`advisor-shell ${compact ? 'is-compact' : ''}`}>
             {!compact && (
                 <AdvisorTopBar
-                    subtitle={filter ? 'Searching with your filters' : 'Knows the marketplace, your rent and your leases'}
+                    subtitle={filter ? t('advisor.business.subtitleFilters') : t('advisor.business.subtitle')}
                     canReset={chatLog.length > 0}
                     onNewChat={handleNewChat}
                 >
@@ -454,7 +454,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
                 {isEmpty && !compact && (
                     <AdvisorHome
                         firstName={firstName}
-                        intro="I search the NextSpace marketplace for you and keep an eye on your rent and leases."
+                        intro={t('advisor.business.intro', BRAND_VALUES)}
                         liveCards={liveCards}
                         topics={BUSINESS_TOPICS}
                         onAsk={ask}
@@ -464,7 +464,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
                                     searchForm
                                 ) : (
                                     <button type="button" className="ns-link-btn" onClick={() => setSearchFormOpen(true)}>
-                                        <i className="bi bi-sliders"></i> Prefer filters? Search with a form
+                                        <i className="bi bi-sliders"></i> {t('advisor.business.preferForm')}
                                     </button>
                                 )}
                             </div>
@@ -473,7 +473,13 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
                 )}
 
                 {isEmpty && compact && (
-                    <RonyReply item={{ text: COMPACT_WELCOME_TEXT, followUps: COMPACT_STARTERS }} onFollowUp={ask} />
+                    <RonyReply
+                        item={{
+                            text: t('advisor.business.compactWelcome'),
+                            followUps: [t('advisor.business.chips.nextPayment'), t('advisor.business.chips.lateAnything'), t('advisor.business.chips.leaseEnd')],
+                        }}
+                        onFollowUp={ask}
+                    />
                 )}
 
                 {chatLog.map((item, i) => {
@@ -510,8 +516,12 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
                             >
                                 {item.relaxed?.length > 0 && (
                                     <p className="advisor-relaxed-note">
-                                        <i className="bi bi-funnel"></i> I{' '}
-                                        {item.relaxed.map((key) => RELAXED_LABELS[key] || key).join(', ')} to find more.
+                                        <i className="bi bi-funnel"></i>{' '}
+                                        {t('advisor.business.relaxed', {
+                                            items: item.relaxed
+                                                .map((key) => (RELAXED_KEYS[key] ? t(`advisor.business.relaxedItems.${RELAXED_KEYS[key]}`) : key))
+                                                .join(', '),
+                                        })}
                                     </p>
                                 )}
                                 {following?.type === 'results' && renderResults(following)}
@@ -535,7 +545,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
                 onChange={setInput}
                 onSubmit={handleComposerSubmit}
                 disabled={loading}
-                placeholder="Ask Rony anything, or say what to change..."
+                placeholder={t('advisor.business.placeholder', BRAND_VALUES)}
                 attachment={
                     pendingAttachment && (
                         <div className="advisor-attachment-preview">
@@ -549,7 +559,7 @@ export default function BusinessAdvisor({ firstName, onViewProperty, onNavigate,
                                 type="button"
                                 className="advisor-attachment-remove"
                                 onClick={() => setPendingAttachment(null)}
-                                aria-label="Remove attachment"
+                                aria-label={t('advisor.removeAttachment')}
                             >
                                 <i className="bi bi-x-lg"></i>
                             </button>

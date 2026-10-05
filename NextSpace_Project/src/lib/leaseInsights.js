@@ -1,10 +1,14 @@
 // Numbers about a lease's rent history, computed from its installments
 // (one payment row per month; payment_date = due date). Shared by the owner
 // and tenant Payments screens so both sides always see the same figures.
-import { daysUntil, effectiveStatus, isPayable, todayInElSalvador } from './rentSchedule'
+import { daysUntil, effectiveStatus, formatDueDate, isPayable, todayInElSalvador } from './rentSchedule'
 import { money } from './money'
+import i18n, { currentLocale } from '../i18n'
+import { BRAND_VALUES } from './brand'
 
 export { money }
+
+const t = (key, values) => i18n.t(key, { ...BRAND_VALUES, ...values })
 
 // Calendar date (YYYY-MM-DD) in El Salvador of a timestamptz string.
 export function svDateOf(timestamp) {
@@ -19,7 +23,7 @@ export function monthKeyShift(monthKey, offset) {
 
 export function monthLabel(monthKey, month = 'short') {
     const [y, m] = monthKey.split('-').map(Number)
-    return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', {
+    return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(currentLocale(), {
         month,
         year: month === 'long' ? 'numeric' : undefined,
         timeZone: 'UTC',
@@ -81,26 +85,24 @@ export function leaseStats(installments, today = todayInElSalvador()) {
 // Payment risk of a tenant on one lease, from how they have actually paid.
 export function riskLevel(stats) {
     if (stats.monthsDue === 0) {
-        return { level: 'new', label: 'New lease', reasons: ['No rent has come due yet, so there is no payment history.'] }
+        return { level: 'new', label: t('risk.new'), reasons: [t('risk.reasons.noHistory')] }
     }
 
     const reasons = []
     const onTimePct = Math.round((stats.onTimeRate ?? 0) * 100)
-    reasons.push(`${stats.paidOnTime} of ${stats.monthsDue} months paid on time (${onTimePct}%).`)
+    reasons.push(t('risk.reasons.paidOnTime', { count: stats.monthsDue, paid: stats.paidOnTime, pct: onTimePct }))
     if (stats.lateMonths > 0) {
-        reasons.push(
-            `${stats.lateMonths} ${stats.lateMonths === 1 ? 'month' : 'months'} unpaid and late, the oldest ${stats.oldestLateDays} days.`
-        )
+        reasons.push(t('risk.reasons.lateMonths', { count: stats.lateMonths, days: stats.oldestLateDays }))
     }
-    if (stats.avgDaysLate >= 1) reasons.push(`On average rent arrives ${stats.avgDaysLate.toFixed(1)} days late.`)
+    if (stats.avgDaysLate >= 1) reasons.push(t('risk.reasons.avgLate', { days: stats.avgDaysLate.toFixed(1) }))
 
     if (stats.oldestLateDays > 15 || stats.lateMonths >= 2 || (stats.monthsDue >= 2 && stats.onTimeRate < 0.5)) {
-        return { level: 'high', label: 'High risk', reasons }
+        return { level: 'high', label: t('risk.high'), reasons }
     }
     if (stats.lateMonths > 0 || stats.onTimeRate < 0.85 || stats.avgDaysLate > 3) {
-        return { level: 'medium', label: 'Watch', reasons }
+        return { level: 'medium', label: t('risk.medium'), reasons }
     }
-    return { level: 'low', label: 'Reliable', reasons }
+    return { level: 'low', label: t('risk.low'), reasons }
 }
 
 // Share of the lease's calendar time that has passed (0..1).
@@ -113,7 +115,7 @@ export function leaseTimeProgress(contract, today = todayInElSalvador()) {
 }
 
 export function tenantName(users) {
-    return users ? `${users.first_name} ${users.last_name}` : 'Tenant'
+    return users ? `${users.first_name} ${users.last_name}` : t('common.tenant')
 }
 
 // leases: [{ contract, installments, stats }]. Expected rent per month for
@@ -124,7 +126,7 @@ export function incomeProjection(leases, today = todayInElSalvador(), count = 6)
     const months = keys.map((key) => {
         const parts = leases
             .map(({ contract, installments }) => ({
-                name: contract.add_business?.property_name || 'Property',
+                name: contract.add_business?.property_name || t('common.property'),
                 amount: sum(installments.filter((p) => p.payment_date.slice(0, 7) === key)),
             }))
             .filter((p) => p.amount > 0)
@@ -135,7 +137,7 @@ export function incomeProjection(leases, today = todayInElSalvador(), count = 6)
         .filter(({ contract }) => contract.end_date && contract.end_date.slice(0, 7) >= start && contract.end_date.slice(0, 7) <= keys[keys.length - 1])
         .map(({ contract }) => ({
             contractId: contract.contract_id,
-            name: contract.add_business?.property_name || 'Property',
+            name: contract.add_business?.property_name || t('common.property'),
             endDate: contract.end_date,
             monthlyRent: Number(contract.monthly_rent || 0),
             daysLeft: daysUntil(contract.end_date, today),
@@ -157,8 +159,14 @@ export function ownerInsights({ leases, thisMonth, projection, today = todayInEl
         items.push({
             tone: 'danger',
             icon: 'bi-exclamation-octagon-fill',
-            text: `${tenantName(contract.users)} is ${stats.oldestLateDays} ${stats.oldestLateDays === 1 ? 'day' : 'days'} late on ${contract.add_business?.property_name || 'their lease'} — ${money(stats.owedNow)} owed${stats.lateMonths > 1 ? ` over ${stats.lateMonths} months` : ''}.`,
-            action: { type: 'open-lease', contractId: contract.contract_id, label: 'Send a reminder' },
+            text: t('insights.owner.late', {
+                count: stats.oldestLateDays,
+                tenant: tenantName(contract.users),
+                name: contract.add_business?.property_name || t('insights.owner.theirLease'),
+                owed: money(stats.owedNow),
+                over: stats.lateMonths > 1 ? t('insights.overMonths', { count: stats.lateMonths }) : '',
+            }),
+            action: { type: 'open-lease', contractId: contract.contract_id, label: t('insights.owner.sendReminder') },
         })
     }
 
@@ -167,7 +175,7 @@ export function ownerInsights({ leases, thisMonth, projection, today = todayInEl
         items.push({
             tone: pct >= 100 ? 'success' : 'info',
             icon: 'bi-cash-stack',
-            text: `This month you've collected ${money(thisMonth.collected)} of ${money(thisMonth.expected)} expected (${pct}%).`,
+            text: t('insights.owner.collected', { collected: money(thisMonth.collected), expected: money(thisMonth.expected), pct }),
         })
     }
 
@@ -185,7 +193,7 @@ export function ownerInsights({ leases, thisMonth, projection, today = todayInEl
         items.push({
             tone: 'info',
             icon: 'bi-calendar-check',
-            text: `${money(sum(week.map((w) => w.p)))} is due in the next 7 days from ${tenants} ${tenants === 1 ? 'tenant' : 'tenants'}.`,
+            text: t('insights.owner.dueThisWeek', { amount: money(sum(week.map((w) => w.p))), count: tenants }),
         })
     }
 
@@ -197,21 +205,25 @@ export function ownerInsights({ leases, thisMonth, projection, today = todayInEl
             tone: 'warning',
             icon: 'bi-hourglass-split',
             text:
-                `${ending.name}'s lease ends in ${ending.daysLeft} days — your expected rent drops by ${money(ending.monthlyRent)}/month after that.` +
-                (reliable ? ' The tenant has paid on time, a good candidate to renew.' : ''),
+                t('insights.owner.leaseEnds', { name: ending.name, count: ending.daysLeft, rent: money(ending.monthlyRent) }) +
+                (reliable ? t('insights.owner.goodCandidate') : ''),
             action:
                 ending.daysLeft <= 90
-                    ? { type: 'open-contract', contractId: ending.contractId, label: lease?.contract.renewal_requested_at ? 'Answer renewal request' : 'Offer renewal' }
+                    ? {
+                          type: 'open-contract',
+                          contractId: ending.contractId,
+                          label: lease?.contract.renewal_requested_at ? t('insights.owner.answerRenewal') : t('insights.owner.offerRenewal'),
+                      }
                     : {
                           type: 'ask-rony',
-                          label: 'Ask Rony',
-                          text: `${ending.name}'s lease ends on ${ending.endDate}. Should I offer a renewal or re-list it, and at what rent?`,
+                          label: t('insights.owner.askRony'),
+                          text: t('insights.owner.askRonyText', { name: ending.name, date: formatDueDate(ending.endDate) }),
                       },
         })
     }
 
     if (late.length === 0 && leases.length > 0) {
-        items.push({ tone: 'success', icon: 'bi-check-circle-fill', text: 'No tenant is late on rent.' })
+        items.push({ tone: 'success', icon: 'bi-check-circle-fill', text: t('insights.owner.noneLate') })
     }
 
     return items
@@ -223,21 +235,27 @@ export function tenantInsights({ leases, today = todayInElSalvador() }) {
     const items = []
 
     for (const { contract, stats } of leases) {
-        const name = contract.add_business?.property_name || 'your lease'
+        const name = contract.add_business?.property_name || t('insights.tenant.yourLease')
         if (stats.lateMonths > 0) {
             items.push({
                 tone: 'danger',
                 icon: 'bi-exclamation-octagon-fill',
-                text: `Your rent for ${name} is ${stats.oldestLateDays} ${stats.oldestLateDays === 1 ? 'day' : 'days'} late — ${money(stats.owedNow)} owed${stats.lateMonths > 1 ? ` over ${stats.lateMonths} months` : ''}. Months are paid oldest first.`,
-                action: { type: 'select-lease', contractId: contract.contract_id, label: 'Pay now' },
+                text: t('insights.tenant.late', {
+                    name,
+                    count: stats.oldestLateDays,
+                    owed: money(stats.owedNow),
+                    over: stats.lateMonths > 1 ? t('insights.overMonths', { count: stats.lateMonths }) : '',
+                }),
+                action: { type: 'select-lease', contractId: contract.contract_id, label: t('insights.tenant.payNow') },
             })
         } else if (stats.owedNow > 0 && stats.nextUnpaid) {
             const d = daysUntil(stats.nextUnpaid.payment_date, today)
+            const when = d === 0 ? t('insights.tenant.today') : d === 1 ? t('insights.tenant.tomorrow') : t('insights.tenant.inDays', { count: d })
             items.push({
                 tone: 'warning',
                 icon: 'bi-clock-fill',
-                text: `${money(stats.nextUnpaid.amount)} for ${name} is due ${d === 0 ? 'today' : d === 1 ? 'tomorrow' : `in ${d} days`}.`,
-                action: { type: 'select-lease', contractId: contract.contract_id, label: 'Pay now' },
+                text: t('insights.tenant.due', { amount: money(stats.nextUnpaid.amount), name, when }),
+                action: { type: 'select-lease', contractId: contract.contract_id, label: t('insights.tenant.payNow') },
             })
         }
     }
@@ -248,7 +266,7 @@ export function tenantInsights({ leases, today = todayInElSalvador() }) {
         items.push({
             tone: 'info',
             icon: 'bi-wallet2',
-            text: `In total you owe ${money(total)} right now across ${owing.length} leases.`,
+            text: t('insights.tenant.totalOwed', { total: money(total), count: owing.length }),
         })
     }
 
@@ -256,13 +274,13 @@ export function tenantInsights({ leases, today = todayInElSalvador() }) {
         if (!contract.end_date) continue
         const left = daysUntil(contract.end_date, today)
         if (left < 0 || left > 90 || contract.termination_requested_at) continue
-        const name = contract.add_business?.property_name || 'your lease'
+        const name = contract.add_business?.property_name || t('insights.tenant.yourLease')
         if (contract.renewal_offered_at) {
             items.push({
                 tone: 'warning',
                 icon: 'bi-arrow-repeat',
-                text: `The owner offered to renew ${name} at ${money(contract.renewal_rent)}/month. Review and sign it in Contracts.`,
-                action: { type: 'open-contract', contractId: contract.contract_id, label: 'Review renewal' },
+                text: t('insights.tenant.renewalOffered', { name, rent: money(contract.renewal_rent) }),
+                action: { type: 'open-contract', contractId: contract.contract_id, label: t('insights.tenant.reviewRenewal') },
             })
             continue
         }
@@ -270,19 +288,17 @@ export function tenantInsights({ leases, today = todayInElSalvador() }) {
             items.push({
                 tone: 'info',
                 icon: 'bi-arrow-repeat',
-                text: `You asked to renew ${name}. The owner will answer with an offer to sign.`,
+                text: t('insights.tenant.renewalRequested', { name }),
             })
             continue
         }
         const record =
-            stats.monthsDue > 0 && stats.paidOnTime === stats.monthsDue
-                ? ` You've paid all ${stats.monthsDue} months on time, a strong case for renewing.`
-                : ''
+            stats.monthsDue > 0 && stats.paidOnTime === stats.monthsDue ? t('insights.tenant.strongRecord', { count: stats.monthsDue }) : ''
         items.push({
             tone: 'warning',
             icon: 'bi-hourglass-split',
-            text: `Your lease for ${name} ends in ${left} days (${contract.end_date}).${record}`,
-            action: { type: 'renewal-request', contractId: contract.contract_id, label: 'Ask to renew' },
+            text: t('insights.tenant.leaseEnds', { name, count: left, date: formatDueDate(contract.end_date) }) + record,
+            action: { type: 'renewal-request', contractId: contract.contract_id, label: t('insights.tenant.askToRenew') },
         })
     }
 
@@ -295,8 +311,12 @@ export function tenantInsights({ leases, today = todayInElSalvador() }) {
             tone: 'success',
             icon: 'bi-check-circle-fill',
             text: next
-                ? `You're up to date on every lease. Next payment: ${money(next.p.amount)} for ${next.contract.add_business?.property_name || 'your lease'} on ${next.p.payment_date}.`
-                : "You're up to date and every month of your leases is paid.",
+                ? t('insights.tenant.upToDateNext', {
+                      amount: money(next.p.amount),
+                      name: next.contract.add_business?.property_name || t('insights.tenant.yourLease'),
+                      date: formatDueDate(next.p.payment_date),
+                  })
+                : t('insights.tenant.allPaid'),
         })
     }
 
@@ -305,7 +325,7 @@ export function tenantInsights({ leases, today = todayInElSalvador() }) {
         items.push({
             tone: 'success',
             icon: 'bi-award-fill',
-            text: `${stats.monthsDue} months in a row paid on time for ${contract.add_business?.property_name || 'your lease'}. Nice record.`,
+            text: t('insights.tenant.streak', { count: stats.monthsDue, name: contract.add_business?.property_name || t('insights.tenant.yourLease') }),
         })
     }
 

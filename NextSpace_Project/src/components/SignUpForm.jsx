@@ -1,23 +1,27 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import logo from '../assets/NextSpace_logo.png'
 import { supabase } from '../lib/supabaseClient'
+import { describeAuthError } from '../lib/supabaseErrors'
+import { BRAND_NAME } from '../lib/brand'
+import { PASSWORD_MASK } from '../lib/symbols'
+import LanguageSwitcher from './LanguageSwitcher.jsx'
 
 const ACCOUNT_TYPES = [
     {
         id: 'business',
         icon: 'bi-shop',
-        title: 'Business',
-        description: 'I want to open or find my business',
+        key: 'business',
     },
     {
         id: 'property-owner',
         icon: 'bi-building',
-        title: 'Property Owner',
-        description: 'I want to rent my property',
+        key: 'owner',
     },
 ]
 
 export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
+    const { t } = useTranslation()
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
     const [dui, setDui] = useState('')
@@ -35,7 +39,7 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
         setErrorMsg('')
         setSuccessMsg('')
         if (!/^\d{8}-\d$/.test(dui)) {
-            setErrorMsg('Enter your DUI as 8 digits, a dash and 1 digit (00000000-0).')
+            setErrorMsg(t('auth.signup.duiFormat'))
             return
         }
         setLoading(true)
@@ -60,30 +64,33 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
             // back as a generic database error.
             setErrorMsg(
                 /database error/i.test(error.message)
-                    ? 'We could not create the account. Check your DUI, or sign in if you already have an account.'
-                    : error.message
+                    ? t('auth.signup.couldNotCreate')
+                    : describeAuthError(error)
             )
             return
         }
 
-        setSuccessMsg('Account created! Check your email to confirm.')
+        setSuccessMsg(t('auth.signup.success'))
     }
 
     return (
         <div className="ns-card">
+            <div className="ns-card-lang">
+                <LanguageSwitcher />
+            </div>
             <div className="ns-logo">
                 <button
                     type="button"
                     className="ns-logo-btn"
                     onClick={() => onLogoClick && onLogoClick()}
-                    aria-label="Go to homepage"
+                    aria-label={t('auth.goHome')}
                 >
-                    <img src={logo} alt="NextSpace" className="ns-logo-img" />
+                    <img src={logo} alt={BRAND_NAME} className="ns-logo-img" />
                 </button>
             </div>
 
-            <h1 className="ns-title">Create your account</h1>
-            <p className="ns-subtitle">It's free and takes less than 2 minutes.</p>
+            <h1 className="ns-title">{t('auth.signup.title')}</h1>
+            <p className="ns-subtitle">{t('auth.signup.subtitle')}</p>
 
             {errorMsg && (
                 <div className="alert alert-danger py-2" role="alert">
@@ -98,11 +105,11 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
 
             <form onSubmit={handleSubmit} noValidate>
                 <div className="ns-mb-field">
-                    <label htmlFor="firstName" className="ns-label">First name</label>
+                    <label htmlFor="firstName" className="ns-label">{t('auth.signup.firstName')}</label>
                     <div className={`ns-input-group input-group ${focusedField === 'firstName' ? 'focused' : ''}`}>
                         <span className="input-group-text"><i className="bi bi-person"></i></span>
                         <input
-                            id="firstName" type="text" className="form-control" placeholder="Ronaldo"
+                            id="firstName" type="text" className="form-control" placeholder={t('auth.signup.firstNamePlaceholder')}
                             value={firstName} onChange={(e) => setFirstName(e.target.value)}
                             onFocus={() => setFocusedField('firstName')} onBlur={() => setFocusedField(null)}
                         />
@@ -110,11 +117,11 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="lastName" className="ns-label">Last name</label>
+                    <label htmlFor="lastName" className="ns-label">{t('auth.signup.lastName')}</label>
                     <div className={`ns-input-group input-group ${focusedField === 'lastName' ? 'focused' : ''}`}>
                         <span className="input-group-text"><i className="bi bi-person"></i></span>
                         <input
-                            id="lastName" type="text" className="form-control" placeholder="Mendoza"
+                            id="lastName" type="text" className="form-control" placeholder={t('auth.signup.lastNamePlaceholder')}
                             value={lastName} onChange={(e) => setLastName(e.target.value)}
                             onFocus={() => setFocusedField('lastName')} onBlur={() => setFocusedField(null)}
                         />
@@ -122,11 +129,11 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="email" className="ns-label">Email address</label>
+                    <label htmlFor="email" className="ns-label">{t('auth.signup.email')}</label>
                     <div className={`ns-input-group input-group ${focusedField === 'email' ? 'focused' : ''}`}>
                         <span className="input-group-text"><i className="bi bi-envelope"></i></span>
                         <input
-                            id="email" type="email" className="form-control" placeholder="example@nextspace.com"
+                            id="email" type="email" className="form-control" placeholder={t('auth.emailPlaceholder')}
                             value={email} onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocusedField('email')} onBlur={() => setFocusedField(null)}
                         />
@@ -134,7 +141,7 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="dui" className="ns-label">DUI</label>
+                    <label htmlFor="dui" className="ns-label">{t('auth.signup.dui')}</label>
                     <div className={`ns-input-group input-group ${focusedField === 'dui' ? 'focused' : ''}`}>
                         <span className="input-group-text"><i className="bi bi-person-badge"></i></span>
                         <input
@@ -152,17 +159,17 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                 </div>
 
                 <div className="ns-mb-field">
-                    <label htmlFor="password" className="ns-label">Password</label>
+                    <label htmlFor="password" className="ns-label">{t('auth.signup.password')}</label>
                     <div className={`ns-input-group input-group ${focusedField === 'password' ? 'focused' : ''}`}>
                         <span className="input-group-text"><i className="bi bi-lock"></i></span>
                         <input
-                            id="password" type={showPassword ? 'text' : 'password'} className="form-control" placeholder="••••••••"
+                            id="password" type={showPassword ? 'text' : 'password'} className="form-control" placeholder={PASSWORD_MASK}
                             value={password} onChange={(e) => setPassword(e.target.value)}
                             onFocus={() => setFocusedField('password')} onBlur={() => setFocusedField(null)}
                         />
                         <button
                             type="button" className="ns-eye-btn" onClick={() => setShowPassword((v) => !v)}
-                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                            aria-label={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                         >
                             <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                         </button>
@@ -170,7 +177,7 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                 </div>
 
                 <div className="ns-mb-field">
-                    <span className="ns-account-type-label">Account type</span>
+                    <span className="ns-account-type-label">{t('auth.signup.accountType')}</span>
                     <div className="row g-2">
                         {ACCOUNT_TYPES.map((type) => (
                             <div className="col-6" key={type.id}>
@@ -186,8 +193,8 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                                     }}
                                 >
                                     <i className={`bi ${type.icon} ns-type-icon`}></i>
-                                    <div className="ns-type-title">{type.title}</div>
-                                    <p className="ns-type-desc">{type.description}</p>
+                                    <div className="ns-type-title">{t(`auth.signup.types.${type.key}.title`)}</div>
+                                    <p className="ns-type-desc">{t(`auth.signup.types.${type.key}.description`)}</p>
                                 </div>
                             </div>
                         ))}
@@ -195,14 +202,14 @@ export default function SignupForm({ onSwitchToLogin, onLogoClick }) {
                 </div>
 
                 <button type="submit" className="ns-submit-btn" disabled={loading}>
-                    {loading ? 'Creating account...' : 'Create my account'}
+                    {loading ? t('auth.signup.submitting') : t('auth.signup.submit')}
                 </button>
             </form>
 
             <p className="ns-footer-text">
-                Already have an account?{' '}
+                {t('auth.signup.haveAccount')}{' '}
                 <button type="button" className="ns-link-btn" onClick={onSwitchToLogin}>
-                    Sign in
+                    {t('auth.signup.signIn')}
                 </button>
             </p>
         </div>

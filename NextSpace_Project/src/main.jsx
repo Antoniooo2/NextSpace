@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './index.css'
-import './i18n'
+import i18n from './i18n'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
 
@@ -22,7 +22,7 @@ function renderFatalError(error) {
     '<pre style="white-space: pre-wrap; word-break: break-word; font-family: monospace; ' +
     'background: #fff8f8; color: #58151c; padding: 1.5rem; margin: 0; min-height: 100vh; ' +
     'box-sizing: border-box; font-size: 0.9rem;">' +
-    'The app failed to start.\n\n' +
+    escapeHtml(i18n.t('app.failedToStart')) + '\n\n' +
     escapeHtml(message) +
     '\n\n' +
     escapeHtml(stack) +

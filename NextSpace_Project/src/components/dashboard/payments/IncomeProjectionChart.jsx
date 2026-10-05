@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { DOT, FLAG } from '../../../lib/symbols'
 import { formatDueDate } from '../../../lib/rentSchedule'
 import { money } from '../../../lib/leaseInsights'
 
@@ -30,11 +32,10 @@ function barPath(x, y, w, h) {
 }
 
 // projection: { months: [{ key, label, fullLabel, total, parts }], endings }
-export default function IncomeProjectionChart({
-    projection,
-    label = 'Expected rent for the next six months',
-    endingNote = (e) => `${money(e.monthlyRent)}/month less after that.`,
-}) {
+export default function IncomeProjectionChart({ projection, label, endingNote }) {
+    const { t } = useTranslation()
+    const chartLabel = label || t('projectionChart.label')
+    const noteFor = endingNote || ((e) => t('projectionChart.endingNote', { rent: money(e.monthlyRent) }))
     const [hover, setHover] = useState(null)
     const [width, setWidth] = useState(560)
     const ref = useRef(null)
@@ -71,20 +72,20 @@ export default function IncomeProjectionChart({
                     width={width}
                     height={HEIGHT}
                     role="img"
-                    aria-label={label}
+                    aria-label={chartLabel}
                     onMouseLeave={() => setHover(null)}
                 >
-                    {ticks.map((t) => (
-                        <g key={t}>
+                    {ticks.map((tick) => (
+                        <g key={tick}>
                             <line
                                 x1={PAD.left}
                                 x2={width - PAD.right}
-                                y1={y(t)}
-                                y2={y(t)}
-                                className={t === 0 ? 'ns-collect-baseline' : 'ns-collect-grid'}
+                                y1={y(tick)}
+                                y2={y(tick)}
+                                className={tick === 0 ? 'ns-collect-baseline' : 'ns-collect-grid'}
                             />
-                            <text x={PAD.left - 8} y={y(t) + 4} textAnchor="end" className="ns-collect-tick">
-                                {compactMoney(t)}
+                            <text x={PAD.left - 8} y={y(tick) + 4} textAnchor="end" className="ns-collect-tick">
+                                {compactMoney(tick)}
                             </text>
                         </g>
                     ))}
@@ -109,7 +110,7 @@ export default function IncomeProjectionChart({
                                 </text>
                                 {ending && (
                                     <text x={cx} y={PAD.top + 10} textAnchor="middle" className="ns-projection-flag">
-                                        ⚑ lease ends
+                                        {FLAG} {t('projectionChart.leaseEnds')}
                                     </text>
                                 )}
                                 <rect
@@ -122,7 +123,7 @@ export default function IncomeProjectionChart({
                                     onMouseEnter={() => setHover(i)}
                                     onFocus={() => setHover(i)}
                                     onBlur={() => setHover(null)}
-                                    aria-label={`${m.fullLabel}: ${money(m.total)} expected`}
+                                    aria-label={t('projectionChart.barAria', { month: m.fullLabel, amount: money(m.total) })}
                                 />
                             </g>
                         )
@@ -135,9 +136,9 @@ export default function IncomeProjectionChart({
                         role="status"
                     >
                         <strong>
-                            {hovered.fullLabel} · {money(hovered.total)}
+                            {hovered.fullLabel} {DOT} {money(hovered.total)}
                         </strong>
-                        {hovered.parts.length === 0 && <em>No rent scheduled</em>}
+                        {hovered.parts.length === 0 && <em>{t('projectionChart.noRent')}</em>}
                         {hovered.parts.map((p) => (
                             <span key={p.name}>
                                 {p.name} <b>{money(p.amount)}</b>
@@ -151,19 +152,24 @@ export default function IncomeProjectionChart({
                 <ul className="ns-projection-endings">
                     {endings.map((e) => (
                         <li key={e.contractId}>
-                            <i className="bi bi-flag-fill"></i> {e.name}'s lease ends {formatDueDate(e.endDate)}
-                            {e.daysLeft >= 0 && ` (in ${e.daysLeft} days)`} — {endingNote(e)}
+                            <i className="bi bi-flag-fill"></i>{' '}
+                            {t('projectionChart.ending', {
+                                name: e.name,
+                                date: formatDueDate(e.endDate),
+                                days: e.daysLeft >= 0 ? t('projectionChart.inDays', { count: e.daysLeft }) : '',
+                                note: noteFor(e),
+                            })}
                         </li>
                     ))}
                 </ul>
             )}
 
             <table className="visually-hidden">
-                <caption>{label}</caption>
+                <caption>{chartLabel}</caption>
                 <thead>
                     <tr>
-                        <th>Month</th>
-                        <th>Expected</th>
+                        <th>{t('docs.reports.month')}</th>
+                        <th>{t('docs.reports.expected')}</th>
                     </tr>
                 </thead>
                 <tbody>

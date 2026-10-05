@@ -1,5 +1,6 @@
 // Small helpers shared by the Marketplace, My Properties and the detail page.
 import { TYPE_ICON } from './propertyTypes'
+import i18n from '../i18n'
 
 export const SERVICE_ICON = {
     Parking: 'bi-p-square',
@@ -53,13 +54,14 @@ export function daysSince(ts) {
 // What a listing is missing. Incomplete listings get fewer requests, so the
 // owner sees what to add.
 export function listingChecklist(property) {
+    const label = (key) => i18n.t(`listings.checklist.${key}`)
     return [
-        { id: 'photo', label: 'Photos', done: (property.photos?.length || (property.photo_url ? 1 : 0)) > 0 },
-        { id: 'more-photos', label: '3+ photos', done: (property.photos?.length || 0) >= 3 },
-        { id: 'rent', label: 'Monthly rent', done: property.monthly_rent != null },
-        { id: 'description', label: 'Description', done: (property.description || '').trim().length >= 40 },
-        { id: 'location', label: 'Location', done: Boolean(property.municipality && property.department) },
-        { id: 'services', label: 'Amenities', done: (property.service_ids?.length || 0) > 0 },
+        { id: 'photo', label: label('photos'), done: (property.photos?.length || (property.photo_url ? 1 : 0)) > 0 },
+        { id: 'more-photos', label: label('morePhotos'), done: (property.photos?.length || 0) >= 3 },
+        { id: 'rent', label: label('rent'), done: property.monthly_rent != null },
+        { id: 'description', label: label('description'), done: (property.description || '').trim().length >= 40 },
+        { id: 'location', label: label('location'), done: Boolean(property.municipality && property.department) },
+        { id: 'services', label: label('services'), done: (property.service_ids?.length || 0) > 0 },
     ]
 }
 

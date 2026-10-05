@@ -6,6 +6,13 @@ import { daysLate, leaseStats, monthKeyShift, monthLabel, riskLevel, svDateOf, t
 import { receiptNumber } from './paymentDocuments'
 import { moneyExact as usd } from './money'
 import { DEFAULT_COMMISSION_RATE, contractRate, formatRate, paymentSplit, sumSplit } from './platformFee'
+import i18n from '../i18n'
+import { BRAND_NAME, BRAND_VALUES } from './brand'
+import { paymentMethodLabel } from './displayValues'
+import { formatNumber } from './format'
+import { DASH, DOT, EN_DASH } from './symbols'
+
+const t = (key, values) => i18n.t(`docs.reports.${key}`, { ...BRAND_VALUES, ...values })
 
 const NAVY = [15, 42, 82]
 const MUTED = [110, 120, 138]
@@ -19,7 +26,7 @@ const EXPECTED = [134, 182, 239]
 const COLLECTED = [28, 92, 171]
 
 function fullName(person) {
-    return [person?.first_name, person?.last_name].filter(Boolean).join(' ') || '—'
+    return [person?.first_name, person?.last_name].filter(Boolean).join(' ') || DASH
 }
 
 function slug(text) {
@@ -27,7 +34,7 @@ function slug(text) {
 }
 
 function paidOnShort(p) {
-    return p.paid_at ? formatDueDate(svDateOf(p.paid_at)) : '—'
+    return p.paid_at ? formatDueDate(svDateOf(p.paid_at)) : DASH
 }
 
 // ---------------------------------------------------------------------------
@@ -49,13 +56,13 @@ export function header(ctx, title, subtitle) {
     doc.setTextColor(255, 255, 255)
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(20)
-    doc.text('NextSpace', left, 42)
+    doc.text(BRAND_NAME, left, 42)
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(11)
     doc.text(title, left, 62)
     doc.setFontSize(9.5)
     doc.text(subtitle, right, 42, { align: 'right' })
-    doc.text(`Generated ${formatDueDate(todayInElSalvador(), { month: 'long', day: 'numeric', year: 'numeric' })}`, right, 58, {
+    doc.text(t('generated', { date: formatDueDate(todayInElSalvador(), { month: 'long', day: 'numeric', year: 'numeric' }) }), right, 58, {
         align: 'right',
     })
     return 116
@@ -92,7 +99,7 @@ export function facts(ctx, y, pairs) {
         doc.text(label.toUpperCase(), x, rowY)
         doc.setFontSize(11)
         doc.setTextColor(...TEXT)
-        doc.text(String(value ?? '—'), x, rowY + 14, { maxWidth: colW - 12 })
+        doc.text(String(value ?? DASH), x, rowY + 14, { maxWidth: colW - 12 })
     })
     return y + Math.ceil(pairs.length / 2) * 30 + 6
 }
@@ -199,7 +206,7 @@ export function footer(ctx, note) {
         doc.setFontSize(8)
         doc.setTextColor(...MUTED)
         doc.text(note, left, height - 28, { maxWidth: right - left - 60 })
-        doc.text(`Page ${i} of ${pages}`, right, height - 28, { align: 'right' })
+        doc.text(t('page', { page: i, pages }), right, height - 28, { align: 'right' })
     }
 }
 
@@ -223,7 +230,7 @@ function barChart(ctx, y, months) {
         doc.setDrawColor(...LINE)
         doc.line(plotLeft, yy, right, yy)
         doc.setTextColor(...MUTED)
-        doc.text(`$${Math.round(v).toLocaleString('en-US')}`, plotLeft - 6, yy + 3, { align: 'right' })
+        doc.text(`$${formatNumber(Math.round(v))}`, plotLeft - 6, yy + 3, { align: 'right' })
     }
 
     months.forEach((m, i) => {
@@ -242,10 +249,10 @@ function barChart(ctx, y, months) {
     doc.setFillColor(...EXPECTED)
     doc.rect(plotLeft, ly - 7, 8, 8, 'F')
     doc.setTextColor(...TEXT)
-    doc.text('Expected', plotLeft + 12, ly)
+    doc.text(t('expected'), plotLeft + 12, ly)
     doc.setFillColor(...COLLECTED)
     doc.rect(plotLeft + 70, ly - 7, 8, 8, 'F')
-    doc.text('Collected', plotLeft + 82, ly)
+    doc.text(t('collected'), plotLeft + 82, ly)
     return ly + 20
 }
 
@@ -263,41 +270,41 @@ export async function downloadLeaseStatementPdf({ contract, installments, tenant
         .filter((p) => period === 'all' || p.payment_date.startsWith(period))
         .sort((a, b) => a.payment_date.localeCompare(b.payment_date))
     const stats = leaseStats(rows, today)
-    const periodLabel = period === 'all' ? 'Whole lease' : `Year ${period}`
+    const periodLabel = period === 'all' ? t('wholeLease') : t('year', { year: period })
 
-    let y = header(ctx, `Rent statement · ${property.property_name || 'Lease'}`, periodLabel)
+    let y = header(ctx, t('statementTitle', { name: property.property_name || t('lease') }), periodLabel)
 
     y = facts(ctx, y, [
-        ['Property', property.property_name],
-        ['Contract', `#${contract.contract_id}`],
-        ['Tenant', `${fullName(tenant)}${tenant?.dui ? ` · DUI ${tenant.dui}` : ''}`],
-        ['Owner', ownerName || fullName(property.users)],
-        ['Lease', `${formatDueDate(contract.start_date)} – ${formatDueDate(contract.end_date)}`],
-        ['Monthly rent', usd(contract.monthly_rent)],
+        [t('property'), property.property_name],
+        [t('contract'), `#${contract.contract_id}`],
+        [t('tenant'), `${fullName(tenant)}${tenant?.dui ? ` ${DOT} DUI ${tenant.dui}` : ''}`],
+        [t('owner'), ownerName || fullName(property.users)],
+        [t('lease'), `${formatDueDate(contract.start_date)} ${EN_DASH} ${formatDueDate(contract.end_date)}`],
+        [t('monthlyRent'), usd(contract.monthly_rent)],
     ])
 
     y = kpis(ctx, y + 4, [
-        { label: 'Total in period', value: usd(stats.leaseTotal) },
-        { label: 'Paid', value: usd(stats.collectedTotal), good: stats.collectedTotal > 0 },
-        { label: 'Owed now', value: usd(stats.owedNow), bad: stats.lateMonths > 0 },
+        { label: t('totalInPeriod'), value: usd(stats.leaseTotal) },
+        { label: t('paid'), value: usd(stats.collectedTotal), good: stats.collectedTotal > 0 },
+        { label: t('owedNow'), value: usd(stats.owedNow), bad: stats.lateMonths > 0 },
         {
-            label: 'On time',
-            value: stats.monthsDue > 0 ? `${stats.paidOnTime}/${stats.monthsDue}` : '—',
+            label: t('onTime'),
+            value: stats.monthsDue > 0 ? `${stats.paidOnTime}/${stats.monthsDue}` : DASH,
         },
     ])
 
-    y = sectionTitle(ctx, y, 'Month by month')
+    y = sectionTitle(ctx, y, t('monthByMonth'))
     y = table(
         ctx,
         y + 6,
         [
-            { label: 'Period', w: 1.4 },
-            { label: 'Due', w: 1.1 },
-            { label: 'Status', w: 0.9 },
-            { label: 'Paid on', w: 1.1 },
-            { label: 'Days late', w: 0.8, align: 'right' },
-            { label: 'Amount', w: 1, align: 'right' },
-            { label: 'Receipt', w: 1 },
+            { label: t('period'), w: 1.4 },
+            { label: t('due'), w: 1.1 },
+            { label: t('status'), w: 0.9 },
+            { label: t('paidOn'), w: 1.1 },
+            { label: t('daysLate'), w: 0.8, align: 'right' },
+            { label: t('amount'), w: 1, align: 'right' },
+            { label: t('receipt'), w: 1 },
         ],
         rows.map((p) => {
             const late = daysLate(p, today)
@@ -310,30 +317,30 @@ export async function downloadLeaseStatementPdf({ contract, installments, tenant
                     bold: p.status === 'Late',
                 },
                 paidOnShort(p),
-                late > 0 ? String(late) : '—',
+                late > 0 ? String(late) : DASH,
                 usd(p.amount),
-                p.status === 'Paid' ? receiptNumber(p) : '—',
+                p.status === 'Paid' ? receiptNumber(p) : DASH,
             ]
         })
     )
 
     const paidWithTx = rows.filter((p) => p.status === 'Paid' && p.wompi_transaction_id)
     if (paidWithTx.length > 0) {
-        y = sectionTitle(ctx, y, 'Wompi transactions')
+        y = sectionTitle(ctx, y, t('providerTransactions'))
         table(
             ctx,
             y + 6,
             [
-                { label: 'Receipt', w: 1 },
-                { label: 'Period', w: 1.2 },
-                { label: 'Transaction ID', w: 3 },
+                { label: t('receipt'), w: 1 },
+                { label: t('period'), w: 1.2 },
+                { label: t('transactionId'), w: 3 },
             ],
             paidWithTx.map((p) => [receiptNumber(p), formatDueDate(p.payment_date, { month: 'short', year: 'numeric' }), p.wompi_transaction_id])
         )
     }
 
-    footer(ctx, 'Generated by NextSpace from the rent schedule and payments confirmed through Wompi.')
-    doc.save(`NextSpace-statement-${slug(property.property_name)}-${period}.pdf`)
+    footer(ctx, t('statementFooter'))
+    doc.save(`${BRAND_NAME}-${t('statementFile')}-${slug(property.property_name)}-${period}.pdf`)
 }
 
 // ---------------------------------------------------------------------------
@@ -367,26 +374,26 @@ export async function downloadOwnerMonthlyReportPdf({
     const splitOf = (rows) => sumSplit(rows.map((p) => ({ ...p, commission_rate: p.commission_rate ?? contractRate(p.contract, feeRate) })), feeRate)
     const collectedSplit = splitOf(allRows.filter((p) => p.status === 'Paid' && paidMonth(p) === monthKey))
 
-    let y = header(ctx, `Monthly rent report · ${monthLabel(monthKey, 'long')}`, ownerName || '')
+    let y = header(ctx, t('monthlyTitle', { month: monthLabel(monthKey, 'long') }), ownerName || '')
 
     if (summary) {
-        y = sectionTitle(ctx, y, "Rony's analysis")
+        y = sectionTitle(ctx, y, t('ronyAnalysis'))
         y = paragraph(ctx, y + 8, summary, { boxed: true })
     }
 
     y = kpis(ctx, y + 4, [
-        { label: 'Expected', value: usd(expected) },
-        { label: 'Collected', value: usd(collected), good: collected > 0 },
-        { label: 'Collection rate', value: rate == null ? '—' : `${rate}%`, bad: rate != null && rate < 80 },
-        { label: 'Overdue today', value: usd(lateTotal), bad: lateTotal > 0 },
+        { label: t('expected'), value: usd(expected) },
+        { label: t('collected'), value: usd(collected), good: collected > 0 },
+        { label: t('collectionRate'), value: rate == null ? DASH : `${rate}%`, bad: rate != null && rate < 80 },
+        { label: t('overdueToday'), value: usd(lateTotal), bad: lateTotal > 0 },
     ])
     y = kpis(ctx, y - 6, [
-        { label: 'Collected from tenants', value: usd(collectedSplit.gross) },
-        { label: `NextSpace fee (${formatRate(feeRate)})`, value: `-${usd(collectedSplit.fee)}` },
-        { label: 'You receive', value: usd(collectedSplit.net), good: collectedSplit.net > 0 },
+        { label: t('collectedFromTenants'), value: usd(collectedSplit.gross) },
+        { label: t('feeLabel', { rate: formatRate(feeRate) }), value: `-${usd(collectedSplit.fee)}` },
+        { label: t('youReceive'), value: usd(collectedSplit.net), good: collectedSplit.net > 0 },
     ])
 
-    y = sectionTitle(ctx, y, 'Expected vs collected, last 6 months')
+    y = sectionTitle(ctx, y, t('expectedVsCollected'))
     const months = Array.from({ length: 6 }, (_, i) => monthKeyShift(monthKey, i - 5)).map((key) => ({
         label: monthLabel(key),
         expected: expectedIn(key),
@@ -394,25 +401,25 @@ export async function downloadOwnerMonthlyReportPdf({
     }))
     y = barChart(ctx, y + 8, months)
 
-    y = sectionTitle(ctx, y, 'By property')
+    y = sectionTitle(ctx, y, t('byProperty'))
     y = table(
         ctx,
         y + 6,
         [
-            { label: 'Property', w: 1.5 },
-            { label: 'Tenant', w: 1.4 },
-            { label: 'Due in month', w: 1, align: 'right' },
-            { label: 'Collected', w: 1, align: 'right' },
-            { label: 'To you', w: 0.9, align: 'right' },
-            { label: 'Owed now', w: 1, align: 'right' },
-            { label: 'Risk', w: 0.9 },
+            { label: t('property'), w: 1.5 },
+            { label: t('tenant'), w: 1.4 },
+            { label: t('dueInMonth'), w: 1, align: 'right' },
+            { label: t('collected'), w: 1, align: 'right' },
+            { label: t('toYou'), w: 0.9, align: 'right' },
+            { label: t('owedNow'), w: 1, align: 'right' },
+            { label: t('risk'), w: 0.9 },
         ],
         leases.map(({ contract, installments, stats, risk }) => {
             const due = installments.filter((p) => p.payment_date.slice(0, 7) === monthKey).reduce((s, p) => s + Number(p.amount), 0)
             const gotRows = installments.filter((p) => p.status === 'Paid' && paidMonth(p) === monthKey)
             const got = sumSplit(gotRows, contractRate(contract, feeRate))
             return [
-                contract.add_business?.property_name || '—',
+                contract.add_business?.property_name || DASH,
                 tenantName(contract.users),
                 usd(due),
                 usd(got.gross),
@@ -424,22 +431,22 @@ export async function downloadOwnerMonthlyReportPdf({
     )
 
     if (late.length > 0) {
-        y = sectionTitle(ctx, y, 'Late rent (as of today)')
+        y = sectionTitle(ctx, y, t('lateRent'))
         y = table(
             ctx,
             y + 6,
             [
-                { label: 'Tenant', w: 1.4 },
-                { label: 'Property', w: 1.5 },
-                { label: 'Month', w: 1.1 },
-                { label: 'Days late', w: 0.8, align: 'right' },
-                { label: 'Amount', w: 1, align: 'right' },
+                { label: t('tenant'), w: 1.4 },
+                { label: t('property'), w: 1.5 },
+                { label: t('month'), w: 1.1 },
+                { label: t('daysLate'), w: 0.8, align: 'right' },
+                { label: t('amount'), w: 1, align: 'right' },
             ],
             late
                 .sort((a, b) => a.payment_date.localeCompare(b.payment_date))
                 .map((p) => [
                     tenantName(p.contract?.users),
-                    p.contract?.add_business?.property_name || '—',
+                    p.contract?.add_business?.property_name || DASH,
                     formatDueDate(p.payment_date, { month: 'short', year: 'numeric' }),
                     String(daysLate(p, today)),
                     { text: usd(p.amount), color: RED, bold: true },
@@ -453,20 +460,20 @@ export async function downloadOwnerMonthlyReportPdf({
         .filter((p) => p.payment_date >= today && p.payment_date.slice(0, 7) <= nextMonth)
         .sort((a, b) => a.payment_date.localeCompare(b.payment_date))
     if (coming.length > 0) {
-        y = sectionTitle(ctx, y, 'Coming up')
+        y = sectionTitle(ctx, y, t('comingUp'))
         y = table(
             ctx,
             y + 6,
             [
-                { label: 'Due', w: 1 },
-                { label: 'Tenant', w: 1.4 },
-                { label: 'Property', w: 1.5 },
-                { label: 'Amount', w: 1, align: 'right' },
+                { label: t('due'), w: 1 },
+                { label: t('tenant'), w: 1.4 },
+                { label: t('property'), w: 1.5 },
+                { label: t('amount'), w: 1, align: 'right' },
             ],
             coming.map((p) => [
                 formatDueDate(p.payment_date),
                 tenantName(p.contract?.users),
-                p.contract?.add_business?.property_name || '—',
+                p.contract?.add_business?.property_name || DASH,
                 usd(p.amount),
             ])
         )
@@ -476,18 +483,18 @@ export async function downloadOwnerMonthlyReportPdf({
         ({ contract }) => contract.end_date && contract.end_date >= today && contract.end_date <= monthKeyShift(today.slice(0, 7), 3) + '-31'
     )
     if (endings.length > 0) {
-        y = sectionTitle(ctx, y, 'Leases ending in the next 3 months')
+        y = sectionTitle(ctx, y, t('leasesEnding'))
         table(
             ctx,
             y + 6,
             [
-                { label: 'Property', w: 1.5 },
-                { label: 'Tenant', w: 1.4 },
-                { label: 'Ends', w: 1 },
-                { label: 'Monthly rent', w: 1, align: 'right' },
+                { label: t('property'), w: 1.5 },
+                { label: t('tenant'), w: 1.4 },
+                { label: t('ends'), w: 1 },
+                { label: t('monthlyRent'), w: 1, align: 'right' },
             ],
             endings.map(({ contract }) => [
-                contract.add_business?.property_name || '—',
+                contract.add_business?.property_name || DASH,
                 tenantName(contract.users),
                 formatDueDate(contract.end_date),
                 usd(contract.monthly_rent),
@@ -495,11 +502,8 @@ export async function downloadOwnerMonthlyReportPdf({
         )
     }
 
-    footer(
-        ctx,
-        `Generated by NextSpace. Rent is paid by tenants online through Wompi; amounts reflect confirmed payments. NextSpace keeps a ${formatRate(feeRate)} fee on each rent payment and transfers the rest to you.`
-    )
-    doc.save(`NextSpace-rent-report-${monthKey}.pdf`)
+    footer(ctx, t('monthlyFooter', { rate: formatRate(feeRate) }))
+    doc.save(`${BRAND_NAME}-${t('monthlyFile')}-${monthKey}.pdf`)
 }
 
 // ---------------------------------------------------------------------------
@@ -523,17 +527,17 @@ function head(labels) {
 function paymentRowsSheet(rows, today, { withLease, feeRate = null }) {
     const withFee = feeRate != null
     const header = head([
-        ...(withLease ? ['Property', 'Tenant', 'Contract'] : []),
-        'Rent period',
-        'Due date',
-        'Status',
-        'Paid on',
-        'Days late',
-        'Amount (USD)',
-        ...(withFee ? ['NextSpace fee (USD)', 'To you (USD)', 'Transfer'] : []),
-        'Method',
-        'Wompi transaction',
-        'Receipt',
+        ...(withLease ? [t('property'), t('tenant'), t('contract')] : []),
+        t('rentPeriod'),
+        t('dueDate'),
+        t('status'),
+        t('paidOn'),
+        t('daysLate'),
+        t('amountUsd'),
+        ...(withFee ? [t('feeUsd'), t('toYouUsd'), t('transfer')] : []),
+        t('method'),
+        t('providerTransaction'),
+        t('receipt'),
     ])
     const data = rows
         .slice()
@@ -553,7 +557,7 @@ function paymentRowsSheet(rows, today, { withLease, feeRate = null }) {
             { type: Number, value: daysLate(p, today) },
             num(p.amount),
             ...(withFee ? feeCells(p, feeRate) : []),
-            { value: p.payment_method || '' },
+            { value: p.payment_method ? paymentMethodLabel(p.payment_method) : '' },
             { value: p.wompi_transaction_id || '' },
             { value: p.status === 'Paid' ? receiptNumber(p) : '' },
         ])
@@ -564,7 +568,7 @@ function paymentRowsSheet(rows, today, { withLease, feeRate = null }) {
 function feeCells(p, feeRate) {
     if (p.status !== 'Paid') return [null, null, { value: '' }]
     const split = paymentSplit(p, contractRate(p.contract, feeRate))
-    return [num(split.fee), num(split.net), { value: p.payout_id ? 'Sent' : 'Pending' }]
+    return [num(split.fee), num(split.net), { value: p.payout_id ? t('transferSent') : t('transferPending') }]
 }
 
 async function writeWorkbook(sheets, fileName) {
@@ -586,21 +590,21 @@ export async function downloadOwnerWorkbook({ leases, allRows, projection, feeRa
 
     const summary = [
         head([
-            'Property',
-            'Tenant',
-            'Monthly rent',
-            'Lease start',
-            'Lease end',
-            'Months paid',
-            'Months in lease',
-            'On-time %',
-            'Avg. days late',
-            'Collected',
-            'NextSpace fee',
-            'To you',
-            'Owed now',
-            'Left on lease',
-            'Risk',
+            t('property'),
+            t('tenant'),
+            t('monthlyRent'),
+            t('leaseStart'),
+            t('leaseEnd'),
+            t('monthsPaid'),
+            t('monthsInLease'),
+            t('onTimePct'),
+            t('avgDaysLate'),
+            t('collected'),
+            t('fee'),
+            t('toYou'),
+            t('owedNow'),
+            t('leftOnLease'),
+            t('risk'),
         ]),
         ...leases.map(({ contract, installments, stats, risk }) => {
             const paid = sumSplit(
@@ -628,7 +632,7 @@ export async function downloadOwnerWorkbook({ leases, allRows, projection, feeRa
     ]
 
     const proj = [
-        head(['Month', 'Expected rent (USD)', `To you after ${formatRate(feeRate)} fee (USD)`, 'Leases paying', 'Lease ends this month']),
+        head([t('month'), t('expectedRentUsd'), t('toYouAfterFee', { rate: formatRate(feeRate) }), t('leasesPaying'), t('leaseEndsThisMonth')]),
         ...projection.months.map((m) => [
             { value: m.fullLabel },
             num(m.total),
@@ -647,7 +651,7 @@ export async function downloadOwnerWorkbook({ leases, allRows, projection, feeRa
             {
                 value: projection.endings
                     .filter((e) => e.endDate.slice(0, 7) === m.key)
-                    .map((e) => `${e.name} (${e.endDate})`)
+                    .map((e) => `${e.name} (${formatDueDate(e.endDate)})`)
                     .join(', '),
             },
         ]),
@@ -656,18 +660,18 @@ export async function downloadOwnerWorkbook({ leases, allRows, projection, feeRa
     await writeWorkbook(
         [
             {
-                name: 'Summary',
+                name: t('sheetSummary'),
                 data: summary,
                 columns: [22, 20, 13, 12, 12, 12, 14, 11, 13, 13, 14, 12, 12, 13, 12].map((width) => ({ width })),
             },
             {
-                name: 'Payments',
+                name: t('sheetPayments'),
                 data: paymentRowsSheet(allRows, today, { withLease: true, feeRate }),
                 columns: [22, 20, 10, 18, 12, 11, 12, 10, 13, 17, 13, 10, 13, 38, 12].map((width) => ({ width })),
             },
-            { name: 'Projection', data: proj, columns: [20, 18, 24, 14, 40].map((width) => ({ width })) },
+            { name: t('sheetProjection'), data: proj, columns: [20, 18, 24, 14, 40].map((width) => ({ width })) },
         ],
-        `NextSpace-rent-${today}.xlsx`
+        `${BRAND_NAME}-${t('rentFile')}-${today}.xlsx`
     )
 }
 
@@ -678,31 +682,31 @@ export async function downloadLeaseWorkbook({ contract, installments, tenant, ow
     const property = contract.add_business || {}
 
     const summary = [
-        head(['Item', 'Value']),
-        [{ value: 'Property' }, { value: property.property_name || '' }],
-        [{ value: 'Contract' }, { type: Number, value: contract.contract_id }],
-        [{ value: 'Tenant' }, { value: fullName(tenant) }],
-        [{ value: 'Owner' }, { value: ownerName || fullName(property.users) }],
-        [{ value: 'Lease start' }, dateCell(contract.start_date)],
-        [{ value: 'Lease end' }, dateCell(contract.end_date)],
-        [{ value: 'Monthly rent' }, num(contract.monthly_rent)],
-        [{ value: 'Months paid' }, { type: Number, value: stats.monthsPaid }],
-        [{ value: 'Months in lease' }, { type: Number, value: stats.monthsTotal }],
-        [{ value: 'Paid on time' }, stats.onTimeRate == null ? { value: '—' } : { type: Number, value: stats.onTimeRate, format: '0%' }],
-        [{ value: 'Paid so far' }, num(stats.collectedTotal)],
-        [{ value: 'Owed now' }, num(stats.owedNow)],
-        [{ value: 'Left on lease' }, num(stats.remainingTotal)],
+        head([t('item'), t('value')]),
+        [{ value: t('property') }, { value: property.property_name || '' }],
+        [{ value: t('contract') }, { type: Number, value: contract.contract_id }],
+        [{ value: t('tenant') }, { value: fullName(tenant) }],
+        [{ value: t('owner') }, { value: ownerName || fullName(property.users) }],
+        [{ value: t('leaseStart') }, dateCell(contract.start_date)],
+        [{ value: t('leaseEnd') }, dateCell(contract.end_date)],
+        [{ value: t('monthlyRent') }, num(contract.monthly_rent)],
+        [{ value: t('monthsPaid') }, { type: Number, value: stats.monthsPaid }],
+        [{ value: t('monthsInLease') }, { type: Number, value: stats.monthsTotal }],
+        [{ value: t('paidOnTime') }, stats.onTimeRate == null ? { value: DASH } : { type: Number, value: stats.onTimeRate, format: '0%' }],
+        [{ value: t('paidSoFar') }, num(stats.collectedTotal)],
+        [{ value: t('owedNow') }, num(stats.owedNow)],
+        [{ value: t('leftOnLease') }, num(stats.remainingTotal)],
     ]
 
     await writeWorkbook(
         [
-            { name: 'Lease', data: summary, columns: [{ width: 18 }, { width: 32 }] },
+            { name: t('sheetLease'), data: summary, columns: [{ width: 18 }, { width: 32 }] },
             {
-                name: 'Payments',
+                name: t('sheetPayments'),
                 data: paymentRowsSheet(installments, today, { withLease: false }),
                 columns: [18, 12, 11, 12, 10, 13, 13, 38, 12].map((width) => ({ width })),
             },
         ],
-        `NextSpace-${slug(property.property_name)}-contract-${contract.contract_id}.xlsx`
+        `${BRAND_NAME}-${slug(property.property_name)}-${t('contractFile')}-${contract.contract_id}.xlsx`
     )
 }

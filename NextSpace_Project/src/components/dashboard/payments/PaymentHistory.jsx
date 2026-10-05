@@ -1,14 +1,12 @@
 import { useMemo, useState } from 'react'
-import { formatDueDate, todayInElSalvador } from '../../../lib/rentSchedule'
+import { useTranslation } from 'react-i18next'
+import { PAYMENT_STATUS_LABEL, formatDueDate, todayInElSalvador } from '../../../lib/rentSchedule'
+import { paymentMethodLabel } from '../../../lib/displayValues'
+import { DOT } from '../../../lib/symbols'
 import { daysLate, monthLabel, money, svDateOf, tenantName } from '../../../lib/leaseInsights'
 import { awaitingTransfer, contractRate, paymentSplit } from '../../../lib/platformFee'
 
-const STATUS_FILTERS = [
-    { id: 'all', label: 'All' },
-    { id: 'Paid', label: 'Paid' },
-    { id: 'Pending', label: 'Due' },
-    { id: 'Late', label: 'Late' },
-]
+const STATUS_FILTERS = ['all', 'Paid', 'Pending', 'Late']
 
 const MONTHS_PAGE = 6
 
@@ -22,6 +20,7 @@ const STATUS_ICON = {
 // filters, instead of one long table. Only months that have come due or were
 // paid; future months live in the timeline. rows carry `.contract`.
 export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onReceipt, receiptBusyId, feeRate }) {
+    const { t } = useTranslation()
     const today = todayInElSalvador()
     const [query, setQuery] = useState('')
     const [status, setStatus] = useState('all')
@@ -88,7 +87,7 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
     const filtersActive = query || status !== 'all' || leaseId !== 'all' || year !== 'all'
 
     if (history.length === 0) {
-        return <p className="ns-pay-muted mb-0">Nothing has come due yet.</p>
+        return <p className="ns-pay-muted mb-0">{t('history.empty')}</p>
     }
 
     return (
@@ -98,29 +97,29 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                     <i className="bi bi-search"></i>
                     <input
                         type="search"
-                        placeholder={viewer === 'owner' ? 'Search tenant, property, month...' : 'Search property, month, amount...'}
+                        placeholder={viewer === 'owner' ? t('history.searchOwner') : t('history.searchTenant')}
                         value={query}
                         onChange={(e) => {
                             setQuery(e.target.value)
                             setPages(1)
                         }}
-                        aria-label="Search payment history"
+                        aria-label={t('history.searchLabel')}
                     />
                 </div>
-                <div className="ns-segmented" role="radiogroup" aria-label="Status">
-                    {STATUS_FILTERS.map((f) => (
+                <div className="ns-segmented" role="radiogroup" aria-label={t('docs.reports.status')}>
+                    {STATUS_FILTERS.map((id) => (
                         <button
                             type="button"
-                            key={f.id}
+                            key={id}
                             role="radio"
-                            aria-checked={status === f.id}
-                            className={status === f.id ? 'active' : ''}
+                            aria-checked={status === id}
+                            className={status === id ? 'active' : ''}
                             onClick={() => {
-                                setStatus(f.id)
+                                setStatus(id)
                                 setPages(1)
                             }}
                         >
-                            {f.label}
+                            {id === 'all' ? t('common.all') : PAYMENT_STATUS_LABEL[id]}
                         </button>
                     ))}
                 </div>
@@ -132,12 +131,12 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                             setLeaseId(e.target.value)
                             setPages(1)
                         }}
-                        aria-label="Property"
+                        aria-label={t('common.property')}
                     >
-                        <option value="all">All properties</option>
+                        <option value="all">{t('history.allProperties')}</option>
                         {leases.map((c) => (
                             <option key={c.contract_id} value={c.contract_id}>
-                                {c.add_business?.property_name || `Contract #${c.contract_id}`}
+                                {c.add_business?.property_name || t('contractDetail.contractNumber', { id: c.contract_id })}
                             </option>
                         ))}
                     </select>
@@ -150,9 +149,9 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                             setYear(e.target.value)
                             setPages(1)
                         }}
-                        aria-label="Year"
+                        aria-label={t('history.year')}
                     >
-                        <option value="all">All years</option>
+                        <option value="all">{t('history.allYears')}</option>
                         {years.map((y) => (
                             <option key={y} value={y}>
                                 {y}
@@ -164,7 +163,7 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
 
             {groups.length === 0 ? (
                 <div className="ns-history-empty">
-                    <p className="ns-pay-muted mb-2">No payments match these filters.</p>
+                    <p className="ns-pay-muted mb-2">{t('history.noMatch')}</p>
                     {filtersActive && (
                         <button
                             type="button"
@@ -176,7 +175,7 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                                 setYear('all')
                             }}
                         >
-                            Clear filters
+                            {t('marketplace.clearFilters')}
                         </button>
                     )}
                 </div>
@@ -187,21 +186,26 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                             <header>
                                 <h4>{monthLabel(group.key, 'long')}</h4>
                                 <span>
-                                    {money(group.paid)} paid{group.paid < group.total ? ` of ${money(group.total)}` : ''}
-                                    {viewer === 'owner' && group.paid > 0 ? ` · ${money(group.paidNet)} to you` : ''}
+                                    {group.paid < group.total
+                                        ? t('history.paidOf', { paid: money(group.paid), total: money(group.total) })
+                                        : t('history.paid', { paid: money(group.paid) })}
+                                    {viewer === 'owner' && group.paid > 0 ? ` ${DOT} ${t('ownerPayments.next30.toYou', { amount: money(group.paidNet) })}` : ''}
                                 </span>
                             </header>
                             <ul>
                                 {group.items.map((p) => {
                                     const late = daysLate(p, today)
-                                    const property = p.contract?.add_business?.property_name || 'Rent'
-                                    const title = viewer === 'owner' ? `${tenantName(p.contract?.users)} · ${property}` : property
+                                    const property = p.contract?.add_business?.property_name || t('propertyDetail.rent')
+                                    const title = viewer === 'owner' ? `${tenantName(p.contract?.users)} ${DOT} ${property}` : property
+                                    const due = t('history.due', { date: formatDueDate(p.payment_date, { month: 'short', day: 'numeric' }) })
                                     const meta =
                                         p.status === 'Paid'
-                                            ? `Paid ${formatDueDate(svDateOf(p.paid_at || p.payment_date), { month: 'short', day: 'numeric' })} · ${late > 0 ? `${late} days late` : 'on time'}${p.payment_method ? ` · ${p.payment_method}` : ''}`
+                                            ? `${t('history.paidOn', { date: formatDueDate(svDateOf(p.paid_at || p.payment_date), { month: 'short', day: 'numeric' }) })} ${DOT} ${
+                                                  late > 0 ? t('rent.daysLate', { count: late }) : t('leaseDetail.activity.onTime')
+                                              }${p.payment_method ? ` ${DOT} ${paymentMethodLabel(p.payment_method)}` : ''}`
                                             : p.status === 'Late'
-                                              ? `Due ${formatDueDate(p.payment_date, { month: 'short', day: 'numeric' })} · ${late} days late`
-                                              : `Due ${formatDueDate(p.payment_date, { month: 'short', day: 'numeric' })}`
+                                              ? `${due} ${DOT} ${t('rent.daysLate', { count: late })}`
+                                              : due
                                     return (
                                         <li key={p.payment_id} className={`status-${p.status.toLowerCase()}`}>
                                             <button type="button" className="ns-history-row" onClick={() => onOpen?.(p)}>
@@ -214,10 +218,10 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                                                     {money(p.amount)}
                                                     <small>
                                                         {viewer === 'owner' && p.status === 'Paid'
-                                                            ? `${money(paymentSplit(p, contractRate(p.contract, feeRate)).net)} to you${awaitingTransfer(p) ? ' · pending transfer' : ''}`
-                                                            : p.status === 'Pending'
-                                                              ? 'Due'
-                                                              : p.status}
+                                                            ? `${t('ownerPayments.next30.toYou', { amount: money(paymentSplit(p, contractRate(p.contract, feeRate)).net) })}${
+                                                                  awaitingTransfer(p) ? ` ${DOT} ${t('history.pendingTransfer')}` : ''
+                                                              }`
+                                                            : PAYMENT_STATUS_LABEL[p.status] || p.status}
                                                     </small>
                                                 </span>
                                             </button>
@@ -227,8 +231,8 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                                                     className="ns-pay-icon-btn"
                                                     onClick={() => onReceipt(p)}
                                                     disabled={receiptBusyId === p.payment_id}
-                                                    title="Download receipt (PDF)"
-                                                    aria-label="Download receipt (PDF)"
+                                                    title={t('paymentDetail.downloadReceipt')}
+                                                    aria-label={t('paymentDetail.downloadReceipt')}
                                                 >
                                                     <i className="bi bi-file-earmark-pdf"></i>
                                                 </button>
@@ -241,7 +245,7 @@ export default function PaymentHistory({ rows, viewer = 'tenant', onOpen, onRece
                     ))}
                     {groups.length > visible.length && (
                         <button type="button" className="ns-outline-btn ns-history-more" onClick={() => setPages((n) => n + 1)}>
-                            Show older months ({groups.length - visible.length} more)
+                            {t('history.showOlder', { count: groups.length - visible.length })}
                         </button>
                     )}
                 </>

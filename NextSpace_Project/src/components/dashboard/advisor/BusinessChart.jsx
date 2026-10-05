@@ -1,12 +1,15 @@
+import { useTranslation } from 'react-i18next'
+import i18n from '../../../i18n'
 import AdvisorBarChart from './AdvisorBarChart'
 
 function shortLabel(name) {
-    if (!name) return 'Listing'
+    if (!name) return i18n.t('advisor.chart.listing')
     const firstWord = name.trim().split(/\s+/)[0]
     return firstWord.length > 12 ? firstWord.slice(0, 12) + '...' : firstWord
 }
 
 export default function BusinessChart({ chart, results, budgetMax }) {
+    const { t } = useTranslation()
     if (chart !== 'budget_fit') return null
     if (!results || results.length === 0) return null
 
@@ -21,7 +24,7 @@ export default function BusinessChart({ chart, results, budgetMax }) {
     if (rentBars.length === 0) return null
 
     const bars =
-        budgetMax != null ? [...rentBars, { label: 'Budget', value: budgetMax, prefix: '$', emphasis: true }] : rentBars
+        budgetMax != null ? [...rentBars, { label: t('advisor.chart.budget'), value: budgetMax, prefix: '$', emphasis: true }] : rentBars
 
-    return <AdvisorBarChart title="Rent against your budget" bars={bars} />
+    return <AdvisorBarChart title={t('advisor.chart.rentVsBudget')} bars={bars} />
 }

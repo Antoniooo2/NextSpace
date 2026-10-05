@@ -1,4 +1,6 @@
 import { supabase } from './supabaseClient'
+import i18n, { currentLocale } from '../i18n'
+import { paymentStatusLabel } from './displayValues'
 
 // Mirrors supabase/migrations/*_rent_schedule.sql. Each Active lease has one
 // payment row per month; payment_date is that installment's DUE date.
@@ -17,11 +19,21 @@ export const PAYMENT_STATUS_TAG = {
 }
 
 export const PAYMENT_STATUS_LABEL = {
-    Scheduled: 'Upcoming',
-    Pending: 'Due',
-    Paid: 'Paid',
-    Late: 'Late',
-    Cancelled: 'Cancelled',
+    get Scheduled() {
+        return paymentStatusLabel('Scheduled')
+    },
+    get Pending() {
+        return paymentStatusLabel('Pending')
+    },
+    get Paid() {
+        return paymentStatusLabel('Paid')
+    },
+    get Late() {
+        return paymentStatusLabel('Late')
+    },
+    get Cancelled() {
+        return paymentStatusLabel('Cancelled')
+    },
 }
 
 // Today's date in El Salvador as YYYY-MM-DD, matching the database's
@@ -55,16 +67,16 @@ export function isPayable(status) {
 
 export function formatDueDate(dateStr, options = { month: 'short', day: 'numeric', year: 'numeric' }) {
     const [y, m, d] = dateStr.split('-').map(Number)
-    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { ...options, timeZone: 'UTC' })
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString(currentLocale(), { ...options, timeZone: 'UTC' })
 }
 
 export function dueCountdown(dateStr, today = todayInElSalvador()) {
     const days = daysUntil(dateStr, today)
-    if (days === 0) return { text: 'Due today', tone: 'warning' }
-    if (days === 1) return { text: 'Due tomorrow', tone: 'warning' }
-    if (days > 1) return { text: `Due in ${days} days`, tone: days <= PAYABLE_WINDOW_DAYS ? 'warning' : 'neutral' }
+    if (days === 0) return { text: i18n.t('rent.dueToday'), tone: 'warning' }
+    if (days === 1) return { text: i18n.t('rent.dueTomorrow'), tone: 'warning' }
+    if (days > 1) return { text: i18n.t('rent.dueInDays', { count: days }), tone: days <= PAYABLE_WINDOW_DAYS ? 'warning' : 'neutral' }
     const late = -days
-    return { text: late === 1 ? '1 day late' : `${late} days late`, tone: 'danger' }
+    return { text: i18n.t('rent.daysLate', { count: late }), tone: 'danger' }
 }
 
 // Brings Scheduled/Pending rows up to date server-side before a screen reads

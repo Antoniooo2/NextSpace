@@ -1,12 +1,15 @@
-const ISSUE_LABELS = {
-    no_photos: 'No photos',
-    short_description: 'Description too short',
-    no_services: 'No services listed',
-    no_municipality: 'Missing location',
-    no_rent: 'No rent set',
+import { useTranslation } from 'react-i18next'
+
+const ISSUE_KEYS = {
+    no_photos: 'noPhotos',
+    short_description: 'shortDescription',
+    no_services: 'noServices',
+    no_municipality: 'noLocation',
+    no_rent: 'noRent',
 }
 
 export default function AuditTable({ audit, onRewrite, disabled }) {
+    const { t } = useTranslation()
     const incomplete = (audit || []).filter((row) => row.issues.length > 0)
     if (incomplete.length === 0) return null
 
@@ -15,8 +18,8 @@ export default function AuditTable({ audit, onRewrite, disabled }) {
             <table>
                 <thead>
                     <tr>
-                        <th>Property</th>
-                        <th>Issues</th>
+                        <th>{t('common.property')}</th>
+                        <th>{t('advisor.audit.issues')}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -24,7 +27,7 @@ export default function AuditTable({ audit, onRewrite, disabled }) {
                     {incomplete.map((row) => (
                         <tr key={row.property_id}>
                             <td>{row.property_name}</td>
-                            <td>{row.issues.map((code) => ISSUE_LABELS[code] || code).join(', ')}</td>
+                            <td>{row.issues.map((code) => (ISSUE_KEYS[code] ? t(`advisor.audit.${ISSUE_KEYS[code]}`) : code)).join(', ')}</td>
                             <td>
                                 <button
                                     type="button"
@@ -32,7 +35,7 @@ export default function AuditTable({ audit, onRewrite, disabled }) {
                                     onClick={() => onRewrite(row)}
                                     disabled={disabled}
                                 >
-                                    Rewrite
+                                    {t('advisor.audit.rewrite')}
                                 </button>
                             </td>
                         </tr>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 import {
@@ -8,25 +9,27 @@ import {
     notificationAction,
     notificationKind,
     notificationTarget,
+    notificationTitle,
     timeLabel,
 } from '../../lib/notificationKinds'
 import './notifications.css'
 
 const FILTERS = [
-    { id: 'all', label: 'All' },
-    { id: 'unread', label: 'Unread' },
-    { id: 'action', label: 'Needs action' },
-    { id: 'Contracts', label: 'Contracts' },
-    { id: 'Payments', label: 'Payments' },
-    { id: 'Marketplace', label: 'Space alerts' },
+    { id: 'all', label: 'notifications.filters.all' },
+    { id: 'unread', label: 'notifications.filters.unread' },
+    { id: 'action', label: 'notifications.filters.action' },
+    { id: 'Contracts', label: 'values.process.contracts' },
+    { id: 'Payments', label: 'values.process.payments' },
+    { id: 'Marketplace', label: 'values.process.marketplace' },
 ]
 
-const GROUP_ORDER = ['Today', 'Yesterday', 'This week', 'Earlier']
+const GROUP_ORDER = ['today', 'yesterday', 'thisWeek', 'earlier']
 
 // Every notification, grouped by day, with an icon per type and a direct
 // button when it still asks something of you ("Review offer", "Pay now").
 // New ones arrive live (liveTick changes when Realtime reports one).
 export default function Notifications({ onNavigate, onUnreadCountChange, liveTick = 0 }) {
+    const { t } = useTranslation()
     const [notifications, setNotifications] = useState([])
     const [context, setContext] = useState({ contracts: {}, owed: {} })
     const [loading, setLoading] = useState(true)
@@ -118,7 +121,7 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading notifications...</p>
+                <p>{t('notifications.loading')}</p>
             </div>
         )
     }
@@ -127,11 +130,11 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
         <>
             <div className="ns-dash-header">
                 <div>
-                    <h1>Notifications</h1>
+                    <h1>{t('notifications.title')}</h1>
                     <p>
                         {counts.action > 0
-                            ? `${counts.action} ${counts.action === 1 ? 'thing needs' : 'things need'} your action. Everything else is for your records.`
-                            : 'Updates on your contracts and payments. Nothing needs your action right now.'}
+                            ? t('notifications.needAction', { count: counts.action })
+                            : t('notifications.nothingToDo')}
                     </p>
                 </div>
                 <div className="ns-dash-header-actions">
@@ -141,7 +144,7 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
                         onClick={() => markRead(notifications.filter((n) => !n.read).map((n) => n.notification_id))}
                         disabled={counts.unread === 0}
                     >
-                        <i className="bi bi-check2-all"></i> Mark all as read
+                        <i className="bi bi-check2-all"></i> {t('notifications.markAllRead')}
                     </button>
                 </div>
             </div>
@@ -153,7 +156,7 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
             )}
 
             {notifications.length > 0 && (
-                <div className="ns-nt-filters" role="tablist" aria-label="Filter notifications">
+                <div className="ns-nt-filters" role="tablist" aria-label={t('notifications.filterLabel')}>
                     {FILTERS.filter((f) => f.id !== 'Marketplace' || counts.Marketplace > 0).map((f) => (
                         <button
                             type="button"
@@ -163,7 +166,7 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
                             className={`${filter === f.id ? 'active' : ''} ${f.id === 'action' && counts.action > 0 ? 'is-hot' : ''}`}
                             onClick={() => setFilter(f.id)}
                         >
-                            {f.label} <em>{counts[f.id]}</em>
+                            {t(f.label)} <em>{counts[f.id]}</em>
                         </button>
                     ))}
                 </div>
@@ -172,23 +175,23 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
             {notifications.length === 0 ? (
                 <div className="ns-empty-state">
                     <i className="bi bi-bell"></i>
-                    <h3>You're all caught up</h3>
-                    <p>New activity on your contracts and payments will show up here as it happens.</p>
+                    <h3>{t('notifications.empty.title')}</h3>
+                    <p>{t('notifications.empty.text')}</p>
                 </div>
             ) : groups.length === 0 ? (
                 <div className="ns-empty-state">
                     <i className="bi bi-check2-circle"></i>
-                    <h3>{filter === 'action' ? 'Nothing needs your action' : 'Nothing here'}</h3>
-                    <p>{filter === 'unread' ? 'You have read everything.' : 'Try another filter.'}</p>
+                    <h3>{filter === 'action' ? t('notifications.emptyFilter.noAction') : t('notifications.emptyFilter.nothing')}</h3>
+                    <p>{filter === 'unread' ? t('notifications.emptyFilter.allRead') : t('notifications.emptyFilter.tryAnother')}</p>
                 </div>
             ) : (
                 groups.map((group) => (
                     <section key={group.title} className="ns-nt-group">
                         <header>
-                            <h2>{group.title}</h2>
+                            <h2>{t(`notifications.groups.${group.title}`)}</h2>
                             {group.rows.some((r) => !r.n.read) && (
                                 <button type="button" className="ns-link-btn" onClick={() => markRead(group.rows.map((r) => r.n.notification_id))}>
-                                    Mark as read
+                                    {t('notifications.markRead')}
                                 </button>
                             )}
                         </header>
@@ -204,8 +207,8 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
                                         </span>
                                         <span className="ns-nt-text">
                                             <span className="ns-nt-title">
-                                                {n.title}
-                                                {!n.read && <span className="ns-nt-dot" aria-label="Unread" />}
+                                                {notificationTitle(n)}
+                                                {!n.read && <span className="ns-nt-dot" aria-label={t('notifications.unread')} />}
                                             </span>
                                             {n.description && <span className="ns-nt-desc">{n.description}</span>}
                                             <span className="ns-nt-time">{timeLabel(n.created_at)}</span>
@@ -213,11 +216,11 @@ export default function Notifications({ onNavigate, onUnreadCountChange, liveTic
                                     </button>
                                     {action === 'done' ? (
                                         <span className="ns-nt-done">
-                                            <i className="bi bi-check2"></i> Done
+                                            <i className="bi bi-check2"></i> {t('common.done')}
                                         </span>
                                     ) : action ? (
                                         <button type="button" className="ns-nt-action" onClick={() => open(n, action.section)}>
-                                            {action.label}
+                                            {t(action.labelKey)}
                                         </button>
                                     ) : null}
                                 </li>

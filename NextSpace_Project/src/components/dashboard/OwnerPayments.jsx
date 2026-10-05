@@ -1,4 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n'
+import { BRAND_VALUES } from '../../lib/brand'
+import { DASH, DOT } from '../../lib/symbols'
 import { supabase } from '../../lib/supabaseClient'
 import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
@@ -57,21 +61,23 @@ function sumNet(rows, rate) {
 }
 
 // "▲ 12% vs Aug" style change between two values.
-function Trend({ current, previous, suffix = 'vs last month', points = false, invert = false }) {
-    if (previous == null || (previous === 0 && current === 0)) return <span className="ns-trend">{suffix.replace('vs', 'no data for')}</span>
+function Trend({ current, previous, points = false, invert = false }) {
+    const { t } = useTranslation()
+    if (previous == null || (previous === 0 && current === 0)) return <span className="ns-trend">{t('ownerPayments.trend.noData')}</span>
     const diff = points ? current - previous : previous === 0 ? 100 : ((current - previous) / previous) * 100
     const rounded = Math.round(diff)
-    if (rounded === 0) return <span className="ns-trend">Same as last month</span>
+    if (rounded === 0) return <span className="ns-trend">{t('ownerPayments.trend.same')}</span>
     const good = invert ? rounded < 0 : rounded > 0
     return (
         <span className={`ns-trend ${good ? 'is-good' : 'is-bad'}`}>
             <i className={`bi ${rounded > 0 ? 'bi-caret-up-fill' : 'bi-caret-down-fill'}`}></i> {Math.abs(rounded)}
-            {points ? ' pts' : '%'} {suffix}
+            {points ? ` ${t('ownerPayments.trend.pts')}` : '%'} {t('ownerPayments.trend.vsLastMonth')}
         </span>
     )
 }
 
 export default function OwnerPayments({ user, onAskRony, onOpenContract, initialContractId }) {
+    const { t } = useTranslation()
     const [contracts, setContracts] = useState([])
     const [payments, setPayments] = useState([])
     const [events, setEvents] = useState([])
@@ -116,7 +122,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
             setPayoutAccount(account)
             setPayoutError('')
         } catch (err) {
-            setPayoutError(`Transfers couldn't be loaded: ${err.message}`)
+            setPayoutError(i18n.t('ownerPayments.transfersError', { message: err.message }))
         }
 
         const ids = withPhotos.map((c) => c.contract_id)
@@ -154,7 +160,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
 
     const today = todayInElSalvador()
 
-    const leases = useMemo(
+    const baseLeases = useMemo(
         () =>
             contracts
                 .filter((c) => c.status === 'Active')
@@ -164,7 +170,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                         today
                     )
                     const stats = leaseStats(installments, today)
-                    return { contract, installments, stats, risk: riskLevel(stats) }
+                    return { contract, installments, stats }
                 })
                 .sort(
                     (a, b) =>
@@ -174,6 +180,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 ),
         [contracts, payments, today]
     )
+    const leases = baseLeases.map((lease) => ({ ...lease, risk: riskLevel(lease.stats) }))
 
     // Every installment with today's status and its lease attached (for the
     // CSV and month totals, which also include ended leases).
@@ -186,7 +193,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
         return (
             <div className="ns-dash-loading">
                 <div className="ns-dash-spinner" />
-                <p>Loading payments...</p>
+                <p>{t('payments.loading')}</p>
             </div>
         )
     }
@@ -284,10 +291,9 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
         <>
             <div className="ns-dash-header">
                 <div>
-                    <h1>Payments</h1>
+                    <h1>{t('dashboard.nav.payments')}</h1>
                     <p>
-                        Rent across all your properties. Tenants pay online with Wompi; NextSpace keeps its {formatRate(feeRate)}{' '}
-                        fee and transfers the rest to you.
+                        {t('ownerPayments.subtitle', { ...BRAND_VALUES, rate: formatRate(feeRate) })}
                     </p>
                 </div>
                 {allRows.length > 0 && (
@@ -297,15 +303,15 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                 {
                                     id: 'report',
                                     icon: 'bi-file-earmark-pdf',
-                                    label: 'Monthly report (PDF)',
-                                    description: 'Totals, chart, each property, late rent, with Rony’s analysis',
+                                    label: t('ownerPayments.export.report'),
+                                    description: t('ownerPayments.export.reportDesc', BRAND_VALUES),
                                     onSelect: async () => setReportOpen(true),
                                 },
                                 {
                                     id: 'xlsx',
                                     icon: 'bi-file-earmark-spreadsheet',
-                                    label: 'Excel workbook (.xlsx)',
-                                    description: 'Summary per property, every payment, 6-month projection',
+                                    label: t('ownerPayments.export.excel'),
+                                    description: t('ownerPayments.export.excelDesc'),
                                     onSelect: () => downloadOwnerWorkbook({ leases, allRows, projection, feeRate }),
                                 },
                             ]}
@@ -321,68 +327,69 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
             )}
 
             <SectionNav
-                label="Payments sections"
+                label={t('payments.sectionsLabel')}
                 sections={[
-                    { id: 'pay-today', label: 'Today', icon: 'bi-sun' },
-                    { id: 'pay-properties', label: 'Your properties', icon: 'bi-shop', count: leases.length },
-                    { id: 'pay-transfers', label: 'Transfers', icon: 'bi-bank' },
-                    { id: 'pay-analysis', label: 'Analysis', icon: 'bi-graph-up' },
-                    { id: 'pay-history', label: 'History', icon: 'bi-clock-history' },
+                    { id: 'pay-today', label: t('notifications.groups.today'), icon: 'bi-sun' },
+                    { id: 'pay-properties', label: t('ownerPayments.yourProperties'), icon: 'bi-shop', count: leases.length },
+                    { id: 'pay-transfers', label: t('ownerPayments.transfers'), icon: 'bi-bank' },
+                    { id: 'pay-analysis', label: t('ownerPayments.analysis'), icon: 'bi-graph-up' },
+                    { id: 'pay-history', label: t('contractDetail.history'), icon: 'bi-clock-history' },
                 ]}
             />
 
-            <PageGroup id="pay-today" title="Today" hint="What needs you and how this month is going">
+            <PageGroup id="pay-today" title={t('notifications.groups.today')} hint={t('ownerPayments.todayHint')}>
                 <RonyInsightCard
                     insights={insights}
                     onAction={handleInsightAction}
                     onAskRony={
                         onAskRony
-                            ? () => onAskRony({ text: 'Summarize my rent collections this month and tell me what I should do first.' })
+                            ? () => onAskRony({ text: t('ownerPayments.askSummary') })
                             : undefined
                     }
                 />
 
                 <div className="ns-kpi-row">
                     <div className="ns-kpi">
-                        <span className="ns-kpi-label">Collected in {monthLabel(monthKey, 'long')}</span>
+                        <span className="ns-kpi-label">{t('ownerPayments.kpi.collectedIn', { month: monthLabel(monthKey, 'long') })}</span>
                         <span className="ns-kpi-value">{money(thisMonth.collected)}</span>
                         {thisMonth.collected > 0 && (
-                            <span className="ns-kpi-sub">{money(collectedNet)} to you after the NextSpace fee</span>
+                            <span className="ns-kpi-sub">{t('ownerPayments.kpi.toYouAfterFee', { ...BRAND_VALUES, amount: money(collectedNet) })}</span>
                         )}
                         <Trend current={thisMonth.collected} previous={lastMonth.collected} />
                     </div>
                     <div className="ns-kpi">
-                        <span className="ns-kpi-label">Expected this month</span>
+                        <span className="ns-kpi-label">{t('ownerPayments.kpi.expected')}</span>
                         <span className="ns-kpi-value">{money(thisMonth.expected)}</span>
                         <Trend current={thisMonth.expected} previous={lastMonth.expected} />
                     </div>
                     <div className="ns-kpi">
-                        <span className="ns-kpi-label">Collection rate</span>
-                        <span className="ns-kpi-value">{rate(thisMonth) == null ? '—' : `${rate(thisMonth)}%`}</span>
+                        <span className="ns-kpi-label">{t('docs.reports.collectionRate')}</span>
+                        <span className="ns-kpi-value">{rate(thisMonth) == null ? DASH : `${rate(thisMonth)}%`}</span>
                         {rate(thisMonth) != null && rate(lastMonth) != null ? (
                             <Trend current={rate(thisMonth)} previous={rate(lastMonth)} points />
                         ) : (
-                            <span className="ns-trend">of rent due this month</span>
+                            <span className="ns-trend">{t('ownerPayments.kpi.ofRentDue')}</span>
                         )}
                     </div>
                     <div className={`ns-kpi ${late.length > 0 ? 'is-alert' : ''}`}>
-                        <span className="ns-kpi-label">Overdue</span>
+                        <span className="ns-kpi-label">{t('ownerPayments.kpi.overdue')}</span>
                         <span className="ns-kpi-value">{money(sumAmount(late))}</span>
                         <span className="ns-trend">
-                            {lateTenants === 0 ? 'Nobody is late' : `${lateTenants} ${lateTenants === 1 ? 'tenant' : 'tenants'} late`}
+                            {lateTenants === 0 ? t('ownerPayments.kpi.nobodyLate') : t('ownerPayments.kpi.tenantsLate', { count: lateTenants })}
                         </span>
                     </div>
                 </div>
 
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Next 30 days</h3>
+                        <h3>{t('ownerPayments.next30.title')}</h3>
                         <span>
-                            {money(upcomingTotal)} coming in{upcomingTotal > 0 ? ` · ${money(upcomingNet)} to you` : ''}
+                            {t('ownerPayments.next30.coming', { amount: money(upcomingTotal) })}
+                            {upcomingTotal > 0 ? ` ${DOT} ${t('ownerPayments.next30.toYou', { amount: money(upcomingNet) })}` : ''}
                         </span>
                     </div>
                     {upcoming.length === 0 ? (
-                        <p className="ns-pay-muted mb-0">No rent is due in the next 30 days.</p>
+                        <p className="ns-pay-muted mb-0">{t('ownerPayments.next30.none')}</p>
                     ) : (
                         <ul className="ns-upcoming ns-upcoming-wide">
                             {upcoming.slice(0, 8).map(({ contract, p }) => {
@@ -397,7 +404,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                             <span className="ns-upcoming-info">
                                                 <strong>{tenantName(contract.users)}</strong>
                                                 <small>
-                                                    {contract.add_business?.property_name} · {cd.text}
+                                                    {contract.add_business?.property_name} {DOT} {cd.text}
                                                 </small>
                                             </span>
                                             <span className="ns-upcoming-amount">{money(p.amount)}</span>
@@ -405,7 +412,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                     </li>
                                 )
                             })}
-                            {upcoming.length > 8 && <li className="ns-pay-muted">+{upcoming.length - 8} more</li>}
+                            {upcoming.length > 8 && <li className="ns-pay-muted">{t('ownerPayments.more', { count: upcoming.length - 8 })}</li>}
                         </ul>
                     )}
                 </section>
@@ -413,12 +420,12 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
 
             <PageGroup
                 id="pay-properties"
-                title="Your properties"
-                hint={`${leases.length} active ${leases.length === 1 ? 'lease' : 'leases'} · tap one for its details`}
+                title={t('ownerPayments.yourProperties')}
+                hint={t('ownerPayments.propertiesHint', { count: leases.length, dot: DOT })}
             >
                 {leases.length === 0 ? (
                     <p className="ns-pay-muted mb-4">
-                        You don't have any active leases yet. Accept a contract request from the Contracts section.
+                        {t('ownerPayments.noLeases')}
                     </p>
                 ) : (
                     <div className="ns-lease-grid">
@@ -436,7 +443,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                     }}
                                     tabIndex={0}
                                     role="button"
-                                    aria-label={`Open ${contract.add_business?.property_name || 'lease'}`}
+                                    aria-label={t('propertyCard.open', { name: contract.add_business?.property_name || t('docs.reports.lease') })}
                                 >
                                     <div className="ns-lease-card-photo">
                                         {contract.add_business?.photo_url ? (
@@ -446,25 +453,25 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                         )}
                                         <span className={`ns-lease-card-status status-${status}`}>
                                             {status === 'late'
-                                                ? `${stats.oldestLateDays} days late`
+                                                ? t('rent.daysLate', { count: stats.oldestLateDays })
                                                 : status === 'due'
-                                                  ? 'Due now'
+                                                  ? t('ownerPayments.card.dueNow')
                                                   : status === 'done'
-                                                    ? 'Fully paid'
-                                                    : 'Up to date'}
+                                                    ? t('payments.tabs.fullyPaid')
+                                                    : t('payments.tabs.upToDate')}
                                         </span>
                                     </div>
                                     <div className="ns-lease-card-body">
                                         <div className="ns-lease-card-top">
                                             <div>
-                                                <h4>{contract.add_business?.property_name || 'Property'}</h4>
+                                                <h4>{contract.add_business?.property_name || t('common.property')}</h4>
                                                 <span>{tenantName(contract.users)}</span>
                                             </div>
                                             <ProgressRing
                                                 size={48}
                                                 stroke={5}
                                                 value={stats.monthsTotal > 0 ? stats.monthsPaid / stats.monthsTotal : 0}
-                                                label={`${stats.monthsPaid} of ${stats.monthsTotal} months paid`}
+                                                label={t('ownerPayments.card.monthsPaid', { paid: stats.monthsPaid, count: stats.monthsTotal })}
                                             >
                                                 <small>
                                                     {stats.monthsPaid}/{stats.monthsTotal}
@@ -473,15 +480,15 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                         </div>
                                         <div className="ns-lease-card-facts">
                                             <div>
-                                                <small>Owed now</small>
+                                                <small>{t('docs.reports.owedNow')}</small>
                                                 <strong className={stats.lateMonths > 0 ? 'is-bad' : ''}>{money(stats.owedNow)}</strong>
                                             </div>
                                             <div>
-                                                <small>{stats.lateMonths > 0 ? 'Late since' : 'Next due'}</small>
-                                                <strong>{next ? formatDueDate(next.payment_date, { month: 'short', day: 'numeric' }) : '—'}</strong>
+                                                <small>{stats.lateMonths > 0 ? t('ownerPayments.card.lateSince') : t('ownerPayments.card.nextDue')}</small>
+                                                <strong>{next ? formatDueDate(next.payment_date, { month: 'short', day: 'numeric' }) : DASH}</strong>
                                             </div>
                                             <div>
-                                                <small>Rent</small>
+                                                <small>{t('propertyDetail.rent')}</small>
                                                 <strong>{money(contract.monthly_rent)}</strong>
                                             </div>
                                         </div>
@@ -492,13 +499,13 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                                     onAskRony
                                                         ? () =>
                                                               onAskRony({
-                                                                  text: `How is ${tenantName(contract.users)} doing with rent on ${contract.add_business?.property_name}? What should I do next?`,
+                                                                  text: t('ownerPayments.askTenant', { tenant: tenantName(contract.users), name: contract.add_business?.property_name }),
                                                               })
                                                         : undefined
                                                 }
                                             />
                                             <span className="ns-link-btn">
-                                                Details <i className="bi bi-arrow-right"></i>
+                                                {t('ownerPayments.card.details')} <i className="bi bi-arrow-right"></i>
                                             </span>
                                         </div>
                                     </div>
@@ -512,8 +519,8 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
  
             <PageGroup
                 id="pay-transfers"
-                title="Transfers"
-                hint={`Your rent minus the ${formatRate(feeRate)} NextSpace fee, sent to your bank account`}
+                title={t('ownerPayments.transfers')}
+                hint={t('ownerPayments.transfersHint', { ...BRAND_VALUES, rate: formatRate(feeRate) })}
             >
                 <OwnerTransfers
                     rows={allRows}
@@ -526,12 +533,12 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 />
             </PageGroup>
 
-            <PageGroup id="pay-analysis" title="Analysis" hint="How rent has come in, and what to expect">
+            <PageGroup id="pay-analysis" title={t('ownerPayments.analysis')} hint={t('ownerPayments.analysisHint')}>
                 <div className="ns-pay-grid-2 ns-pay-grid-even">
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Rent expected vs collected</h3>
-                        <div className="ns-segmented" role="radiogroup" aria-label="Range">
+                        <h3>{t('ownerPayments.chart.title')}</h3>
+                        <div className="ns-segmented" role="radiogroup" aria-label={t('ownerPayments.chart.range')}>
                             {[6, 12].map((n) => (
                                 <button
                                     type="button"
@@ -541,7 +548,7 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                                     className={chartRange === n ? 'active' : ''}
                                     onClick={() => setChartRange(n)}
                                 >
-                                    {n} months
+                                    {t('common.month', { count: n })}
                                 </button>
                             ))}
                         </div>
@@ -549,24 +556,22 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                     {hasChartData ? (
                         <CollectionsChart months={chartMonths} />
                     ) : (
-                        <p className="ns-pay-muted mb-0">No rent has come due in this period yet.</p>
+                        <p className="ns-pay-muted mb-0">{t('ownerPayments.chart.empty')}</p>
                     )}
                 </section>
 
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Expected income, next 6 months</h3>
-                        <span>From your active leases</span>
+                        <h3>{t('ownerPayments.projection.title')}</h3>
+                        <span>{t('ownerPayments.projection.hint')}</span>
                     </div>
                     {leases.length === 0 ? (
-                        <p className="ns-pay-muted mb-0">No active leases yet.</p>
+                        <p className="ns-pay-muted mb-0">{t('contractsBoard.sections.activeEmpty')}</p>
                     ) : (
                         <>
                             <IncomeProjectionChart projection={projection} />
                             <p className="ns-pay-muted mt-2 mb-0">
-                                Rent your tenants will pay. You receive it minus the {formatRate(feeRate)} NextSpace fee (about{' '}
-                                {money(projectedNet)}{' '}
-                                over these six months).
+                                {t('ownerPayments.projection.note', { ...BRAND_VALUES, rate: formatRate(feeRate), amount: money(projectedNet) })}
                             </p>
                         </>
                     )}
@@ -574,11 +579,11 @@ export default function OwnerPayments({ user, onAskRony, onOpenContract, initial
                 </div>
             </PageGroup>
 
-            <PageGroup id="pay-history" title="History">
+            <PageGroup id="pay-history" title={t('contractDetail.history')}>
                 <section className="ns-panel">
                     <div className="ns-panel-head">
-                        <h3>Payment history</h3>
-                        <span>Every month that has come due, newest first</span>
+                        <h3>{t('payments.historyTitle')}</h3>
+                        <span>{t('ownerPayments.historyHint')}</span>
                     </div>
                     <PaymentHistory
                         rows={allRows}

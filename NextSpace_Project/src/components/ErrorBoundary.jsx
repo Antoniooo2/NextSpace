@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import i18n from '../i18n'
 
 const FALLBACK_STYLE = {
     whiteSpace: 'pre-wrap',
@@ -39,7 +40,7 @@ export default class ErrorBoundary extends Component {
             const error = this.state.error
             return (
                 <pre style={FALLBACK_STYLE}>
-                    {'The app crashed while rendering.\n\n'}
+                    {`${i18n.t('app.crashed')}\n\n`}
                     {String(error && error.message ? error.message : error)}
                     {'\n\n'}
                     {String(error && error.stack ? error.stack : '')}

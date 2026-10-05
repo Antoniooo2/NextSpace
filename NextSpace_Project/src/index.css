@@ -433,6 +433,12 @@ body {
   outline-offset: -2px;
 }
 
+.ns-card-lang {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
 @media (max-width: 600px) {
   .ns-navbar-inner {
     flex-wrap: wrap;

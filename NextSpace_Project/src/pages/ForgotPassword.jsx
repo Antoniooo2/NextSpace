@@ -1,12 +1,18 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabaseClient'
+import { describeAuthError } from '../lib/supabaseErrors'
+import { BRAND_NAME } from '../lib/brand'
+import { ARROW_RIGHT, PASSWORD_MASK } from '../lib/symbols'
+import LanguageSwitcher from '../components/LanguageSwitcher.jsx'
 import logo from '../assets/NextSpace_logo.png'
 import './AuthPages.css'
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 function ForgotPassword() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   // step 1 = pedir el código, step 2 = escribir código + nueva contraseña
@@ -24,8 +30,8 @@ function ForgotPassword() {
 
   // --- Paso 1: pedir el código ---
   const validateEmail = () => {
-    if (!email.trim()) return 'Please enter your email address.'
-    if (!EMAIL_REGEX.test(email.trim())) return 'Please enter a valid email address.'
+    if (!email.trim()) return t('auth.forgot.emailRequired')
+    if (!EMAIL_REGEX.test(email.trim())) return t('auth.forgot.emailInvalid')
     return ''
   }
 
@@ -48,7 +54,7 @@ function ForgotPassword() {
     if (error) {
       setStatus({
         type: 'error',
-        text: 'We could not process your request: ' + error.message,
+        text: t('auth.forgot.requestFailed', { message: describeAuthError(error) }),
       })
     } else {
       setStep(2)
@@ -59,17 +65,17 @@ function ForgotPassword() {
   const validateStep2 = () => {
     const errs = {}
     if (!code.trim() || code.trim().length < 6) {
-      errs.code = 'Enter the 6-digit code from your email.'
+      errs.code = t('auth.forgot.codeRequired')
     }
     if (!password) {
-      errs.password = 'Please enter a new password.'
+      errs.password = t('auth.password.required')
     } else if (password.length < 6) {
-      errs.password = 'Password must be at least 6 characters.'
+      errs.password = t('auth.password.tooShort')
     }
     if (!confirmPassword) {
-      errs.confirmPassword = 'Please confirm your new password.'
+      errs.confirmPassword = t('auth.password.confirmRequired')
     } else if (password && confirmPassword !== password) {
-      errs.confirmPassword = 'Passwords do not match.'
+      errs.confirmPassword = t('auth.password.mismatch')
     }
     return errs
   }
@@ -94,7 +100,7 @@ function ForgotPassword() {
       setLoading(false)
       setStatus({
         type: 'error',
-        text: 'Invalid or expired code: ' + verifyError.message,
+        text: t('auth.forgot.invalidCode', { message: describeAuthError(verifyError) }),
       })
       return
     }
@@ -106,10 +112,10 @@ function ForgotPassword() {
     if (updateError) {
       setStatus({
         type: 'error',
-        text: 'We could not update your password: ' + updateError.message,
+        text: t('auth.password.updateFailed', { message: describeAuthError(updateError) }),
       })
     } else {
-      setStatus({ type: 'success', text: 'Password updated successfully. Redirecting...' })
+      setStatus({ type: 'success', text: t('auth.password.updated') })
       setTimeout(() => navigate('/'), 2000)
     }
   }
@@ -117,19 +123,22 @@ function ForgotPassword() {
   return (
     <div className="ns-auth-wrapper">
       <div className="ns-card">
+        <div className="ns-card-lang">
+          <LanguageSwitcher />
+        </div>
 
-        <img src={logo} alt="NextSpace" className="ns-logo-img" />
+        <img src={logo} alt={BRAND_NAME} className="ns-logo-img" />
 
         {step === 1 ? (
           <>
-            <h1 className="ns-title">Forgot your password?</h1>
+            <h1 className="ns-title">{t('auth.forgot.title')}</h1>
             <p className="ns-subtitle">
-              Enter your email and we'll send you a 6-digit code.
+              {t('auth.forgot.subtitle')}
             </p>
 
             <form onSubmit={handleSendCode} noValidate>
               <div className="ns-field">
-                <label className="ns-label" htmlFor="email">Your email address</label>
+                <label className="ns-label" htmlFor="email">{t('auth.login.email')}</label>
                 <div className="ns-input-wrap">
                   <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -139,7 +148,7 @@ function ForgotPassword() {
                     id="email"
                     className={`ns-input ${fieldError ? 'ns-input-error' : ''}`}
                     type="email"
-                    placeholder="example@yourproperty.com"
+                    placeholder={t('auth.forgot.emailPlaceholder')}
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value)
@@ -151,24 +160,24 @@ function ForgotPassword() {
               </div>
 
               <button className="ns-button" type="submit" disabled={loading}>
-                {loading ? 'Sending...' : 'Send code →'}
+                {loading ? t('common.sending') : `${t('auth.forgot.sendCode')} ${ARROW_RIGHT}`}
               </button>
             </form>
 
             <div className="ns-link-row">
-              <Link className="ns-link" to="/">Back to sign in</Link>
+              <Link className="ns-link" to="/">{t('auth.forgot.backToSignIn')}</Link>
             </div>
           </>
         ) : (
           <>
-            <h1 className="ns-title">Enter your code</h1>
+            <h1 className="ns-title">{t('auth.forgot.codeTitle')}</h1>
             <p className="ns-subtitle">
-              We sent a 6-digit code to {email}. Enter it below along with your new password.
+              {t('auth.forgot.codeSubtitle', { email })}
             </p>
 
             <form onSubmit={handleResetPassword} noValidate>
               <div className="ns-field">
-                <label className="ns-label" htmlFor="code">6-digit code</label>
+                <label className="ns-label" htmlFor="code">{t('auth.forgot.codeLabel')}</label>
                 <div className="ns-input-wrap">
                   <input
                     id="code"
@@ -188,13 +197,13 @@ function ForgotPassword() {
               </div>
 
               <div className="ns-field">
-                <label className="ns-label" htmlFor="password">New password</label>
+                <label className="ns-label" htmlFor="password">{t('auth.password.new')}</label>
                 <div className="ns-input-wrap">
                   <input
                     id="password"
                     className={`ns-input ${step2Errors.password ? 'ns-input-error' : ''}`}
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={PASSWORD_MASK}
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value)
@@ -206,13 +215,13 @@ function ForgotPassword() {
               </div>
 
               <div className="ns-field">
-                <label className="ns-label" htmlFor="confirmPassword">Confirm new password</label>
+                <label className="ns-label" htmlFor="confirmPassword">{t('auth.password.confirm')}</label>
                 <div className="ns-input-wrap">
                   <input
                     id="confirmPassword"
                     className={`ns-input ${step2Errors.confirmPassword ? 'ns-input-error' : ''}`}
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={PASSWORD_MASK}
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value)
@@ -224,7 +233,7 @@ function ForgotPassword() {
               </div>
 
               <button className="ns-button" type="submit" disabled={loading}>
-                {loading ? 'Saving...' : 'Reset password →'}
+                {loading ? t('common.saving') : `${t('auth.forgot.reset')} ${ARROW_RIGHT}`}
               </button>
             </form>
 
@@ -235,7 +244,7 @@ function ForgotPassword() {
                 style={{ background: 'none', border: 'none', cursor: 'pointer' }}
                 onClick={() => setStep(1)}
               >
-                Use a different email
+                {t('auth.forgot.differentEmail')}
               </button>
             </div>
           </>
