@@ -50,6 +50,15 @@
       "description": "Paga tu alquiler cada mes con tarjeta a través de {{provider}} y recibe tu comprobante al instante. {{brand}} lo cobra en nombre del propietario y te avisa antes de que venza."
     }
   },
+  "map": {
+    "title": "Encuentra espacios en El Salvador",
+    "subtitle": "De occidente a oriente, mira d\u00f3nde tiene {{brand}} espacios comerciales disponibles. Pasa el mouse o toca un pin para ver el departamento.",
+    "ariaLabel": "Mapa de El Salvador y sus 14 departamentos",
+    "spaces_one": "{{count}} espacio disponible",
+    "spaces_other": "{{count}} espacios disponibles",
+    "noSpaces": "A\u00fan no hay espacios disponibles",
+    "capital": "Cabecera: {{capital}}"
+  },
   "pricing": {
     "title": "Cómo gana {{brand}}: {{rate}} de cada alquiler, y solo cuando se paga",
     "businesses": {
