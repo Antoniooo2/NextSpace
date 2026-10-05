@@ -593,9 +593,9 @@ body {
 .ns-hero-mockup {
   position: relative;
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
   aspect-ratio: 4 / 3.4;
-  background: linear-gradient(135deg, #edf4ff 0%, #dfeafe 100%);
+  background: linear-gradient(170deg, var(--ns-periwinkle) 0%, var(--ns-surface) 88%);
   border: 1px solid rgba(47, 95, 224, 0.12);
   border-radius: 24px;
   display: flex;
@@ -606,16 +606,7 @@ body {
   overflow: visible;
 }
 
-.ns-mockup-pin {
-  font-size: 38px;
-  color: var(--ns-blue-accent);
-  text-shadow: 0 8px 18px rgba(47, 95, 224, 0.22);
-}
-
 .ns-mockup-card {
-  position: absolute;
-  bottom: -18px;
-  left: -16px;
   background: linear-gradient(135deg, #ffffff 0%, #f6f9ff 100%);
   border: 1px solid rgba(15, 28, 63, 0.08);
   border-radius: 14px;

@@ -1,0 +1,145 @@
+.ns-hero-dots {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--ns-navy) 16%, transparent) 1px,
+    transparent 1.6px
+  );
+  background-size: 18px 18px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 35%, transparent 78%);
+  mask-image: radial-gradient(ellipse at center, #000 35%, transparent 78%);
+  pointer-events: none;
+}
+
+.ns-hero-map-layer {
+  position: relative;
+  z-index: 1;
+  width: 90%;
+}
+
+.ns-hero-map-layer:has(.ns-map-canvas.has-active) {
+  z-index: 4;
+}
+
+.ns-hero-float {
+  position: absolute;
+  z-index: 2;
+}
+
+.ns-hero-float .ns-mockup-card {
+  white-space: nowrap;
+}
+
+.ns-hero-float.is-mall {
+  left: -16px;
+  bottom: -18px;
+}
+
+.ns-hero-float.is-property {
+  top: -22px;
+  right: -20px;
+}
+
+.ns-hero-float.is-notice {
+  top: 16px;
+  left: -26px;
+}
+
+.ns-hero-photo {
+  display: block;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 9px;
+  box-shadow: 0 8px 16px rgba(47, 95, 224, 0.18);
+}
+
+.ns-hero-photo-sky {
+  fill: var(--ns-blue-bg);
+}
+
+.ns-hero-photo-wall {
+  fill: var(--ns-periwinkle);
+}
+
+.ns-hero-photo-awning {
+  fill: var(--ns-blue-accent);
+}
+
+.ns-hero-photo-stripe {
+  fill: var(--ns-surface);
+  opacity: 0.85;
+}
+
+.ns-hero-photo-glass {
+  fill: var(--ns-surface);
+}
+
+.ns-hero-photo-door {
+  fill: var(--ns-navy);
+}
+
+.ns-hero-card-price {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ns-blue-accent);
+}
+
+.ns-hero-card-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #1a8a4a;
+  color: #ffffff;
+  font-size: 17px;
+  box-shadow: 0 8px 16px rgba(26, 138, 74, 0.22);
+}
+
+.ns-hero-card-sub {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ns-text-muted);
+}
+
+@media (max-width: 600px) {
+  .ns-hero-mockup {
+    aspect-ratio: 1 / 1;
+  }
+
+  .ns-hero-float .ns-mockup-card {
+    padding: 8px 11px;
+    gap: 8px;
+  }
+
+  .ns-hero-float.is-mall {
+    left: -8px;
+    bottom: -16px;
+  }
+
+  .ns-hero-float.is-property {
+    top: -18px;
+    right: -10px;
+  }
+
+  .ns-hero-float.is-notice {
+    top: 52px;
+    left: -10px;
+  }
+
+  .ns-hero-photo {
+    width: 30px;
+    height: 30px;
+  }
+
+  .ns-hero-card-check {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+  }
+}
