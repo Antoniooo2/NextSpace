@@ -13,11 +13,11 @@
     "title": "Accesibilidad",
     "close": "Cerrar opciones de accesibilidad",
     "readAloud": "Leer en voz alta",
-    "readAloudHint": "Toca un t\u00edtulo, p\u00e1rrafo o tarjeta de propiedad para escucharlo. Toca la tarjeta otra vez para abrirla.",
-    "largeText": "Letra m\u00e1s grande",
+    "readAloudHint": "Toca un título, párrafo o tarjeta de propiedad para escucharlo. Toca la tarjeta otra vez para abrirla.",
+    "largeText": "Letra más grande",
     "largeTextHint": "Agranda el texto y el contenido.",
     "highContrast": "Alto contraste",
-    "highContrastHint": "Texto m\u00e1s oscuro y bordes m\u00e1s marcados.",
+    "highContrastHint": "Texto más oscuro y bordes más marcados.",
     "stop": "Detener voz"
   },
   "hero": {
@@ -31,7 +31,7 @@
   },
   "heroCards": {
     "property": {
-      "zone": "Antiguo Cuscatl\u00e1n",
+      "zone": "Antiguo Cuscatlán",
       "price": "{{price}}/mes"
     },
     "notice": {
@@ -64,8 +64,18 @@
     "ariaLabel": "Mapa de El Salvador y sus 14 departamentos",
     "spaces_one": "{{count}} espacio disponible",
     "spaces_other": "{{count}} espacios disponibles",
-    "noSpaces": "A\u00fan no hay espacios disponibles",
-    "capital": "Cabecera: {{capital}}"
+    "noSpaces": "Aún no hay espacios disponibles",
+    "capital": "Cabecera: {{capital}}",
+    "viewDetails": "Ver detalle",
+    "priceOnRequest": "Precio a consultar",
+    "noPins": "Ningún espacio con pin en el mapa coincide con estos filtros.",
+    "missing_one": "{{count}} espacio aún no tiene pin en el mapa; velo en la vista Lista.",
+    "missing_other": "{{count}} espacios aún no tienen pin en el mapa; velos en la vista Lista.",
+    "picker": {
+      "hint": "Toca el mapa para colocar un pin",
+      "useMine": "Usar mi ubicación",
+      "remove": "Quitar pin"
+    }
   },
   "pricing": {
     "title": "Cómo gana {{brand}}: {{rate}} de cada alquiler, y solo cuando se paga",
@@ -844,6 +854,11 @@
       "addOne": "Agrega uno más para comparar",
       "clear": "Limpiar",
       "button": "Comparar {{count}}"
+    },
+    "view": {
+      "label": "Vista",
+      "list": "Lista",
+      "map": "Mapa"
     }
   },
   "propertyCard": {
@@ -1098,7 +1113,9 @@
     "completeHint": "Las publicaciones completas reciben más solicitudes.",
     "stepOf": "Paso {{step}} de {{total}}",
     "publishSpace": "Publicar espacio",
-    "savePaused": "Guardar pausado"
+    "savePaused": "Guardar pausado",
+    "pinLabel": "Pin en el mapa",
+    "pinHelp": "Opcional. Los negocios verán tu espacio en el mapa del Marketplace. Arrastra el pin para ajustarlo."
   },
   "propertyDetail": {
     "listedToday": "Publicado hoy",
