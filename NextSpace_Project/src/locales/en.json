@@ -432,6 +432,40 @@
       "tryAnother": "Try another filter."
     }
   },
+  "messages": {
+    "title": "Messages",
+    "subtitle": "Your conversations with owners and businesses about each space.",
+    "unreadChats_one": "{{count}} conversation with new messages",
+    "unreadChats_other": "{{count}} conversations with new messages",
+    "loading": "Loading your messages...",
+    "listLabel": "Conversations",
+    "threadLabel": "Conversation with {{name}}",
+    "pick": "Pick a conversation to read it here.",
+    "backToList": "Back to conversations",
+    "you": "You",
+    "noMessagesYet": "No messages yet",
+    "firstMessageHint": "Say hi to {{name}}: ask about the space, a visit or the lease terms.",
+    "unreadCount_one": "{{count}} unread message",
+    "unreadCount_other": "{{count}} unread messages",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "sent": "Sent",
+    "read": "Read",
+    "placeholder": "Write a message...",
+    "sendHint": "Enter to send, Shift+Enter for a new line",
+    "sendFailed": "Your message couldn't be sent. Please try again.",
+    "openFailed": "We couldn't open the conversation. Please try again.",
+    "opening": "Opening...",
+    "role": {
+      "owner": "Owner",
+      "business": "Interested business"
+    },
+    "empty": {
+      "title": "No conversations yet",
+      "business": "Open a space in the Marketplace and tap \"Contact the owner\" to ask anything before you request it.",
+      "owner": "When a business writes to you about one of your spaces, the conversation shows up here."
+    }
+  },
   "market": {
     "similarIn": "similar in {{place}}",
     "similarType": "similar {{type}} spaces",
@@ -745,8 +779,11 @@
     "back": {
       "listings": "Back to listings",
       "profile": "Back to profile",
-      "advisor": "Back to {{advisor}}"
+      "advisor": "Back to {{advisor}}",
+      "messages": "Back to messages"
     },
+    "unreadMessages_one": "{{count}} unread message",
+    "unreadMessages_other": "{{count}} unread messages",
     "navGroups": {
       "main": "Main",
       "manage": "Manage",
@@ -758,6 +795,7 @@
       "advisor": "AI Advisor",
       "contracts": "Contracts",
       "payments": "Payments",
+      "messages": "Messages",
       "notifications": "Notifications",
       "profile": "Profile"
     },
@@ -1230,7 +1268,8 @@
       "title": "Delete this property?",
       "description": "\"{{name}}\" will be permanently removed from your listings. This can't be undone.",
       "deleting": "Deleting..."
-    }
+    },
+    "contactOwner": "Contact the owner"
   },
   "priceBar": {
     "cheaper": "Cheaper",

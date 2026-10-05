@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import LandingPage from './components/LandingPage.jsx'
 import LoginForm from './components/LoginForm.jsx'
 import SignupForm from './components/SignUpForm.jsx'
@@ -8,7 +8,10 @@ import NewPassword from './pages/NewPassword'
 import Dashboard from './pages/Dashboard.jsx'
 
 function MainFlow() {
-  const [view, setView] = useState('landing')
+  // Other screens can send people straight to the login (e.g. "Contact the owner"
+  // without a session) with navigate('/', { state: { view: 'login' } }).
+  const location = useLocation()
+  const [view, setView] = useState(location.state?.view === 'login' ? 'login' : 'landing')
 
   if (view === 'landing') {
     return (

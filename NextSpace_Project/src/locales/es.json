@@ -429,6 +429,40 @@
       "tryAnother": "Prueba con otro filtro."
     }
   },
+  "messages": {
+    "title": "Mensajes",
+    "subtitle": "Tus conversaciones con dueños y negocios sobre cada espacio.",
+    "unreadChats_one": "{{count}} conversación con mensajes nuevos",
+    "unreadChats_other": "{{count}} conversaciones con mensajes nuevos",
+    "loading": "Cargando tus mensajes...",
+    "listLabel": "Conversaciones",
+    "threadLabel": "Conversación con {{name}}",
+    "pick": "Elige una conversación para leerla aquí.",
+    "backToList": "Volver a las conversaciones",
+    "you": "Tú",
+    "noMessagesYet": "Aún no hay mensajes",
+    "firstMessageHint": "Saluda a {{name}}: pregunta por el espacio, una visita o las condiciones del contrato.",
+    "unreadCount_one": "{{count}} mensaje sin leer",
+    "unreadCount_other": "{{count}} mensajes sin leer",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "sent": "Enviado",
+    "read": "Leído",
+    "placeholder": "Escribe un mensaje...",
+    "sendHint": "Enter para enviar, Shift+Enter para una nueva línea",
+    "sendFailed": "No se pudo enviar tu mensaje. Inténtalo de nuevo.",
+    "openFailed": "No pudimos abrir la conversación. Inténtalo de nuevo.",
+    "opening": "Abriendo...",
+    "role": {
+      "owner": "Dueño",
+      "business": "Negocio interesado"
+    },
+    "empty": {
+      "title": "Aún no tienes conversaciones",
+      "business": "Abre un espacio en el Marketplace y toca \"Contactar al dueño\" para preguntar lo que necesites antes de solicitarlo.",
+      "owner": "Cuando un negocio te escriba sobre uno de tus espacios, la conversación aparecerá aquí."
+    }
+  },
   "market": {
     "similarIn": "similares en {{place}}",
     "similarType": "espacios similares de tipo {{type}}",
@@ -742,8 +776,11 @@
     "back": {
       "listings": "Volver a los espacios",
       "profile": "Volver al perfil",
-      "advisor": "Volver con {{advisor}}"
+      "advisor": "Volver con {{advisor}}",
+      "messages": "Volver a los mensajes"
     },
+    "unreadMessages_one": "{{count}} mensaje sin leer",
+    "unreadMessages_other": "{{count}} mensajes sin leer",
     "navGroups": {
       "main": "Principal",
       "manage": "Gestión",
@@ -755,6 +792,7 @@
       "advisor": "Asesor IA",
       "contracts": "Contratos",
       "payments": "Pagos",
+      "messages": "Mensajes",
       "notifications": "Notificaciones",
       "profile": "Perfil"
     },
@@ -1227,7 +1265,8 @@
       "title": "¿Eliminar esta propiedad?",
       "description": "\"{{name}}\" se eliminará de forma permanente de tus publicaciones. Esto no se puede deshacer.",
       "deleting": "Eliminando…"
-    }
+    },
+    "contactOwner": "Contactar al dueño"
   },
   "priceBar": {
     "cheaper": "Más barato",

@@ -16,11 +16,14 @@ import OwnerPayments from '../components/dashboard/OwnerPayments'
 import OwnerContracts from '../components/dashboard/OwnerContracts'
 import BusinessContracts from '../components/dashboard/BusinessContracts'
 import Notifications from '../components/dashboard/Notifications'
+import Messages from '../components/dashboard/Messages'
+import { countUnreadMessages } from '../lib/chat'
 
 const BACK_LABEL = {
     home: 'dashboard.back.listings',
     profile: 'dashboard.back.profile',
     advisor: 'dashboard.back.advisor',
+    messages: 'dashboard.back.messages',
 }
 
 export default function Dashboard() {
@@ -42,6 +45,10 @@ export default function Dashboard() {
     // Rony as a side panel over the Payments screen (same conversation as the
     // AI Advisor page), so asking about rent doesn't navigate away.
     const [ronyPanel, setRonyPanel] = useState({ open: false, seed: null })
+    // Chat open on the Messages screen (e.g. after "Contact the owner"), kept
+    // here so it survives a trip to the space's page and back.
+    const [chatConversationId, setChatConversationId] = useState(null)
+    const [unreadMessages, setUnreadMessages] = useState(0)
 
     const loadUnreadCount = useCallback(async () => {
         const { count } = await supabase
@@ -50,6 +57,13 @@ export default function Dashboard() {
             .eq('read', false)
         setUnreadCount(count || 0)
     }, [])
+
+    const myDui = user?.user_metadata?.dui
+    const loadUnreadMessages = useCallback(async () => {
+        if (!myDui) return
+        const { count } = await countUnreadMessages(myDui)
+        setUnreadMessages(count)
+    }, [myDui])
 
     const loadUser = useCallback(async () => {
         const { data, error } = await supabase.auth.getUser()
@@ -132,6 +146,24 @@ export default function Dashboard() {
         }
     }, [user, loadUnreadCount])
 
+    // Live chat, same idea: Realtime only sends rows from this user's own
+    // conversations (RLS), both new messages and read receipts.
+    const [messagesTick, setMessagesTick] = useState(0)
+    useEffect(() => {
+        if (!user) return undefined
+        loadUnreadMessages()
+        const channel = supabase
+            .channel(`messages-${user.id}`)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+                loadUnreadMessages()
+                setMessagesTick((t) => t + 1)
+            })
+            .subscribe()
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [user, loadUnreadMessages])
+
     const handleLogout = async () => {
         await supabase.auth.signOut()
         navigate('/')
@@ -141,6 +173,7 @@ export default function Dashboard() {
         setViewingProperty(null)
         setRonyPanel({ open: false, seed: null })
         setPaymentsContractId(options.contractId ?? null)
+        if (nextSection === 'messages') setChatConversationId(options.conversationId ?? null)
         setSection(nextSection)
         // A "new space for your search" notification opens that space.
         if (options.propertyId) {
@@ -250,6 +283,18 @@ export default function Dashboard() {
                         }
                     />
                 )
+            case 'messages':
+                return (
+                    <Messages
+                        user={user}
+                        accountType={accountType}
+                        liveTick={messagesTick}
+                        initialConversationId={chatConversationId}
+                        onActiveChange={setChatConversationId}
+                        onUnreadChanged={loadUnreadMessages}
+                        onViewProperty={openProperty('messages')}
+                    />
+                )
             case 'advisor':
                 return (
                     <AdvisorRouter
@@ -294,6 +339,7 @@ export default function Dashboard() {
             search={search}
             onSearchChange={setSearch}
             unreadCount={unreadCount}
+            unreadMessages={unreadMessages}
             attention={attention}
             liveTick={liveTick}
             onNotificationsRead={(n) => setUnreadCount((prev) => Math.max(0, prev - n))}

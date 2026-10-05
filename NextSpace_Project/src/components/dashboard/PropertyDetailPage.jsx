@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n'
 import { propertyTypeLabel, serviceLabel } from '../../lib/displayValues'
@@ -10,6 +11,7 @@ import { describeSupabaseError } from '../../lib/supabaseErrors'
 import { PROPERTY_PHOTO_EMBED, withCoverPhoto } from '../../lib/propertyPhotos'
 import { PROPERTY_SERVICES_FULL_EMBED, PROPERTY_SERVICE_NAMES_EMBED, withServiceNames, withServices } from '../../lib/propertyServices'
 import { createNotification } from '../../lib/notifications'
+import { openConversation } from '../../lib/chat'
 import { SERVICE_ICON, areaOf, daysSince, listingChecklist, listingScore, locationOf, typeIcon } from '../../lib/listings'
 import { formatDueDate } from '../../lib/rentSchedule'
 import { money, personName } from '../../lib/contracts'
@@ -93,6 +95,7 @@ function ListingContent({ detail }) {
 
 export default function PropertyDetailPage({ property, user, accountType, onBack, onAskRony, onViewProperty, onNavigate, backLabel }) {
     const { t } = useTranslation()
+    const navigate = useNavigate()
     const isBusiness = accountType === 'business'
     const isOwnerView = accountType === 'property-owner'
 
@@ -109,6 +112,7 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
     const [requestSuccess, setRequestSuccess] = useState(false)
     const [saved, setSaved] = useState(false)
     const [similar, setSimilar] = useState([])
+    const [contacting, setContacting] = useState(false)
 
     // Owner
     const [tab, setTab] = useState('overview')
@@ -273,6 +277,26 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
         setOpenRequest('Pending')
     }
 
+    // Opens (or reuses) the chat with the owner about this space. Without a
+    // session there is no one to write as, so it goes to the login first.
+    const handleContactOwner = async () => {
+        const { data: auth } = await supabase.auth.getSession()
+        if (!auth?.session) {
+            navigate('/', { state: { view: 'login' } })
+            return
+        }
+        if (!tenantDui || !detail) return
+        setContacting(true)
+        setRequestError('')
+        const { conversationId, error } = await openConversation(detail.property_id, tenantDui)
+        setContacting(false)
+        if (error || !conversationId) {
+            setRequestError(error ? describeSupabaseError(error) : t('messages.openFailed'))
+            return
+        }
+        onNavigate?.('messages', { conversationId })
+    }
+
     const toggleSave = async () => {
         if (!user?.id || !detail) return
         const next = !saved
@@ -409,6 +433,11 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                     <i className="bi bi-file-earmark-text"></i> {requesting ? t('common.sending') : t('propertyDetail.cta.request')}
                 </button>
             ) : null
+        // Business accounts only, never on their own space, and only while the
+        // owner can still be reached about it (listed, or a lease in progress).
+        const canContact =
+            !user?.id ||
+            (isBusiness && Boolean(tenantDui) && tenantDui !== detail.owner_id && (detail.availability === 'Available' || Boolean(openRequest)))
         const yearly = detail.monthly_rent != null ? Number(detail.monthly_rent) * 12 : null
         const steps = [
             { icon: 'bi-send', label: t('propertyDetail.steps.request'), done: Boolean(openRequest) },
@@ -435,6 +464,11 @@ export default function PropertyDetailPage({ property, user, accountType, onBack
                     </div>
                     <div className="ns-pd-owner-actions">
                         {cta}
+                        {canContact && (
+                            <button type="button" className="ns-outline-btn" onClick={handleContactOwner} disabled={contacting}>
+                                <i className="bi bi-chat-dots"></i> {contacting ? t('messages.opening') : t('propertyDetail.contactOwner')}
+                            </button>
+                        )}
                         <button type="button" className={`ns-outline-btn ${saved ? 'is-saved' : ''}`} onClick={toggleSave} aria-pressed={saved}>
                             <i className={`bi ${saved ? 'bi-heart-fill' : 'bi-heart'}`}></i> {saved ? t('propertyCard.saved') : t('propertyCard.save')}
                         </button>

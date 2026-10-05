@@ -25,6 +25,7 @@ function navGroupsFor(accountType) {
             items: [
                 { id: 'contracts', icon: 'bi-file-earmark-text', label: 'contracts' },
                 { id: 'payments', icon: 'bi-credit-card', label: 'payments' },
+                { id: 'messages', icon: 'bi-chat-dots', label: 'messages' },
                 { id: 'notifications', icon: 'bi-bell', label: 'notifications' },
             ],
         },
@@ -74,6 +75,7 @@ export default function DashboardLayout({
     search,
     onSearchChange,
     unreadCount = 0,
+    unreadMessages = 0,
     attention = {},
     liveTick = 0,
     onNotificationsRead,
@@ -106,6 +108,10 @@ export default function DashboardLayout({
     const initials = (firstName?.[0] || 'U') + (lastName?.[0] || '')
     const hintKeys = ATTENTION_HINT[accountType] || ATTENTION_HINT.business
     const hints = { payments: t(hintKeys.payments), contracts: t(hintKeys.contracts) }
+    const badges = {
+        notifications: { count: unreadCount },
+        messages: { count: unreadMessages, label: t('dashboard.unreadMessages', { count: unreadMessages }) },
+    }
 
     const goTo = (id) => {
         onSectionChange(id)
@@ -156,8 +162,10 @@ export default function DashboardLayout({
                                             {needsAttention && <span className="ns-dash-nav-dot" aria-label={hints[item.id]} />}
                                         </span>
                                         <span className="ns-dash-nav-text">{item.label}</span>
-                                        {item.id === 'notifications' && unreadCount > 0 && (
-                                            <span className="ns-dash-nav-badge">{unreadCount}</span>
+                                        {badges[item.id]?.count > 0 && (
+                                            <span className="ns-dash-nav-badge" aria-label={badges[item.id].label}>
+                                                {badges[item.id].count}
+                                            </span>
                                         )}
                                     </button>
                                 )
@@ -208,7 +216,7 @@ export default function DashboardLayout({
                         aria-label={t('dashboard.openMenu')}
                     >
                         <i className="bi bi-list"></i>
-                        {(attention.payments || attention.contracts) && <span className="ns-dash-nav-dot" />}
+                        {(attention.payments || attention.contracts || unreadMessages > 0) && <span className="ns-dash-nav-dot" />}
                     </button>
                     <img src={logo} alt={BRAND_NAME} className="ns-dash-mobile-logo" />
 
