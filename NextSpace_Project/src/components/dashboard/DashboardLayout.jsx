@@ -4,6 +4,7 @@ import { currentLocale } from '../../i18n'
 import { BRAND_NAME, BRAND_VALUES } from '../../lib/brand'
 import { DOT } from '../../lib/symbols'
 import LanguageSwitcher from '../LanguageSwitcher.jsx'
+import AccessibilityMenu from '../AccessibilityMenu.jsx'
 import mark from '../../assets/favicon_ns.png'
 import logo from '../../assets/NextSpace_logo.png'
 import ConfirmDialog from './ConfirmDialog'
@@ -237,6 +238,7 @@ export default function DashboardLayout({
                     )}
                     <div className="ns-dash-topbar-actions">
                         <LanguageSwitcher />
+                        <AccessibilityMenu />
                         <NotificationBell
                             unreadCount={unreadCount}
                             liveTick={liveTick}

@@ -6,6 +6,7 @@ import './index.css'
 import i18n from './i18n'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import AccessibilityProvider from './components/AccessibilityProvider.jsx'
 
 function escapeHtml(value) {
   return String(value)
@@ -39,7 +40,9 @@ try {
     <StrictMode>
       <BrowserRouter>
         <ErrorBoundary>
-          <App />
+          <AccessibilityProvider>
+            <App />
+          </AccessibilityProvider>
         </ErrorBoundary>
       </BrowserRouter>
     </StrictMode>,

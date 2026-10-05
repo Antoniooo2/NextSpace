@@ -8,6 +8,18 @@
       "es": "Cambiar a español"
     }
   },
+  "a11y": {
+    "open": "Opciones de accesibilidad",
+    "title": "Accesibilidad",
+    "close": "Cerrar opciones de accesibilidad",
+    "readAloud": "Leer en voz alta",
+    "readAloudHint": "Toca un t\u00edtulo, p\u00e1rrafo o tarjeta de propiedad para escucharlo. Toca la tarjeta otra vez para abrirla.",
+    "largeText": "Letra m\u00e1s grande",
+    "largeTextHint": "Agranda el texto y el contenido.",
+    "highContrast": "Alto contraste",
+    "highContrastHint": "Texto m\u00e1s oscuro y bordes m\u00e1s marcados.",
+    "stop": "Detener voz"
+  },
   "hero": {
     "badge": "Líder en bienes raíces comerciales",
     "titleStart": "Encuentra el espacio perfecto para tu negocio,",

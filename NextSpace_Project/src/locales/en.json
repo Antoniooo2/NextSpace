@@ -8,6 +8,18 @@
       "es": "Switch to Spanish"
     }
   },
+  "a11y": {
+    "open": "Accessibility options",
+    "title": "Accessibility",
+    "close": "Close accessibility options",
+    "readAloud": "Read aloud",
+    "readAloudHint": "Tap a title, paragraph or property card to hear it. Tap a card again to open it.",
+    "largeText": "Larger text",
+    "largeTextHint": "Makes the text and content bigger.",
+    "highContrast": "High contrast",
+    "highContrastHint": "Darker text and stronger borders.",
+    "stop": "Stop voice"
+  },
   "hero": {
     "badge": "Leader in Commercial Real Estate",
     "titleStart": "Find the perfect space for your business,",

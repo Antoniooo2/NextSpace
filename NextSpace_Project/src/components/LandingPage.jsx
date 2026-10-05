@@ -5,6 +5,7 @@ import { feeSplit, formatRate } from '../lib/platformFee'
 import { money } from '../lib/money'
 import { ADVISOR_NAME, BRAND_NAME, PAYMENT_PROVIDER } from '../lib/brand'
 import LanguageSwitcher from './LanguageSwitcher.jsx'
+import AccessibilityMenu from './AccessibilityMenu.jsx'
 
 const STATS = [
     { value: '500+', labelKey: 'stats.activeSpaces' },
@@ -40,6 +41,7 @@ export default function LandingPage({ onLogin, onSignup }) {
                     </div>
                     <div className="ns-navbar-actions">
                         <LanguageSwitcher />
+                        <AccessibilityMenu />
                         <button
                             type="button"
                             className="ns-nav-btn ns-nav-btn-ghost"
